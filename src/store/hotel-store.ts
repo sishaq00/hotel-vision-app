@@ -68,6 +68,11 @@ interface HotelState {
   addRoom: (room: Omit<Room, "id">) => void;
   updateRoomStatus: (id: string, status: RoomStatus) => void;
   deleteRoom: (id: string) => void;
+  renameRoomType: (
+    oldType: string,
+    next: { type: string; typeCode: string },
+  ) => number;
+  setRoomTypePrice: (type: string, price: number) => number;
 
   // Guests
   addGuest: (guest: Omit<Guest, "id" | "createdAt">) => string;
