@@ -82,6 +82,10 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
       toast.error("Please select a room");
       return;
     }
+    if (!datesValid) {
+      toast.error("Check-out must be after check-in");
+      return;
+    }
 
     const nights = Math.max(
       1,
@@ -101,7 +105,7 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
       guestId = addGuest({ name, email, phone, country });
     }
 
-    addReservation({
+    const result = addReservation({
       guestId,
       roomId,
       checkIn,
@@ -109,6 +113,11 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
       status: "confirmed",
       totalAmount: room.price * nights,
     });
+
+    if (!result.ok) {
+      toast.error("Cannot create reservation", { description: result.error });
+      return;
+    }
 
     toast.success("Reservation created", {
       description: `${nights} night${nights > 1 ? "s" : ""} · Room ${room.number}`,
