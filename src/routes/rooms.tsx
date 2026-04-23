@@ -105,12 +105,22 @@ function RoomsPage() {
                   className="group relative border-border/60 p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                        {r.type} · Floor {r.floor}
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-foreground">
+                    <div className="min-w-0">
+                      <p className="text-2xl font-bold leading-tight text-foreground">
                         Room {r.number}
+                      </p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="truncate text-xs font-medium text-muted-foreground">
+                          {r.type}
+                        </span>
+                        {r.typeCode && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-primary">
+                            {r.typeCode}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        Floor {r.floor}
                       </p>
                     </div>
                     <DropdownMenu>
@@ -150,11 +160,13 @@ function RoomsPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
                     <StatusBadge status={r.status} />
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-base font-bold text-foreground">
                       ${r.price}
-                      <span className="text-xs font-normal text-muted-foreground">/night</span>
+                      <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">
+                        USD/night
+                      </span>
                     </span>
                   </div>
                 </Card>
