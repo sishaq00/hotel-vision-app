@@ -43,10 +43,27 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
 
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
+  const reservations = useHotelStore((s) => s.reservations);
   const addGuest = useHotelStore((s) => s.addGuest);
   const addReservation = useHotelStore((s) => s.addReservation);
+  const hasRoomConflict = useHotelStore((s) => s.hasRoomConflict);
 
-  const availableRooms = rooms.filter((r) => r.status === "available");
+  // Rooms not in maintenance can be booked for future dates even if currently occupied
+  const bookableRooms = rooms.filter((r) => r.status !== "maintenance");
+
+  const datesValid =
+    !!checkIn &&
+    !!checkOut &&
+    new Date(checkOut).getTime() > new Date(checkIn).getTime();
+
+  const conflict =
+    roomId && datesValid
+      ? hasRoomConflict(roomId, checkIn, checkOut)
+      : null;
+
+  const conflictGuestName = conflict
+    ? guests.find((g) => g.id === conflict.guestId)?.name ?? "another guest"
+    : null;
 
   const reset = () => {
     setName("");
