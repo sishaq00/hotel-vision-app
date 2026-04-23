@@ -130,11 +130,10 @@ export const useHotelStore = create<HotelState>((set, get) => ({
     set((s) => ({ guests: s.guests.filter((g) => g.id !== id) })),
 
   hasRoomConflict: (roomId, checkIn, checkOut, ignoreReservationId) => {
-    const state = useHotelStore.getState();
     const startA = new Date(checkIn).getTime();
     const endA = new Date(checkOut).getTime();
     return (
-      state.reservations.find((r) => {
+      get().reservations.find((r) => {
         if (r.id === ignoreReservationId) return false;
         if (r.roomId !== roomId) return false;
         if (r.status === "cancelled" || r.status === "checked-out") return false;
@@ -151,9 +150,7 @@ export const useHotelStore = create<HotelState>((set, get) => ({
     if (!(endA > startA)) {
       return { ok: false as const, error: "Check-out must be after check-in." };
     }
-    const conflict = useHotelStore
-      .getState()
-      .hasRoomConflict(r.roomId, r.checkIn, r.checkOut);
+    const conflict = get().hasRoomConflict(r.roomId, r.checkIn, r.checkOut);
     if (conflict) {
       return {
         ok: false as const,
