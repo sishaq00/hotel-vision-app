@@ -217,17 +217,22 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
             <Select value={roomId} onValueChange={setRoomId}>
               <SelectTrigger>
                 <SelectValue placeholder={
-                  availableRooms.length === 0
-                    ? "No available rooms — add one first"
+                  bookableRooms.length === 0
+                    ? "No rooms available — add one first"
                     : "Select a room"
                 } />
               </SelectTrigger>
               <SelectContent>
-                {availableRooms.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    Room {r.number} · {r.type} · ${r.price}/night
-                  </SelectItem>
-                ))}
+                {bookableRooms.map((r) => {
+                  const conflictForRoom =
+                    datesValid && hasRoomConflict(r.id, checkIn, checkOut);
+                  return (
+                    <SelectItem key={r.id} value={r.id}>
+                      Room {r.number} · {r.type} · ${r.price}/night
+                      {conflictForRoom ? " · ⚠ booked" : ""}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -253,11 +258,28 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
             </div>
           </div>
 
+          {!datesValid && checkIn && checkOut && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              Check-out date must be after check-in date.
+            </div>
+          )}
+
+          {conflict && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <p className="font-medium">Room not available for these dates</p>
+              <p className="mt-1 text-xs opacity-90">
+                Already booked by {conflictGuestName} from {conflict.checkIn} to {conflict.checkOut}. Pick different dates or another room.
+              </p>
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create reservation</Button>
+            <Button type="submit" disabled={!datesValid || !roomId || !!conflict}>
+              Create reservation
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
