@@ -68,6 +68,11 @@ interface HotelState {
   addRoom: (room: Omit<Room, "id">) => void;
   updateRoomStatus: (id: string, status: RoomStatus) => void;
   deleteRoom: (id: string) => void;
+  renameRoomType: (
+    oldType: string,
+    next: { type: string; typeCode: string },
+  ) => number;
+  setRoomTypePrice: (type: string, price: number) => number;
 
   // Guests
   addGuest: (guest: Omit<Guest, "id" | "createdAt">) => string;
@@ -120,6 +125,31 @@ export const useHotelStore = create<HotelState>((set, get) => ({
       rooms: s.rooms.map((r) => (r.id === id ? { ...r, status } : r)),
     })),
   deleteRoom: (id) => set((s) => ({ rooms: s.rooms.filter((r) => r.id !== id) })),
+
+  renameRoomType: (oldType, next) => {
+    const code = next.typeCode.trim().toUpperCase();
+    let count = 0;
+    set((s) => ({
+      rooms: s.rooms.map((r) => {
+        if (r.type !== oldType) return r;
+        count++;
+        return { ...r, type: next.type.trim(), typeCode: code };
+      }),
+    }));
+    return count;
+  },
+
+  setRoomTypePrice: (type, price) => {
+    let count = 0;
+    set((s) => ({
+      rooms: s.rooms.map((r) => {
+        if (r.type !== type) return r;
+        count++;
+        return { ...r, price };
+      }),
+    }));
+    return count;
+  },
 
   addGuest: (guest) => {
     const id = uid();
