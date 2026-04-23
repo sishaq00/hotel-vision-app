@@ -1,12 +1,14 @@
 import { create } from "zustand";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
-export type RoomType = "Single" | "Double" | "Suite" | "Deluxe";
+// Free-form room type to support unlimited custom hotel layouts
+export type RoomType = string;
 
 export interface Room {
   id: string;
   number: string;
-  type: RoomType;
+  type: RoomType;        // e.g. "Royal Suite", "Family Room"
+  typeCode: string;      // short code shown under the name, e.g. "RS", "FAM"
   floor: number;
   price: number;
   status: RoomStatus;
