@@ -1,3 +1,4 @@
+// New reservation dialog with overlap validation
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useHotelStore } from "@/store/hotel-store";
