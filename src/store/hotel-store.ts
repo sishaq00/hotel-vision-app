@@ -72,7 +72,13 @@ interface HotelState {
   deleteGuest: (id: string) => void;
 
   // Reservations
-  addReservation: (r: Omit<Reservation, "id" | "createdAt">) => void;
+  addReservation: (r: Omit<Reservation, "id" | "createdAt">) => { ok: true; id: string } | { ok: false; error: string };
+  hasRoomConflict: (
+    roomId: string,
+    checkIn: string,
+    checkOut: string,
+    ignoreReservationId?: string,
+  ) => Reservation | null;
   checkIn: (id: string) => void;
   checkOut: (id: string) => void;
   cancelReservation: (id: string) => void;
@@ -91,7 +97,7 @@ const uid = () =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-export const useHotelStore = create<HotelState>((set) => ({
+export const useHotelStore = create<HotelState>((set, get) => ({
   rooms: [],
   reservations: [],
   guests: [],
@@ -123,17 +129,43 @@ export const useHotelStore = create<HotelState>((set) => ({
   deleteGuest: (id) =>
     set((s) => ({ guests: s.guests.filter((g) => g.id !== id) })),
 
-  addReservation: (r) =>
-    set((s) => {
-      const id = uid();
-      const newReservation: Reservation = {
-        ...r,
-        id,
-        createdAt: new Date().toISOString(),
+  hasRoomConflict: (roomId, checkIn, checkOut, ignoreReservationId) => {
+    const startA = new Date(checkIn).getTime();
+    const endA = new Date(checkOut).getTime();
+    return (
+      get().reservations.find((r) => {
+        if (r.id === ignoreReservationId) return false;
+        if (r.roomId !== roomId) return false;
+        if (r.status === "cancelled" || r.status === "checked-out") return false;
+        const startB = new Date(r.checkIn).getTime();
+        const endB = new Date(r.checkOut).getTime();
+        return startA < endB && endA > startB;
+      }) ?? null
+    );
+  },
+
+  addReservation: (r) => {
+    const startA = new Date(r.checkIn).getTime();
+    const endA = new Date(r.checkOut).getTime();
+    if (!(endA > startA)) {
+      return { ok: false as const, error: "Check-out must be after check-in." };
+    }
+    const conflict = get().hasRoomConflict(r.roomId, r.checkIn, r.checkOut);
+    if (conflict) {
+      return {
+        ok: false as const,
+        error: `Room is already booked from ${conflict.checkIn} to ${conflict.checkOut}.`,
       };
-      // Auto-update room: keep available until checked-in
-      return { reservations: [...s.reservations, newReservation] };
-    }),
+    }
+    const id = uid();
+    const newReservation: Reservation = {
+      ...r,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    set((s) => ({ reservations: [...s.reservations, newReservation] }));
+    return { ok: true as const, id };
+  },
   checkIn: (id) =>
     set((s) => {
       const res = s.reservations.find((r) => r.id === id);

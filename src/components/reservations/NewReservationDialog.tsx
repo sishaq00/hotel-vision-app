@@ -43,10 +43,27 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
 
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
+  const reservations = useHotelStore((s) => s.reservations);
   const addGuest = useHotelStore((s) => s.addGuest);
   const addReservation = useHotelStore((s) => s.addReservation);
+  const hasRoomConflict = useHotelStore((s) => s.hasRoomConflict);
 
-  const availableRooms = rooms.filter((r) => r.status === "available");
+  // Rooms not in maintenance can be booked for future dates even if currently occupied
+  const bookableRooms = rooms.filter((r) => r.status !== "maintenance");
+
+  const datesValid =
+    !!checkIn &&
+    !!checkOut &&
+    new Date(checkOut).getTime() > new Date(checkIn).getTime();
+
+  const conflict =
+    roomId && datesValid
+      ? hasRoomConflict(roomId, checkIn, checkOut)
+      : null;
+
+  const conflictGuestName = conflict
+    ? guests.find((g) => g.id === conflict.guestId)?.name ?? "another guest"
+    : null;
 
   const reset = () => {
     setName("");
@@ -63,6 +80,10 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
     e.preventDefault();
     if (!roomId) {
       toast.error("Please select a room");
+      return;
+    }
+    if (!datesValid) {
+      toast.error("Check-out must be after check-in");
       return;
     }
 
@@ -84,7 +105,7 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
       guestId = addGuest({ name, email, phone, country });
     }
 
-    addReservation({
+    const result = addReservation({
       guestId,
       roomId,
       checkIn,
@@ -92,6 +113,11 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
       status: "confirmed",
       totalAmount: room.price * nights,
     });
+
+    if (!result.ok) {
+      toast.error("Cannot create reservation", { description: result.error });
+      return;
+    }
 
     toast.success("Reservation created", {
       description: `${nights} night${nights > 1 ? "s" : ""} · Room ${room.number}`,
@@ -191,17 +217,22 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
             <Select value={roomId} onValueChange={setRoomId}>
               <SelectTrigger>
                 <SelectValue placeholder={
-                  availableRooms.length === 0
-                    ? "No available rooms — add one first"
+                  bookableRooms.length === 0
+                    ? "No rooms available — add one first"
                     : "Select a room"
                 } />
               </SelectTrigger>
               <SelectContent>
-                {availableRooms.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    Room {r.number} · {r.type} · ${r.price}/night
-                  </SelectItem>
-                ))}
+                {bookableRooms.map((r) => {
+                  const conflictForRoom =
+                    datesValid && hasRoomConflict(r.id, checkIn, checkOut);
+                  return (
+                    <SelectItem key={r.id} value={r.id}>
+                      Room {r.number} · {r.type} · ${r.price}/night
+                      {conflictForRoom ? " · ⚠ booked" : ""}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -227,11 +258,28 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
             </div>
           </div>
 
+          {!datesValid && checkIn && checkOut && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              Check-out date must be after check-in date.
+            </div>
+          )}
+
+          {conflict && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <p className="font-medium">Room not available for these dates</p>
+              <p className="mt-1 text-xs opacity-90">
+                Already booked by {conflictGuestName} from {conflict.checkIn} to {conflict.checkOut}. Pick different dates or another room.
+              </p>
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create reservation</Button>
+            <Button type="submit" disabled={!datesValid || !roomId || !!conflict}>
+              Create reservation
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
