@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarCheck, LogIn, LogOut, Search, Trash2, X } from "lucide-react";
+import { CalendarCheck, LogIn, LogOut, Search, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,6 @@ function ReservationsPage() {
   const checkIn = useHotelStore((s) => s.checkIn);
   const checkOut = useHotelStore((s) => s.checkOut);
   const cancel = useHotelStore((s) => s.cancelReservation);
-  const remove = useHotelStore((s) => s.deleteReservation);
 
   const [query, setQuery] = useState("");
 
@@ -142,6 +141,7 @@ function ReservationsPage() {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              title="Cancel reservation"
                               onClick={() => {
                                 cancel(r.id);
                                 toast("Reservation cancelled");
@@ -150,17 +150,6 @@ function ReservationsPage() {
                               <X className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                              remove(r.id);
-                              toast("Reservation deleted");
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
