@@ -6,6 +6,7 @@ import {
   Users,
   CreditCard,
   BarChart3,
+  History,
   Settings,
   Hotel,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const items = [
   { title: "Guests", url: "/guests", icon: Users },
   { title: "Payments", url: "/payments", icon: CreditCard },
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Audit Log", url: "/audit", icon: History },
   { title: "Settings", url: "/settings", icon: Settings },
 ] as const;
 
