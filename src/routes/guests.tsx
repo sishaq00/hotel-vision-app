@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Trash2, Users } from "lucide-react";
+import { Archive, Search, Users } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,10 +39,12 @@ function initials(name: string) {
 }
 
 function GuestsPage() {
-  const guests = useHotelStore((s) => s.guests);
+  const allGuests = useHotelStore((s) => s.guests);
   const reservations = useHotelStore((s) => s.reservations);
-  const remove = useHotelStore((s) => s.deleteGuest);
+  const archive = useHotelStore((s) => s.archiveGuest);
   const [query, setQuery] = useState("");
+
+  const guests = useMemo(() => allGuests.filter((g) => !g.archived), [allGuests]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -125,12 +127,19 @@ function GuestsPage() {
                           size="icon"
                           variant="ghost"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          title="Archive guest"
                           onClick={() => {
-                            remove(g.id);
-                            toast("Guest deleted");
+                            const result = archive(g.id);
+                            if (result.ok) {
+                              toast.success("Guest archived");
+                            } else {
+                              toast.error("Cannot archive guest", {
+                                description: result.error,
+                              });
+                            }
                           }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Archive className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>

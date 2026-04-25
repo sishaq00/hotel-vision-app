@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { BedDouble, MoreVertical, Trash2 } from "lucide-react";
+import { BedDouble, MoreVertical, Archive } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,13 @@ export const Route = createFileRoute("/rooms")({
 const STATUSES: RoomStatus[] = ["available", "occupied", "cleaning", "maintenance"];
 
 function RoomsPage() {
-  const rooms = useHotelStore((s) => s.rooms);
+  const allRooms = useHotelStore((s) => s.rooms);
   const updateStatus = useHotelStore((s) => s.updateRoomStatus);
-  const deleteRoom = useHotelStore((s) => s.deleteRoom);
+  const archiveRoom = useHotelStore((s) => s.archiveRoom);
   const [query, setQuery] = useState("");
+
+  // Hide archived rooms from the active inventory view
+  const rooms = useMemo(() => allRooms.filter((r) => !r.archived), [allRooms]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -151,11 +154,17 @@ function RoomsPage() {
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={() => {
-                            deleteRoom(r.id);
-                            toast("Room deleted");
+                            const result = archiveRoom(r.id);
+                            if (result.ok) {
+                              toast.success(`Room ${r.number} archived`);
+                            } else {
+                              toast.error("Cannot archive room", {
+                                description: result.error,
+                              });
+                            }
                           }}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Archive className="mr-2 h-4 w-4" /> Archive
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
