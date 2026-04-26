@@ -677,9 +677,28 @@ export const useHotelStore = create<HotelState>()(
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 1,
+      version: 2,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
+      migrate: (persisted: unknown, version: number) => {
+        const state = (persisted ?? {}) as Partial<HotelState>;
+        if (version < 2) {
+          state.settings = {
+            hotelName: "NEXORA OS",
+            currency: "USD",
+            timezone: "UTC",
+            contactEmail: "",
+            contactPhone: "",
+            address: "",
+            taxRate: 0.15,
+            serviceFeeRate: 0.10,
+            invoicePrefix: "INV",
+            invoiceCounter: 1000,
+            ...(state.settings ?? {}),
+          };
+        }
+        return state as HotelState;
+      },
     },
   ),
 );
