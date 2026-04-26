@@ -131,12 +131,29 @@ function ReservationsPage() {
                               size="sm"
                               variant="outline"
                               className="h-8 gap-1.5"
-                              onClick={() => {
-                                checkOut(r.id);
-                                toast.success("Checked out");
-                              }}
+                              onClick={() => setCheckoutId(r.id)}
                             >
                               <LogOut className="h-3.5 w-3.5" /> Check out
+                            </Button>
+                          )}
+                          {r.status === "checked-out" && r.invoice && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 gap-1.5"
+                              title="Download invoice PDF"
+                              onClick={() => {
+                                if (!rm) return;
+                                downloadInvoicePDF({
+                                  invoice: r.invoice!,
+                                  reservation: r,
+                                  guest: g,
+                                  room: rm,
+                                  settings,
+                                });
+                              }}
+                            >
+                              <Download className="h-3.5 w-3.5" /> Invoice
                             </Button>
                           )}
                           {(r.status === "confirmed" || r.status === "checked-in") && (
