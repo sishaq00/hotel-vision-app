@@ -474,29 +474,91 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
-        checkOut: (id) => {
+        previewInvoice: (reservationId) => {
+          const res = get().reservations.find((r) => r.id === reservationId);
+          if (!res) return null;
+          const room = get().rooms.find((rm) => rm.id === res.roomId);
+          if (!room) return null;
+          const settings = get().settings;
+          // Re-use existing snapshot if already checked-out
+          if (res.invoice) return res.invoice;
+          return buildInvoice({
+            reservation: res,
+            room,
+            settings,
+            invoiceNumber: nextInvoiceNumber(settings),
+            issuedAt: new Date().toISOString(),
+          });
+        },
+
+        checkOut: (id, opts) => {
           const res = get().reservations.find((r) => r.id === id);
-          if (!res || res.status !== "checked-in") return;
+          if (!res || res.status !== "checked-in") return null;
+          const room = get().rooms.find((rm) => rm.id === res.roomId);
+          if (!room) return null;
+          const settings = get().settings;
           const now = new Date().toISOString();
+          const invoiceNumber = nextInvoiceNumber(settings);
+          const invoice = buildInvoice({
+            reservation: res,
+            room,
+            settings,
+            invoiceNumber,
+            issuedAt: now,
+          });
+
           set((s) => ({
             reservations: s.reservations.map((r) =>
               r.id === id
-                ? { ...r, status: "checked-out" as ReservationStatus, checkedOutAt: now }
+                ? {
+                    ...r,
+                    status: "checked-out" as ReservationStatus,
+                    checkedOutAt: now,
+                    totalAmount: invoice.total,
+                    invoice,
+                  }
                 : r,
             ),
             rooms: s.rooms.map((rm) =>
               rm.id === res.roomId ? { ...rm, status: "cleaning" as RoomStatus } : rm,
             ),
+            settings: { ...s.settings, invoiceCounter: s.settings.invoiceCounter + 1 },
           }));
+
+          // Auto-record payment if requested
+          if (opts?.markPaid) {
+            const pid = uid();
+            set((s) => ({
+              payments: [
+                ...s.payments,
+                {
+                  id: pid,
+                  reservationId: id,
+                  amount: invoice.total,
+                  method: opts.paymentMethod ?? "card",
+                  status: "paid",
+                  date: now.slice(0, 10),
+                },
+              ],
+            }));
+            log({
+              entity: "payment",
+              entityId: pid,
+              action: "create",
+              description: `Auto payment $${invoice.total.toFixed(2)} on check-out (${invoice.invoiceNumber})`,
+              metadata: { reservationId: id, invoiceNumber: invoice.invoiceNumber },
+            });
+          }
+
           const guest = get().guests.find((g) => g.id === res.guestId);
-          const room = get().rooms.find((rm) => rm.id === res.roomId);
           log({
             entity: "reservation",
             entityId: id,
             action: "check-out",
-            description: `Check-out: ${guest?.name ?? "guest"} ← Room ${room?.number ?? "?"}`,
-            metadata: { at: now },
+            description: `Check-out: ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber} · $${invoice.total.toFixed(2)}`,
+            metadata: { at: now, invoice },
           });
+          return invoice;
         },
 
         cancelReservation: (id) => {
