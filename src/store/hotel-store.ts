@@ -215,6 +215,10 @@ export const useHotelStore = create<HotelState>()(
           contactEmail: "",
           contactPhone: "",
           address: "",
+          taxRate: 0.15,
+          serviceFeeRate: 0.10,
+          invoicePrefix: "INV",
+          invoiceCounter: 1000,
         },
 
         // -------------------- Rooms --------------------
