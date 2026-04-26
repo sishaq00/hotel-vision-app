@@ -180,6 +180,18 @@ function ReservationsPage() {
           </div>
         )}
       </Card>
+
+      {checkoutId && (() => {
+        const r = reservations.find((x) => x.id === checkoutId);
+        if (!r) return null;
+        return (
+          <CheckoutDialog
+            reservation={r}
+            open={true}
+            onOpenChange={(o) => !o && setCheckoutId(null)}
+          />
+        );
+      })()}
     </AppLayout>
   );
 }
