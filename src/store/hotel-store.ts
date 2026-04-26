@@ -19,6 +19,20 @@ export interface Room {
 
 export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
 
+export interface InvoiceSnapshot {
+  invoiceNumber: string;
+  issuedAt: string;
+  nights: number;
+  ratePerNight: number;
+  subtotal: number;
+  taxRate: number;       // e.g. 0.15
+  taxAmount: number;
+  serviceFeeRate: number;
+  serviceFeeAmount: number;
+  total: number;
+  currency: string;
+}
+
 export interface Reservation {
   id: string;
   guestId: string;
@@ -32,6 +46,8 @@ export interface Reservation {
   checkedInAt?: string;
   checkedOutAt?: string;
   cancelledAt?: string;
+  // Invoice snapshot — locked at check-out
+  invoice?: InvoiceSnapshot;
 }
 
 export interface Guest {
@@ -64,6 +80,10 @@ export interface HotelSettings {
   contactEmail: string;
   contactPhone: string;
   address: string;
+  taxRate: number;        // 0..1 (e.g. 0.15 = 15% VAT)
+  serviceFeeRate: number; // 0..1 (e.g. 0.10 = 10% service)
+  invoicePrefix: string;  // e.g. "INV"
+  invoiceCounter: number; // monotonically increasing
 }
 
 // ---- Audit log -------------------------------------------------------------
@@ -133,8 +153,9 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string) => void;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
+  previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
@@ -151,6 +172,55 @@ const uid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+// ---- Invoice helpers -------------------------------------------------------
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+export const computeNights = (checkIn: string, checkOut: string) =>
+  Math.max(
+    1,
+    Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000,
+    ),
+  );
+
+function nextInvoiceNumber(settings: HotelSettings): string {
+  const n = settings.invoiceCounter + 1;
+  return `${settings.invoicePrefix || "INV"}-${String(n).padStart(6, "0")}`;
+}
+
+function buildInvoice(args: {
+  reservation: Reservation;
+  room: Room;
+  settings: HotelSettings;
+  invoiceNumber: string;
+  issuedAt: string;
+}): InvoiceSnapshot {
+  const { reservation, room, settings, invoiceNumber, issuedAt } = args;
+  // Use actual stay if checked out today, otherwise planned dates
+  const nights = computeNights(reservation.checkIn, reservation.checkOut);
+  const ratePerNight = room.price;
+  const subtotal = round2(ratePerNight * nights);
+  const taxRate = Math.max(0, settings.taxRate ?? 0);
+  const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
+  const taxAmount = round2(subtotal * taxRate);
+  const serviceFeeAmount = round2(subtotal * serviceFeeRate);
+  const total = round2(subtotal + taxAmount + serviceFeeAmount);
+  return {
+    invoiceNumber,
+    issuedAt,
+    nights,
+    ratePerNight,
+    subtotal,
+    taxRate,
+    taxAmount,
+    serviceFeeRate,
+    serviceFeeAmount,
+    total,
+    currency: settings.currency || "USD",
+  };
+}
 
 // SSR-safe storage: returns a no-op store on the server, real localStorage on the client.
 const safeStorage = createJSONStorage(() => {
@@ -194,6 +264,10 @@ export const useHotelStore = create<HotelState>()(
           contactEmail: "",
           contactPhone: "",
           address: "",
+          taxRate: 0.15,
+          serviceFeeRate: 0.10,
+          invoicePrefix: "INV",
+          invoiceCounter: 1000,
         },
 
         // -------------------- Rooms --------------------
@@ -449,29 +523,91 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
-        checkOut: (id) => {
+        previewInvoice: (reservationId) => {
+          const res = get().reservations.find((r) => r.id === reservationId);
+          if (!res) return null;
+          const room = get().rooms.find((rm) => rm.id === res.roomId);
+          if (!room) return null;
+          const settings = get().settings;
+          // Re-use existing snapshot if already checked-out
+          if (res.invoice) return res.invoice;
+          return buildInvoice({
+            reservation: res,
+            room,
+            settings,
+            invoiceNumber: nextInvoiceNumber(settings),
+            issuedAt: new Date().toISOString(),
+          });
+        },
+
+        checkOut: (id, opts) => {
           const res = get().reservations.find((r) => r.id === id);
-          if (!res || res.status !== "checked-in") return;
+          if (!res || res.status !== "checked-in") return null;
+          const room = get().rooms.find((rm) => rm.id === res.roomId);
+          if (!room) return null;
+          const settings = get().settings;
           const now = new Date().toISOString();
+          const invoiceNumber = nextInvoiceNumber(settings);
+          const invoice = buildInvoice({
+            reservation: res,
+            room,
+            settings,
+            invoiceNumber,
+            issuedAt: now,
+          });
+
           set((s) => ({
             reservations: s.reservations.map((r) =>
               r.id === id
-                ? { ...r, status: "checked-out" as ReservationStatus, checkedOutAt: now }
+                ? {
+                    ...r,
+                    status: "checked-out" as ReservationStatus,
+                    checkedOutAt: now,
+                    totalAmount: invoice.total,
+                    invoice,
+                  }
                 : r,
             ),
             rooms: s.rooms.map((rm) =>
               rm.id === res.roomId ? { ...rm, status: "cleaning" as RoomStatus } : rm,
             ),
+            settings: { ...s.settings, invoiceCounter: s.settings.invoiceCounter + 1 },
           }));
+
+          // Auto-record payment if requested
+          if (opts?.markPaid) {
+            const pid = uid();
+            set((s) => ({
+              payments: [
+                ...s.payments,
+                {
+                  id: pid,
+                  reservationId: id,
+                  amount: invoice.total,
+                  method: opts.paymentMethod ?? "card",
+                  status: "paid",
+                  date: now.slice(0, 10),
+                },
+              ],
+            }));
+            log({
+              entity: "payment",
+              entityId: pid,
+              action: "create",
+              description: `Auto payment $${invoice.total.toFixed(2)} on check-out (${invoice.invoiceNumber})`,
+              metadata: { reservationId: id, invoiceNumber: invoice.invoiceNumber },
+            });
+          }
+
           const guest = get().guests.find((g) => g.id === res.guestId);
-          const room = get().rooms.find((rm) => rm.id === res.roomId);
           log({
             entity: "reservation",
             entityId: id,
             action: "check-out",
-            description: `Check-out: ${guest?.name ?? "guest"} ← Room ${room?.number ?? "?"}`,
-            metadata: { at: now },
+            description: `Check-out: ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber} · $${invoice.total.toFixed(2)}`,
+            metadata: { at: now, invoice },
           });
+          return invoice;
         },
 
         cancelReservation: (id) => {
@@ -541,9 +677,28 @@ export const useHotelStore = create<HotelState>()(
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 1,
+      version: 2,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
+      migrate: (persisted: unknown, version: number) => {
+        const state = (persisted ?? {}) as Partial<HotelState>;
+        if (version < 2) {
+          state.settings = {
+            hotelName: "NEXORA OS",
+            currency: "USD",
+            timezone: "UTC",
+            contactEmail: "",
+            contactPhone: "",
+            address: "",
+            taxRate: 0.15,
+            serviceFeeRate: 0.10,
+            invoicePrefix: "INV",
+            invoiceCounter: 1000,
+            ...(state.settings ?? {}),
+          };
+        }
+        return state as HotelState;
+      },
     },
   ),
 );

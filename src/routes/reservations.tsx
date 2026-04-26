@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CalendarCheck, LogIn, LogOut, Search, X } from "lucide-react";
+import { CalendarCheck, Download, LogIn, LogOut, Search, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { NewReservationDialog } from "@/components/reservations/NewReservationDialog";
+import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useHotelStore } from "@/store/hotel-store";
+import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reservations")({
@@ -33,11 +35,12 @@ function ReservationsPage() {
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
+  const settings = useHotelStore((s) => s.settings);
   const checkIn = useHotelStore((s) => s.checkIn);
-  const checkOut = useHotelStore((s) => s.checkOut);
   const cancel = useHotelStore((s) => s.cancelReservation);
 
   const [query, setQuery] = useState("");
+  const [checkoutId, setCheckoutId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -128,12 +131,29 @@ function ReservationsPage() {
                               size="sm"
                               variant="outline"
                               className="h-8 gap-1.5"
-                              onClick={() => {
-                                checkOut(r.id);
-                                toast.success("Checked out");
-                              }}
+                              onClick={() => setCheckoutId(r.id)}
                             >
                               <LogOut className="h-3.5 w-3.5" /> Check out
+                            </Button>
+                          )}
+                          {r.status === "checked-out" && r.invoice && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 gap-1.5"
+                              title="Download invoice PDF"
+                              onClick={() => {
+                                if (!rm) return;
+                                downloadInvoicePDF({
+                                  invoice: r.invoice!,
+                                  reservation: r,
+                                  guest: g,
+                                  room: rm,
+                                  settings,
+                                });
+                              }}
+                            >
+                              <Download className="h-3.5 w-3.5" /> Invoice
                             </Button>
                           )}
                           {(r.status === "confirmed" || r.status === "checked-in") && (
@@ -160,6 +180,18 @@ function ReservationsPage() {
           </div>
         )}
       </Card>
+
+      {checkoutId && (() => {
+        const r = reservations.find((x) => x.id === checkoutId);
+        if (!r) return null;
+        return (
+          <CheckoutDialog
+            reservation={r}
+            open={true}
+            onOpenChange={(o) => !o && setCheckoutId(null)}
+          />
+        );
+      })()}
     </AppLayout>
   );
 }

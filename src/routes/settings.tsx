@@ -99,6 +99,68 @@ function SettingsPage() {
           </div>
         </Card>
 
+        <Card className="border-border/60 p-6 shadow-card">
+          <h3 className="text-sm font-semibold text-foreground">Billing & Invoicing</h3>
+          <p className="text-xs text-muted-foreground">
+            Tax and service fee rates applied to every check-out invoice.
+          </p>
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="vat">VAT rate (%)</Label>
+              <Input
+                id="vat"
+                type="number"
+                step="0.1"
+                min={0}
+                max={100}
+                value={(form.taxRate * 100).toFixed(2)}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    taxRate: Math.max(0, Number(e.target.value) / 100),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="svc">Service fee (%)</Label>
+              <Input
+                id="svc"
+                type="number"
+                step="0.1"
+                min={0}
+                max={100}
+                value={(form.serviceFeeRate * 100).toFixed(2)}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    serviceFeeRate: Math.max(0, Number(e.target.value) / 100),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="prefix">Invoice prefix</Label>
+              <Input
+                id="prefix"
+                value={form.invoicePrefix}
+                onChange={(e) => setForm({ ...form, invoicePrefix: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="counter">Next invoice #</Label>
+              <Input
+                id="counter"
+                type="number"
+                value={form.invoiceCounter + 1}
+                onChange={(e) =>
+                  setForm({ ...form, invoiceCounter: Math.max(0, Number(e.target.value) - 1) })
+                }
+              />
+            </div>
+          </div>
+        </Card>
+
         <div className="flex justify-end">
           <Button type="submit" className="gap-2 shadow-md">
             <Save className="h-4 w-4" /> Save changes
