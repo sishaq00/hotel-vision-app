@@ -173,6 +173,55 @@ const uid = () =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
+// ---- Invoice helpers -------------------------------------------------------
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+export const computeNights = (checkIn: string, checkOut: string) =>
+  Math.max(
+    1,
+    Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000,
+    ),
+  );
+
+function nextInvoiceNumber(settings: HotelSettings): string {
+  const n = settings.invoiceCounter + 1;
+  return `${settings.invoicePrefix || "INV"}-${String(n).padStart(6, "0")}`;
+}
+
+function buildInvoice(args: {
+  reservation: Reservation;
+  room: Room;
+  settings: HotelSettings;
+  invoiceNumber: string;
+  issuedAt: string;
+}): InvoiceSnapshot {
+  const { reservation, room, settings, invoiceNumber, issuedAt } = args;
+  // Use actual stay if checked out today, otherwise planned dates
+  const nights = computeNights(reservation.checkIn, reservation.checkOut);
+  const ratePerNight = room.price;
+  const subtotal = round2(ratePerNight * nights);
+  const taxRate = Math.max(0, settings.taxRate ?? 0);
+  const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
+  const taxAmount = round2(subtotal * taxRate);
+  const serviceFeeAmount = round2(subtotal * serviceFeeRate);
+  const total = round2(subtotal + taxAmount + serviceFeeAmount);
+  return {
+    invoiceNumber,
+    issuedAt,
+    nights,
+    ratePerNight,
+    subtotal,
+    taxRate,
+    taxAmount,
+    serviceFeeRate,
+    serviceFeeAmount,
+    total,
+    currency: settings.currency || "USD",
+  };
+}
+
 // SSR-safe storage: returns a no-op store on the server, real localStorage on the client.
 const safeStorage = createJSONStorage(() => {
   if (typeof window === "undefined") {
