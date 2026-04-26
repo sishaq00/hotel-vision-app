@@ -19,6 +19,20 @@ export interface Room {
 
 export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
 
+export interface InvoiceSnapshot {
+  invoiceNumber: string;
+  issuedAt: string;
+  nights: number;
+  ratePerNight: number;
+  subtotal: number;
+  taxRate: number;       // e.g. 0.15
+  taxAmount: number;
+  serviceFeeRate: number;
+  serviceFeeAmount: number;
+  total: number;
+  currency: string;
+}
+
 export interface Reservation {
   id: string;
   guestId: string;
@@ -32,6 +46,8 @@ export interface Reservation {
   checkedInAt?: string;
   checkedOutAt?: string;
   cancelledAt?: string;
+  // Invoice snapshot — locked at check-out
+  invoice?: InvoiceSnapshot;
 }
 
 export interface Guest {
@@ -64,6 +80,10 @@ export interface HotelSettings {
   contactEmail: string;
   contactPhone: string;
   address: string;
+  taxRate: number;        // 0..1 (e.g. 0.15 = 15% VAT)
+  serviceFeeRate: number; // 0..1 (e.g. 0.10 = 10% service)
+  invoicePrefix: string;  // e.g. "INV"
+  invoiceCounter: number; // monotonically increasing
 }
 
 // ---- Audit log -------------------------------------------------------------
@@ -133,8 +153,9 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string) => void;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
+  previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
