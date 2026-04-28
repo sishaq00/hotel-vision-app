@@ -24,11 +24,23 @@ import {
 import { toast } from "sonner";
 
 interface NewReservationDialogProps {
-  trigger?: React.ReactNode;
+  trigger?: React.ReactNode | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
-  const [open, setOpen] = useState(false);
+export function NewReservationDialog({
+  trigger,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+}: NewReservationDialogProps) {
+  const [openInner, setOpenInner] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : openInner;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChangeProp?.(v);
+    else setOpenInner(v);
+  };
 
   // form fields
   const [name, setName] = useState("");
@@ -129,14 +141,16 @@ export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button className="gap-2 shadow-md">
-            <Plus className="h-4 w-4" />
-            New Reservation
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button className="gap-2 shadow-md">
+              <Plus className="h-4 w-4" />
+              New Reservation
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>New Reservation</DialogTitle>

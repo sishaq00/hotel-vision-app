@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
+export type HousekeepingStatus = "clean" | "dirty" | "inspected" | "out-of-order";
 // Free-form room type to support unlimited custom hotel layouts
 export type RoomType = string;
 
@@ -13,6 +14,10 @@ export interface Room {
   floor: number;
   price: number;
   status: RoomStatus;
+  // v3: housekeeping & categorization
+  housekeepingStatus?: HousekeepingStatus;
+  smokingAllowed?: boolean;
+  accessible?: boolean;
   archived?: boolean;    // soft-delete flag — record is preserved
   archivedAt?: string;
 }
@@ -33,6 +38,8 @@ export interface InvoiceSnapshot {
   currency: string;
 }
 
+export type ReservationSource = "walk-in" | "phone" | "group" | "direct";
+
 export interface Reservation {
   id: string;
   guestId: string;
@@ -48,6 +55,12 @@ export interface Reservation {
   cancelledAt?: string;
   // Invoice snapshot — locked at check-out
   invoice?: InvoiceSnapshot;
+  // v3 fields (no online sources)
+  source?: ReservationSource;
+  noShow?: boolean;
+  groupMasterId?: string;
+  confirmationNumber?: string;
+  recentlyViewedAt?: string;
 }
 
 export interface Guest {
@@ -59,6 +72,10 @@ export interface Guest {
   createdAt: string;
   archived?: boolean;
   archivedAt?: string;
+  // v3
+  doNotRent?: boolean;
+  vip?: boolean;
+  notes?: string;
 }
 
 export type PaymentStatus = "paid" | "pending" | "refunded";
@@ -75,6 +92,7 @@ export interface Payment {
 
 export interface HotelSettings {
   hotelName: string;
+  hotelCode: string;      // e.g. "DTTSH" — short code shown next to name
   currency: string;
   timezone: string;
   contactEmail: string;
@@ -84,6 +102,148 @@ export interface HotelSettings {
   serviceFeeRate: number; // 0..1 (e.g. 0.10 = 10% service)
   invoicePrefix: string;  // e.g. "INV"
   invoiceCounter: number; // monotonically increasing
+  language: "en" | "ar";
+}
+
+// ---- v3 entities -----------------------------------------------------------
+
+export type ShiftStatus = "open" | "closed";
+
+export interface Shift {
+  id: string;
+  userId: string;          // free-form for now (pre-auth)
+  userName: string;
+  startedAt: string;
+  endedAt?: string;
+  openingCash: number;
+  closingCash?: number;
+  status: ShiftStatus;
+  notes?: string;
+}
+
+export type ReminderPriority = "low" | "medium" | "high";
+
+export interface Reminder {
+  id: string;
+  title: string;
+  description?: string;
+  dueAt: string;
+  priority: ReminderPriority;
+  done: boolean;
+  createdAt: string;
+}
+
+export type AdvanceDepositStatus = "held" | "applied" | "refunded";
+
+export interface AdvanceDeposit {
+  id: string;
+  reservationId?: string;
+  guestId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: AdvanceDepositStatus;
+  receivedAt: string;
+  appliedAt?: string;
+  notes?: string;
+}
+
+export type MaintenancePriority = "low" | "medium" | "high" | "urgent";
+export type MaintenanceStatus = "open" | "in-progress" | "resolved";
+
+export interface MaintenanceTicket {
+  id: string;
+  roomId?: string;
+  area: string;            // e.g. "Lobby", "Room 204"
+  description: string;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  reportedAt: string;
+  resolvedAt?: string;
+  assignee?: string;
+}
+
+export interface HousekeepingTask {
+  id: string;
+  roomId: string;
+  status: "pending" | "in-progress" | "done";
+  assignee?: string;
+  createdAt: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface LostFoundItem {
+  id: string;
+  description: string;
+  foundAt: string;
+  location: string;
+  status: "stored" | "claimed" | "discarded";
+  claimedBy?: string;
+  claimedAt?: string;
+}
+
+export interface GroupMaster {
+  id: string;
+  name: string;            // e.g. "ACME Conference 2026"
+  contactName?: string;
+  contactPhone?: string;
+  arrivalDate: string;
+  departureDate: string;
+  rateOverride?: number;   // unified nightly rate
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Folio {
+  id: string;
+  reservationId?: string;
+  guestId: string;
+  status: "open" | "closed";
+  charges: FolioCharge[];
+  createdAt: string;
+  closedAt?: string;
+}
+
+export interface FolioCharge {
+  id: string;
+  description: string;
+  amount: number;
+  postedAt: string;
+  category: "room" | "minibar" | "spa" | "restaurant" | "laundry" | "other";
+}
+
+export interface HouseAccount {
+  id: string;
+  name: string;            // e.g. "Staff Meals", "Owner", "Promo"
+  balance: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: "linen" | "amenity" | "cleaning" | "other";
+  quantity: number;
+  reorderLevel: number;
+  unit: string;            // e.g. "pcs", "L"
+}
+
+export interface ProductItem {
+  id: string;
+  name: string;
+  category: "minibar" | "spa" | "restaurant" | "other";
+  price: number;
+  stock: number;
+}
+
+export interface RoutingRule {
+  id: string;
+  name: string;
+  fromGuestId?: string;
+  toFolioId: string;
+  categories: FolioCharge["category"][];
+  active: boolean;
 }
 
 // ---- Audit log -------------------------------------------------------------
@@ -94,7 +254,19 @@ export type AuditEntity =
   | "guest"
   | "payment"
   | "settings"
-  | "room-type";
+  | "room-type"
+  | "shift"
+  | "reminder"
+  | "deposit"
+  | "maintenance"
+  | "housekeeping"
+  | "lost-found"
+  | "group"
+  | "folio"
+  | "house-account"
+  | "inventory"
+  | "product"
+  | "routing";
 
 export type AuditAction =
   | "create"
@@ -126,9 +298,24 @@ interface HotelState {
   settings: HotelSettings;
   auditLog: AuditEntry[];
 
+  // v3 collections
+  shifts: Shift[];
+  reminders: Reminder[];
+  advanceDeposits: AdvanceDeposit[];
+  maintenanceTickets: MaintenanceTicket[];
+  housekeepingTasks: HousekeepingTask[];
+  lostFoundItems: LostFoundItem[];
+  groupMasters: GroupMaster[];
+  folios: Folio[];
+  houseAccounts: HouseAccount[];
+  inventoryItems: InventoryItem[];
+  productItems: ProductItem[];
+  routingRules: RoutingRule[];
+
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
   updateRoomStatus: (id: string, status: RoomStatus) => void;
+  updateRoomHousekeeping: (id: string, status: HousekeepingStatus) => void;
   archiveRoom: (id: string) => { ok: boolean; error?: string };
   restoreRoom: (id: string) => void;
   renameRoomType: (
@@ -155,11 +342,63 @@ interface HotelState {
   checkIn: (id: string) => void;
   checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
+  markNoShow: (id: string) => void;
+  markRecentlyViewed: (id: string) => void;
   previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
   updatePaymentStatus: (id: string, status: PaymentStatus) => void;
+
+  // Shifts
+  startShift: (userName: string, openingCash?: number) => string;
+  endShift: (id: string, closingCash?: number, notes?: string) => void;
+  getOpenShift: (userName?: string) => Shift | undefined;
+
+  // Reminders
+  addReminder: (r: Omit<Reminder, "id" | "createdAt" | "done">) => string;
+  toggleReminder: (id: string) => void;
+  deleteReminder: (id: string) => void;
+
+  // Advance Deposits
+  addAdvanceDeposit: (d: Omit<AdvanceDeposit, "id" | "receivedAt" | "status">) => string;
+  applyAdvanceDeposit: (id: string) => void;
+  refundAdvanceDeposit: (id: string) => void;
+
+  // Maintenance
+  addMaintenanceTicket: (t: Omit<MaintenanceTicket, "id" | "reportedAt" | "status">) => string;
+  updateMaintenanceStatus: (id: string, status: MaintenanceStatus) => void;
+
+  // Housekeeping tasks
+  addHousekeepingTask: (t: Omit<HousekeepingTask, "id" | "createdAt" | "status">) => string;
+  updateHousekeepingTaskStatus: (id: string, status: HousekeepingTask["status"]) => void;
+
+  // Lost & Found
+  addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
+  updateLostFoundStatus: (id: string, status: LostFoundItem["status"], claimedBy?: string) => void;
+
+  // Group Master
+  addGroupMaster: (g: Omit<GroupMaster, "id" | "createdAt">) => string;
+
+  // Folios
+  addFolio: (f: Omit<Folio, "id" | "createdAt" | "status" | "charges">) => string;
+  postFolioCharge: (folioId: string, c: Omit<FolioCharge, "id" | "postedAt">) => void;
+  closeFolio: (id: string) => void;
+
+  // House Accounts
+  addHouseAccount: (h: Omit<HouseAccount, "id" | "createdAt" | "balance">) => string;
+
+  // Inventory
+  addInventoryItem: (i: Omit<InventoryItem, "id">) => string;
+  updateInventoryQuantity: (id: string, quantity: number) => void;
+
+  // Products
+  addProductItem: (p: Omit<ProductItem, "id">) => string;
+  updateProductStock: (id: string, stock: number) => void;
+
+  // Routing
+  addRoutingRule: (r: Omit<RoutingRule, "id">) => string;
+  toggleRoutingRule: (id: string) => void;
 
   // Settings
   updateSettings: (s: Partial<HotelSettings>) => void;
@@ -257,8 +496,21 @@ export const useHotelStore = create<HotelState>()(
         guests: [],
         payments: [],
         auditLog: [],
+        shifts: [],
+        reminders: [],
+        advanceDeposits: [],
+        maintenanceTickets: [],
+        housekeepingTasks: [],
+        lostFoundItems: [],
+        groupMasters: [],
+        folios: [],
+        houseAccounts: [],
+        inventoryItems: [],
+        productItems: [],
+        routingRules: [],
         settings: {
           hotelName: "NEXORA OS",
+          hotelCode: "NXR",
           currency: "USD",
           timezone: "UTC",
           contactEmail: "",
@@ -268,6 +520,7 @@ export const useHotelStore = create<HotelState>()(
           serviceFeeRate: 0.10,
           invoicePrefix: "INV",
           invoiceCounter: 1000,
+          language: "en",
         },
 
         // -------------------- Rooms --------------------
@@ -294,6 +547,24 @@ export const useHotelStore = create<HotelState>()(
             action: "status-change",
             description: `Room ${room.number}: ${room.status} → ${status}`,
             metadata: { from: room.status, to: status },
+          });
+        },
+        updateRoomHousekeeping: (id, status) => {
+          const room = get().rooms.find((r) => r.id === id);
+          if (!room) return;
+          const from = room.housekeepingStatus ?? "clean";
+          if (from === status) return;
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              r.id === id ? { ...r, housekeepingStatus: status } : r,
+            ),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: id,
+            action: "status-change",
+            description: `Room ${room.number} housekeeping: ${from} → ${status}`,
+            metadata: { from, to: status },
           });
         },
         archiveRoom: (id) => {
@@ -659,6 +930,294 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
+        // -------------------- Reservation extras --------------------
+        markNoShow: (id) => {
+          const res = get().reservations.find((r) => r.id === id);
+          if (!res || res.status !== "confirmed") return;
+          set((s) => ({
+            reservations: s.reservations.map((r) =>
+              r.id === id
+                ? { ...r, noShow: true, status: "cancelled" as ReservationStatus, cancelledAt: new Date().toISOString() }
+                : r,
+            ),
+          }));
+          log({
+            entity: "reservation",
+            entityId: id,
+            action: "cancel",
+            description: `Marked as No-Show`,
+          });
+        },
+        markRecentlyViewed: (id) => {
+          set((s) => ({
+            reservations: s.reservations.map((r) =>
+              r.id === id ? { ...r, recentlyViewedAt: new Date().toISOString() } : r,
+            ),
+          }));
+        },
+
+        // -------------------- Shifts --------------------
+        startShift: (userName, openingCash = 0) => {
+          const id = uid();
+          set((s) => ({
+            shifts: [
+              ...s.shifts,
+              {
+                id,
+                userId: userName,
+                userName,
+                startedAt: new Date().toISOString(),
+                openingCash,
+                status: "open",
+              },
+            ],
+          }));
+          log({ entity: "shift", entityId: id, action: "create", description: `Shift started by ${userName}` });
+          return id;
+        },
+        endShift: (id, closingCash, notes) => {
+          const shift = get().shifts.find((x) => x.id === id);
+          if (!shift || shift.status !== "open") return;
+          set((s) => ({
+            shifts: s.shifts.map((x) =>
+              x.id === id
+                ? { ...x, endedAt: new Date().toISOString(), closingCash, notes, status: "closed" as ShiftStatus }
+                : x,
+            ),
+          }));
+          log({ entity: "shift", entityId: id, action: "update", description: `Shift ended by ${shift.userName}` });
+        },
+        getOpenShift: (userName) => {
+          return get().shifts.find(
+            (s) => s.status === "open" && (!userName || s.userName === userName),
+          );
+        },
+
+        // -------------------- Reminders --------------------
+        addReminder: (r) => {
+          const id = uid();
+          set((s) => ({
+            reminders: [
+              ...s.reminders,
+              { ...r, id, done: false, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "reminder", entityId: id, action: "create", description: `Reminder: ${r.title}` });
+          return id;
+        },
+        toggleReminder: (id) => {
+          set((s) => ({
+            reminders: s.reminders.map((x) => (x.id === id ? { ...x, done: !x.done } : x)),
+          }));
+        },
+        deleteReminder: (id) => {
+          set((s) => ({ reminders: s.reminders.filter((x) => x.id !== id) }));
+        },
+
+        // -------------------- Advance Deposits --------------------
+        addAdvanceDeposit: (d) => {
+          const id = uid();
+          set((s) => ({
+            advanceDeposits: [
+              ...s.advanceDeposits,
+              { ...d, id, status: "held", receivedAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "deposit", entityId: id, action: "create", description: `Deposit $${d.amount} (${d.method})` });
+          return id;
+        },
+        applyAdvanceDeposit: (id) => {
+          set((s) => ({
+            advanceDeposits: s.advanceDeposits.map((d) =>
+              d.id === id ? { ...d, status: "applied", appliedAt: new Date().toISOString() } : d,
+            ),
+          }));
+          log({ entity: "deposit", entityId: id, action: "update", description: `Deposit applied` });
+        },
+        refundAdvanceDeposit: (id) => {
+          set((s) => ({
+            advanceDeposits: s.advanceDeposits.map((d) =>
+              d.id === id ? { ...d, status: "refunded" } : d,
+            ),
+          }));
+          log({ entity: "deposit", entityId: id, action: "update", description: `Deposit refunded` });
+        },
+
+        // -------------------- Maintenance --------------------
+        addMaintenanceTicket: (t) => {
+          const id = uid();
+          set((s) => ({
+            maintenanceTickets: [
+              ...s.maintenanceTickets,
+              { ...t, id, status: "open", reportedAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "maintenance", entityId: id, action: "create", description: `Maintenance: ${t.area} — ${t.description}` });
+          return id;
+        },
+        updateMaintenanceStatus: (id, status) => {
+          set((s) => ({
+            maintenanceTickets: s.maintenanceTickets.map((t) =>
+              t.id === id
+                ? { ...t, status, resolvedAt: status === "resolved" ? new Date().toISOString() : t.resolvedAt }
+                : t,
+            ),
+          }));
+          log({ entity: "maintenance", entityId: id, action: "status-change", description: `Maintenance → ${status}` });
+        },
+
+        // -------------------- Housekeeping tasks --------------------
+        addHousekeepingTask: (t) => {
+          const id = uid();
+          set((s) => ({
+            housekeepingTasks: [
+              ...s.housekeepingTasks,
+              { ...t, id, status: "pending", createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "create", description: `HK task created` });
+          return id;
+        },
+        updateHousekeepingTaskStatus: (id, status) => {
+          set((s) => ({
+            housekeepingTasks: s.housekeepingTasks.map((t) =>
+              t.id === id
+                ? { ...t, status, completedAt: status === "done" ? new Date().toISOString() : t.completedAt }
+                : t,
+            ),
+          }));
+        },
+
+        // -------------------- Lost & Found --------------------
+        addLostFoundItem: (i) => {
+          const id = uid();
+          set((s) => ({
+            lostFoundItems: [
+              ...s.lostFoundItems,
+              { ...i, id, status: "stored", foundAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "lost-found", entityId: id, action: "create", description: `Found: ${i.description}` });
+          return id;
+        },
+        updateLostFoundStatus: (id, status, claimedBy) => {
+          set((s) => ({
+            lostFoundItems: s.lostFoundItems.map((i) =>
+              i.id === id
+                ? { ...i, status, claimedBy, claimedAt: status === "claimed" ? new Date().toISOString() : i.claimedAt }
+                : i,
+            ),
+          }));
+        },
+
+        // -------------------- Group Master --------------------
+        addGroupMaster: (g) => {
+          const id = uid();
+          set((s) => ({
+            groupMasters: [
+              ...s.groupMasters,
+              { ...g, id, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "group", entityId: id, action: "create", description: `Group: ${g.name}` });
+          return id;
+        },
+
+        // -------------------- Folios --------------------
+        addFolio: (f) => {
+          const id = uid();
+          set((s) => ({
+            folios: [
+              ...s.folios,
+              { ...f, id, status: "open", charges: [], createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "folio", entityId: id, action: "create", description: `Folio opened` });
+          return id;
+        },
+        postFolioCharge: (folioId, c) => {
+          set((s) => ({
+            folios: s.folios.map((f) =>
+              f.id === folioId
+                ? {
+                    ...f,
+                    charges: [
+                      ...f.charges,
+                      { ...c, id: uid(), postedAt: new Date().toISOString() },
+                    ],
+                  }
+                : f,
+            ),
+          }));
+          log({ entity: "folio", entityId: folioId, action: "update", description: `Posted $${c.amount} (${c.category})` });
+        },
+        closeFolio: (id) => {
+          set((s) => ({
+            folios: s.folios.map((f) =>
+              f.id === id ? { ...f, status: "closed", closedAt: new Date().toISOString() } : f,
+            ),
+          }));
+          log({ entity: "folio", entityId: id, action: "update", description: `Folio closed` });
+        },
+
+        // -------------------- House Accounts --------------------
+        addHouseAccount: (h) => {
+          const id = uid();
+          set((s) => ({
+            houseAccounts: [
+              ...s.houseAccounts,
+              { ...h, id, balance: 0, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "house-account", entityId: id, action: "create", description: `House account: ${h.name}` });
+          return id;
+        },
+
+        // -------------------- Inventory --------------------
+        addInventoryItem: (i) => {
+          const id = uid();
+          set((s) => ({ inventoryItems: [...s.inventoryItems, { ...i, id }] }));
+          log({ entity: "inventory", entityId: id, action: "create", description: `Inventory: ${i.name}` });
+          return id;
+        },
+        updateInventoryQuantity: (id, quantity) => {
+          set((s) => ({
+            inventoryItems: s.inventoryItems.map((i) =>
+              i.id === id ? { ...i, quantity } : i,
+            ),
+          }));
+        },
+
+        // -------------------- Products --------------------
+        addProductItem: (p) => {
+          const id = uid();
+          set((s) => ({ productItems: [...s.productItems, { ...p, id }] }));
+          log({ entity: "product", entityId: id, action: "create", description: `Product: ${p.name}` });
+          return id;
+        },
+        updateProductStock: (id, stock) => {
+          set((s) => ({
+            productItems: s.productItems.map((p) =>
+              p.id === id ? { ...p, stock } : p,
+            ),
+          }));
+        },
+
+        // -------------------- Routing rules --------------------
+        addRoutingRule: (r) => {
+          const id = uid();
+          set((s) => ({ routingRules: [...s.routingRules, { ...r, id }] }));
+          log({ entity: "routing", entityId: id, action: "create", description: `Routing rule: ${r.name}` });
+          return id;
+        },
+        toggleRoutingRule: (id) => {
+          set((s) => ({
+            routingRules: s.routingRules.map((r) =>
+              r.id === id ? { ...r, active: !r.active } : r,
+            ),
+          }));
+        },
+
         // -------------------- Settings --------------------
         updateSettings: (patch) => {
           set((state) => ({ settings: { ...state.settings, ...patch } }));
@@ -677,14 +1236,16 @@ export const useHotelStore = create<HotelState>()(
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 2,
+      version: 3,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
       migrate: (persisted: unknown, version: number) => {
-        const state = (persisted ?? {}) as Partial<HotelState>;
+        const state = (persisted ?? {}) as Partial<HotelState> & { settings?: Partial<HotelSettings> };
+        // v1 → v2: ensure billing settings exist
         if (version < 2) {
           state.settings = {
             hotelName: "NEXORA OS",
+            hotelCode: "NXR",
             currency: "USD",
             timezone: "UTC",
             contactEmail: "",
@@ -694,8 +1255,39 @@ export const useHotelStore = create<HotelState>()(
             serviceFeeRate: 0.10,
             invoicePrefix: "INV",
             invoiceCounter: 1000,
+            language: "en",
             ...(state.settings ?? {}),
-          };
+          } as HotelSettings;
+        }
+        // v2 → v3: ensure new settings fields + new collections
+        if (version < 3) {
+          state.settings = {
+            hotelName: "NEXORA OS",
+            hotelCode: "NXR",
+            currency: "USD",
+            timezone: "UTC",
+            contactEmail: "",
+            contactPhone: "",
+            address: "",
+            taxRate: 0.15,
+            serviceFeeRate: 0.10,
+            invoicePrefix: "INV",
+            invoiceCounter: 1000,
+            language: "en",
+            ...(state.settings ?? {}),
+          } as HotelSettings;
+          state.shifts ??= [];
+          state.reminders ??= [];
+          state.advanceDeposits ??= [];
+          state.maintenanceTickets ??= [];
+          state.housekeepingTasks ??= [];
+          state.lostFoundItems ??= [];
+          state.groupMasters ??= [];
+          state.folios ??= [];
+          state.houseAccounts ??= [];
+          state.inventoryItems ??= [];
+          state.productItems ??= [];
+          state.routingRules ??= [];
         }
         return state as HotelState;
       },

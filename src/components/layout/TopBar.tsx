@@ -1,45 +1,128 @@
-import { Bell, Search } from "lucide-react";
+import { HelpCircle, ChevronDown, Globe } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useHotelStore } from "@/store/hotel-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TopBarProps {
-  title: string;
+  title?: string;
   subtitle?: string;
 }
 
-export function TopBar({ title, subtitle }: TopBarProps) {
+const formatToday = () =>
+  new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+export function TopBar(_props: TopBarProps) {
+  const settings = useHotelStore((s) => s.settings);
+  const updateSettings = useHotelStore((s) => s.updateSettings);
+  const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-3 md:px-4">
       <SidebarTrigger className="text-foreground" />
 
-      <div className="hidden min-w-0 flex-1 md:block">
-        <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
-        {subtitle && (
-          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-        )}
+      {/* Hotel identity (left) */}
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 sm:flex">
+          <span className="text-[10px] font-bold text-primary">
+            {settings.hotelCode?.slice(0, 4) || "NXR"}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold leading-tight text-foreground">
+            {settings.hotelName}
+          </p>
+          <p className="truncate text-[11px] leading-tight text-muted-foreground">
+            ({settings.hotelCode || "—"})
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
-        <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            className="h-9 w-64 rounded-lg border-border bg-background pl-9 text-sm"
-          />
-        </div>
+      {/* Date (center) */}
+      <div className="hidden flex-1 justify-center md:flex">
+        <p className="text-sm font-medium text-muted-foreground">{formatToday()}</p>
+      </div>
 
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
+      {/* Right cluster */}
+      <div className="ml-auto flex items-center gap-2">
+        <Select
+          value={settings.language ?? "en"}
+          onValueChange={(v) => updateSettings({ language: v as "en" | "ar" })}
+        >
+          <SelectTrigger className="hidden h-8 w-[150px] gap-1 rounded border-border text-xs sm:flex">
+            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="en">English (US)</SelectItem>
+            <SelectItem value="ar">العربية</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 rounded text-xs text-muted-foreground"
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Help</span>
         </Button>
 
-        <Avatar className="h-9 w-9 border-2 border-border">
-          <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
-            NX
-          </AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded px-1.5 py-1 hover:bg-muted"
+            >
+              <Avatar className="h-7 w-7 border border-border">
+                <AvatarFallback className="bg-primary text-[10px] font-semibold text-primary-foreground">
+                  {(openShift?.userName ?? "Front Desk")
+                    .split(" ")
+                    .map((s) => s[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden text-xs font-medium text-foreground sm:inline">
+                {openShift?.userName ?? "Front Desk"}
+              </span>
+              <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs">
+              {openShift ? `Shift open · ${openShift.userName}` : "No active shift"}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="/settings" className="text-xs">Settings</a>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href="/shift-management" className="text-xs">Shift Management</a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
