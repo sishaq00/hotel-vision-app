@@ -94,10 +94,15 @@ const moreItems = [
   { title: "Advance Deposits", url: "/advance-deposits", icon: CreditCard },
 ] as const;
 
-const bottomItems = [
+const bottomItems: ReadonlyArray<{
+  title: string;
+  url: string;
+  icon: typeof BarChart3;
+  external?: boolean;
+}> = [
   { title: "Report Queue", url: "/report-queue", icon: ListChecks },
   { title: "Reports", url: "/reports", icon: BarChart3, external: true },
-] as const;
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
