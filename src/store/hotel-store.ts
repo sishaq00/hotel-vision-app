@@ -1236,14 +1236,16 @@ export const useHotelStore = create<HotelState>()(
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 2,
+      version: 3,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
       migrate: (persisted: unknown, version: number) => {
-        const state = (persisted ?? {}) as Partial<HotelState>;
+        const state = (persisted ?? {}) as Partial<HotelState> & { settings?: Partial<HotelSettings> };
+        // v1 → v2: ensure billing settings exist
         if (version < 2) {
           state.settings = {
             hotelName: "NEXORA OS",
+            hotelCode: "NXR",
             currency: "USD",
             timezone: "UTC",
             contactEmail: "",
@@ -1253,11 +1255,43 @@ export const useHotelStore = create<HotelState>()(
             serviceFeeRate: 0.10,
             invoicePrefix: "INV",
             invoiceCounter: 1000,
+            language: "en",
             ...(state.settings ?? {}),
-          };
+          } as HotelSettings;
+        }
+        // v2 → v3: ensure new settings fields + new collections
+        if (version < 3) {
+          state.settings = {
+            hotelName: "NEXORA OS",
+            hotelCode: "NXR",
+            currency: "USD",
+            timezone: "UTC",
+            contactEmail: "",
+            contactPhone: "",
+            address: "",
+            taxRate: 0.15,
+            serviceFeeRate: 0.10,
+            invoicePrefix: "INV",
+            invoiceCounter: 1000,
+            language: "en",
+            ...(state.settings ?? {}),
+          } as HotelSettings;
+          state.shifts ??= [];
+          state.reminders ??= [];
+          state.advanceDeposits ??= [];
+          state.maintenanceTickets ??= [];
+          state.housekeepingTasks ??= [];
+          state.lostFoundItems ??= [];
+          state.groupMasters ??= [];
+          state.folios ??= [];
+          state.houseAccounts ??= [];
+          state.inventoryItems ??= [];
+          state.productItems ??= [];
+          state.routingRules ??= [];
         }
         return state as HotelState;
       },
+    },
     },
   ),
 );
