@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
+export type HousekeepingStatus = "clean" | "dirty" | "inspected" | "out-of-order";
 // Free-form room type to support unlimited custom hotel layouts
 export type RoomType = string;
 
@@ -13,6 +14,10 @@ export interface Room {
   floor: number;
   price: number;
   status: RoomStatus;
+  // v3: housekeeping & categorization
+  housekeepingStatus?: HousekeepingStatus;
+  smokingAllowed?: boolean;
+  accessible?: boolean;
   archived?: boolean;    // soft-delete flag — record is preserved
   archivedAt?: string;
 }
