@@ -549,6 +549,24 @@ export const useHotelStore = create<HotelState>()(
             metadata: { from: room.status, to: status },
           });
         },
+        updateRoomHousekeeping: (id, status) => {
+          const room = get().rooms.find((r) => r.id === id);
+          if (!room) return;
+          const from = room.housekeepingStatus ?? "clean";
+          if (from === status) return;
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              r.id === id ? { ...r, housekeepingStatus: status } : r,
+            ),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: id,
+            action: "status-change",
+            description: `Room ${room.number} housekeeping: ${from} → ${status}`,
+            metadata: { from, to: status },
+          });
+        },
         archiveRoom: (id) => {
           const room = get().rooms.find((r) => r.id === id);
           if (!room) return { ok: false, error: "Room not found" };
