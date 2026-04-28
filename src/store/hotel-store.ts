@@ -92,6 +92,7 @@ export interface Payment {
 
 export interface HotelSettings {
   hotelName: string;
+  hotelCode: string;      // e.g. "DTTSH" — short code shown next to name
   currency: string;
   timezone: string;
   contactEmail: string;
@@ -101,6 +102,148 @@ export interface HotelSettings {
   serviceFeeRate: number; // 0..1 (e.g. 0.10 = 10% service)
   invoicePrefix: string;  // e.g. "INV"
   invoiceCounter: number; // monotonically increasing
+  language: "en" | "ar";
+}
+
+// ---- v3 entities -----------------------------------------------------------
+
+export type ShiftStatus = "open" | "closed";
+
+export interface Shift {
+  id: string;
+  userId: string;          // free-form for now (pre-auth)
+  userName: string;
+  startedAt: string;
+  endedAt?: string;
+  openingCash: number;
+  closingCash?: number;
+  status: ShiftStatus;
+  notes?: string;
+}
+
+export type ReminderPriority = "low" | "medium" | "high";
+
+export interface Reminder {
+  id: string;
+  title: string;
+  description?: string;
+  dueAt: string;
+  priority: ReminderPriority;
+  done: boolean;
+  createdAt: string;
+}
+
+export type AdvanceDepositStatus = "held" | "applied" | "refunded";
+
+export interface AdvanceDeposit {
+  id: string;
+  reservationId?: string;
+  guestId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: AdvanceDepositStatus;
+  receivedAt: string;
+  appliedAt?: string;
+  notes?: string;
+}
+
+export type MaintenancePriority = "low" | "medium" | "high" | "urgent";
+export type MaintenanceStatus = "open" | "in-progress" | "resolved";
+
+export interface MaintenanceTicket {
+  id: string;
+  roomId?: string;
+  area: string;            // e.g. "Lobby", "Room 204"
+  description: string;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  reportedAt: string;
+  resolvedAt?: string;
+  assignee?: string;
+}
+
+export interface HousekeepingTask {
+  id: string;
+  roomId: string;
+  status: "pending" | "in-progress" | "done";
+  assignee?: string;
+  createdAt: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface LostFoundItem {
+  id: string;
+  description: string;
+  foundAt: string;
+  location: string;
+  status: "stored" | "claimed" | "discarded";
+  claimedBy?: string;
+  claimedAt?: string;
+}
+
+export interface GroupMaster {
+  id: string;
+  name: string;            // e.g. "ACME Conference 2026"
+  contactName?: string;
+  contactPhone?: string;
+  arrivalDate: string;
+  departureDate: string;
+  rateOverride?: number;   // unified nightly rate
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Folio {
+  id: string;
+  reservationId?: string;
+  guestId: string;
+  status: "open" | "closed";
+  charges: FolioCharge[];
+  createdAt: string;
+  closedAt?: string;
+}
+
+export interface FolioCharge {
+  id: string;
+  description: string;
+  amount: number;
+  postedAt: string;
+  category: "room" | "minibar" | "spa" | "restaurant" | "laundry" | "other";
+}
+
+export interface HouseAccount {
+  id: string;
+  name: string;            // e.g. "Staff Meals", "Owner", "Promo"
+  balance: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: "linen" | "amenity" | "cleaning" | "other";
+  quantity: number;
+  reorderLevel: number;
+  unit: string;            // e.g. "pcs", "L"
+}
+
+export interface ProductItem {
+  id: string;
+  name: string;
+  category: "minibar" | "spa" | "restaurant" | "other";
+  price: number;
+  stock: number;
+}
+
+export interface RoutingRule {
+  id: string;
+  name: string;
+  fromGuestId?: string;
+  toFolioId: string;
+  categories: FolioCharge["category"][];
+  active: boolean;
 }
 
 // ---- Audit log -------------------------------------------------------------
@@ -111,7 +254,19 @@ export type AuditEntity =
   | "guest"
   | "payment"
   | "settings"
-  | "room-type";
+  | "room-type"
+  | "shift"
+  | "reminder"
+  | "deposit"
+  | "maintenance"
+  | "housekeeping"
+  | "lost-found"
+  | "group"
+  | "folio"
+  | "house-account"
+  | "inventory"
+  | "product"
+  | "routing";
 
 export type AuditAction =
   | "create"
