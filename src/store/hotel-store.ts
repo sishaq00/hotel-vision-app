@@ -930,6 +930,294 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
+        // -------------------- Reservation extras --------------------
+        markNoShow: (id) => {
+          const res = get().reservations.find((r) => r.id === id);
+          if (!res || res.status !== "confirmed") return;
+          set((s) => ({
+            reservations: s.reservations.map((r) =>
+              r.id === id
+                ? { ...r, noShow: true, status: "cancelled" as ReservationStatus, cancelledAt: new Date().toISOString() }
+                : r,
+            ),
+          }));
+          log({
+            entity: "reservation",
+            entityId: id,
+            action: "cancel",
+            description: `Marked as No-Show`,
+          });
+        },
+        markRecentlyViewed: (id) => {
+          set((s) => ({
+            reservations: s.reservations.map((r) =>
+              r.id === id ? { ...r, recentlyViewedAt: new Date().toISOString() } : r,
+            ),
+          }));
+        },
+
+        // -------------------- Shifts --------------------
+        startShift: (userName, openingCash = 0) => {
+          const id = uid();
+          set((s) => ({
+            shifts: [
+              ...s.shifts,
+              {
+                id,
+                userId: userName,
+                userName,
+                startedAt: new Date().toISOString(),
+                openingCash,
+                status: "open",
+              },
+            ],
+          }));
+          log({ entity: "shift", entityId: id, action: "create", description: `Shift started by ${userName}` });
+          return id;
+        },
+        endShift: (id, closingCash, notes) => {
+          const shift = get().shifts.find((x) => x.id === id);
+          if (!shift || shift.status !== "open") return;
+          set((s) => ({
+            shifts: s.shifts.map((x) =>
+              x.id === id
+                ? { ...x, endedAt: new Date().toISOString(), closingCash, notes, status: "closed" as ShiftStatus }
+                : x,
+            ),
+          }));
+          log({ entity: "shift", entityId: id, action: "update", description: `Shift ended by ${shift.userName}` });
+        },
+        getOpenShift: (userName) => {
+          return get().shifts.find(
+            (s) => s.status === "open" && (!userName || s.userName === userName),
+          );
+        },
+
+        // -------------------- Reminders --------------------
+        addReminder: (r) => {
+          const id = uid();
+          set((s) => ({
+            reminders: [
+              ...s.reminders,
+              { ...r, id, done: false, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "reminder", entityId: id, action: "create", description: `Reminder: ${r.title}` });
+          return id;
+        },
+        toggleReminder: (id) => {
+          set((s) => ({
+            reminders: s.reminders.map((x) => (x.id === id ? { ...x, done: !x.done } : x)),
+          }));
+        },
+        deleteReminder: (id) => {
+          set((s) => ({ reminders: s.reminders.filter((x) => x.id !== id) }));
+        },
+
+        // -------------------- Advance Deposits --------------------
+        addAdvanceDeposit: (d) => {
+          const id = uid();
+          set((s) => ({
+            advanceDeposits: [
+              ...s.advanceDeposits,
+              { ...d, id, status: "held", receivedAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "deposit", entityId: id, action: "create", description: `Deposit $${d.amount} (${d.method})` });
+          return id;
+        },
+        applyAdvanceDeposit: (id) => {
+          set((s) => ({
+            advanceDeposits: s.advanceDeposits.map((d) =>
+              d.id === id ? { ...d, status: "applied", appliedAt: new Date().toISOString() } : d,
+            ),
+          }));
+          log({ entity: "deposit", entityId: id, action: "update", description: `Deposit applied` });
+        },
+        refundAdvanceDeposit: (id) => {
+          set((s) => ({
+            advanceDeposits: s.advanceDeposits.map((d) =>
+              d.id === id ? { ...d, status: "refunded" } : d,
+            ),
+          }));
+          log({ entity: "deposit", entityId: id, action: "update", description: `Deposit refunded` });
+        },
+
+        // -------------------- Maintenance --------------------
+        addMaintenanceTicket: (t) => {
+          const id = uid();
+          set((s) => ({
+            maintenanceTickets: [
+              ...s.maintenanceTickets,
+              { ...t, id, status: "open", reportedAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "maintenance", entityId: id, action: "create", description: `Maintenance: ${t.area} — ${t.description}` });
+          return id;
+        },
+        updateMaintenanceStatus: (id, status) => {
+          set((s) => ({
+            maintenanceTickets: s.maintenanceTickets.map((t) =>
+              t.id === id
+                ? { ...t, status, resolvedAt: status === "resolved" ? new Date().toISOString() : t.resolvedAt }
+                : t,
+            ),
+          }));
+          log({ entity: "maintenance", entityId: id, action: "status-change", description: `Maintenance → ${status}` });
+        },
+
+        // -------------------- Housekeeping tasks --------------------
+        addHousekeepingTask: (t) => {
+          const id = uid();
+          set((s) => ({
+            housekeepingTasks: [
+              ...s.housekeepingTasks,
+              { ...t, id, status: "pending", createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "create", description: `HK task created` });
+          return id;
+        },
+        updateHousekeepingTaskStatus: (id, status) => {
+          set((s) => ({
+            housekeepingTasks: s.housekeepingTasks.map((t) =>
+              t.id === id
+                ? { ...t, status, completedAt: status === "done" ? new Date().toISOString() : t.completedAt }
+                : t,
+            ),
+          }));
+        },
+
+        // -------------------- Lost & Found --------------------
+        addLostFoundItem: (i) => {
+          const id = uid();
+          set((s) => ({
+            lostFoundItems: [
+              ...s.lostFoundItems,
+              { ...i, id, status: "stored", foundAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "lost-found", entityId: id, action: "create", description: `Found: ${i.description}` });
+          return id;
+        },
+        updateLostFoundStatus: (id, status, claimedBy) => {
+          set((s) => ({
+            lostFoundItems: s.lostFoundItems.map((i) =>
+              i.id === id
+                ? { ...i, status, claimedBy, claimedAt: status === "claimed" ? new Date().toISOString() : i.claimedAt }
+                : i,
+            ),
+          }));
+        },
+
+        // -------------------- Group Master --------------------
+        addGroupMaster: (g) => {
+          const id = uid();
+          set((s) => ({
+            groupMasters: [
+              ...s.groupMasters,
+              { ...g, id, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "group", entityId: id, action: "create", description: `Group: ${g.name}` });
+          return id;
+        },
+
+        // -------------------- Folios --------------------
+        addFolio: (f) => {
+          const id = uid();
+          set((s) => ({
+            folios: [
+              ...s.folios,
+              { ...f, id, status: "open", charges: [], createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "folio", entityId: id, action: "create", description: `Folio opened` });
+          return id;
+        },
+        postFolioCharge: (folioId, c) => {
+          set((s) => ({
+            folios: s.folios.map((f) =>
+              f.id === folioId
+                ? {
+                    ...f,
+                    charges: [
+                      ...f.charges,
+                      { ...c, id: uid(), postedAt: new Date().toISOString() },
+                    ],
+                  }
+                : f,
+            ),
+          }));
+          log({ entity: "folio", entityId: folioId, action: "update", description: `Posted $${c.amount} (${c.category})` });
+        },
+        closeFolio: (id) => {
+          set((s) => ({
+            folios: s.folios.map((f) =>
+              f.id === id ? { ...f, status: "closed", closedAt: new Date().toISOString() } : f,
+            ),
+          }));
+          log({ entity: "folio", entityId: id, action: "update", description: `Folio closed` });
+        },
+
+        // -------------------- House Accounts --------------------
+        addHouseAccount: (h) => {
+          const id = uid();
+          set((s) => ({
+            houseAccounts: [
+              ...s.houseAccounts,
+              { ...h, id, balance: 0, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "house-account", entityId: id, action: "create", description: `House account: ${h.name}` });
+          return id;
+        },
+
+        // -------------------- Inventory --------------------
+        addInventoryItem: (i) => {
+          const id = uid();
+          set((s) => ({ inventoryItems: [...s.inventoryItems, { ...i, id }] }));
+          log({ entity: "inventory", entityId: id, action: "create", description: `Inventory: ${i.name}` });
+          return id;
+        },
+        updateInventoryQuantity: (id, quantity) => {
+          set((s) => ({
+            inventoryItems: s.inventoryItems.map((i) =>
+              i.id === id ? { ...i, quantity } : i,
+            ),
+          }));
+        },
+
+        // -------------------- Products --------------------
+        addProductItem: (p) => {
+          const id = uid();
+          set((s) => ({ productItems: [...s.productItems, { ...p, id }] }));
+          log({ entity: "product", entityId: id, action: "create", description: `Product: ${p.name}` });
+          return id;
+        },
+        updateProductStock: (id, stock) => {
+          set((s) => ({
+            productItems: s.productItems.map((p) =>
+              p.id === id ? { ...p, stock } : p,
+            ),
+          }));
+        },
+
+        // -------------------- Routing rules --------------------
+        addRoutingRule: (r) => {
+          const id = uid();
+          set((s) => ({ routingRules: [...s.routingRules, { ...r, id }] }));
+          log({ entity: "routing", entityId: id, action: "create", description: `Routing rule: ${r.name}` });
+          return id;
+        },
+        toggleRoutingRule: (id) => {
+          set((s) => ({
+            routingRules: s.routingRules.map((r) =>
+              r.id === id ? { ...r, active: !r.active } : r,
+            ),
+          }));
+        },
+
         // -------------------- Settings --------------------
         updateSettings: (patch) => {
           set((state) => ({ settings: { ...state.settings, ...patch } }));
