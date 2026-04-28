@@ -215,7 +215,7 @@ function Dashboard() {
   const reservations = useHotelStore((s) => s.reservations);
   const advanceDeposits = useHotelStore((s) => s.advanceDeposits);
   const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
-  const navigate = useNavigate();
+  
 
   const [shiftOpen, setShiftOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
