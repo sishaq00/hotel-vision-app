@@ -1,16 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  BedDouble,
-  LogOut,
-  CalendarCheck,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
   CalendarPlus,
-  DollarSign,
-  Layers,
-  AlertTriangle,
   Search,
   Grid3x3,
   Clock,
