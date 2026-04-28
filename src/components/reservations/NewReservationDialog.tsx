@@ -141,14 +141,16 @@ export function NewReservationDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button className="gap-2 shadow-md">
-            <Plus className="h-4 w-4" />
-            New Reservation
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button className="gap-2 shadow-md">
+              <Plus className="h-4 w-4" />
+              New Reservation
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>New Reservation</DialogTitle>
