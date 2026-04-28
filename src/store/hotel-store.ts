@@ -38,6 +38,8 @@ export interface InvoiceSnapshot {
   currency: string;
 }
 
+export type ReservationSource = "walk-in" | "phone" | "group" | "direct";
+
 export interface Reservation {
   id: string;
   guestId: string;
@@ -53,6 +55,12 @@ export interface Reservation {
   cancelledAt?: string;
   // Invoice snapshot — locked at check-out
   invoice?: InvoiceSnapshot;
+  // v3 fields (no online sources)
+  source?: ReservationSource;
+  noShow?: boolean;
+  groupMasterId?: string;
+  confirmationNumber?: string;
+  recentlyViewedAt?: string;
 }
 
 export interface Guest {
@@ -64,6 +72,10 @@ export interface Guest {
   createdAt: string;
   archived?: boolean;
   archivedAt?: string;
+  // v3
+  doNotRent?: boolean;
+  vip?: boolean;
+  notes?: string;
 }
 
 export type PaymentStatus = "paid" | "pending" | "refunded";
