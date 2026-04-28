@@ -298,9 +298,24 @@ interface HotelState {
   settings: HotelSettings;
   auditLog: AuditEntry[];
 
+  // v3 collections
+  shifts: Shift[];
+  reminders: Reminder[];
+  advanceDeposits: AdvanceDeposit[];
+  maintenanceTickets: MaintenanceTicket[];
+  housekeepingTasks: HousekeepingTask[];
+  lostFoundItems: LostFoundItem[];
+  groupMasters: GroupMaster[];
+  folios: Folio[];
+  houseAccounts: HouseAccount[];
+  inventoryItems: InventoryItem[];
+  productItems: ProductItem[];
+  routingRules: RoutingRule[];
+
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
   updateRoomStatus: (id: string, status: RoomStatus) => void;
+  updateRoomHousekeeping: (id: string, status: HousekeepingStatus) => void;
   archiveRoom: (id: string) => { ok: boolean; error?: string };
   restoreRoom: (id: string) => void;
   renameRoomType: (
@@ -327,11 +342,63 @@ interface HotelState {
   checkIn: (id: string) => void;
   checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
+  markNoShow: (id: string) => void;
+  markRecentlyViewed: (id: string) => void;
   previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
   updatePaymentStatus: (id: string, status: PaymentStatus) => void;
+
+  // Shifts
+  startShift: (userName: string, openingCash?: number) => string;
+  endShift: (id: string, closingCash?: number, notes?: string) => void;
+  getOpenShift: (userName?: string) => Shift | undefined;
+
+  // Reminders
+  addReminder: (r: Omit<Reminder, "id" | "createdAt" | "done">) => string;
+  toggleReminder: (id: string) => void;
+  deleteReminder: (id: string) => void;
+
+  // Advance Deposits
+  addAdvanceDeposit: (d: Omit<AdvanceDeposit, "id" | "receivedAt" | "status">) => string;
+  applyAdvanceDeposit: (id: string) => void;
+  refundAdvanceDeposit: (id: string) => void;
+
+  // Maintenance
+  addMaintenanceTicket: (t: Omit<MaintenanceTicket, "id" | "reportedAt" | "status">) => string;
+  updateMaintenanceStatus: (id: string, status: MaintenanceStatus) => void;
+
+  // Housekeeping tasks
+  addHousekeepingTask: (t: Omit<HousekeepingTask, "id" | "createdAt" | "status">) => string;
+  updateHousekeepingTaskStatus: (id: string, status: HousekeepingTask["status"]) => void;
+
+  // Lost & Found
+  addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
+  updateLostFoundStatus: (id: string, status: LostFoundItem["status"], claimedBy?: string) => void;
+
+  // Group Master
+  addGroupMaster: (g: Omit<GroupMaster, "id" | "createdAt">) => string;
+
+  // Folios
+  addFolio: (f: Omit<Folio, "id" | "createdAt" | "status" | "charges">) => string;
+  postFolioCharge: (folioId: string, c: Omit<FolioCharge, "id" | "postedAt">) => void;
+  closeFolio: (id: string) => void;
+
+  // House Accounts
+  addHouseAccount: (h: Omit<HouseAccount, "id" | "createdAt" | "balance">) => string;
+
+  // Inventory
+  addInventoryItem: (i: Omit<InventoryItem, "id">) => string;
+  updateInventoryQuantity: (id: string, quantity: number) => void;
+
+  // Products
+  addProductItem: (p: Omit<ProductItem, "id">) => string;
+  updateProductStock: (id: string, stock: number) => void;
+
+  // Routing
+  addRoutingRule: (r: Omit<RoutingRule, "id">) => string;
+  toggleRoutingRule: (id: string) => void;
 
   // Settings
   updateSettings: (s: Partial<HotelSettings>) => void;
