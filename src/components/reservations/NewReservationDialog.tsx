@@ -24,11 +24,23 @@ import {
 import { toast } from "sonner";
 
 interface NewReservationDialogProps {
-  trigger?: React.ReactNode;
+  trigger?: React.ReactNode | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function NewReservationDialog({ trigger }: NewReservationDialogProps) {
-  const [open, setOpen] = useState(false);
+export function NewReservationDialog({
+  trigger,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+}: NewReservationDialogProps) {
+  const [openInner, setOpenInner] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : openInner;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChangeProp?.(v);
+    else setOpenInner(v);
+  };
 
   // form fields
   const [name, setName] = useState("");
