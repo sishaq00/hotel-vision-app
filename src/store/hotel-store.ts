@@ -1292,7 +1292,6 @@ export const useHotelStore = create<HotelState>()(
         return state as HotelState;
       },
     },
-    },
   ),
 );
 
