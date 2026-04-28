@@ -9,19 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ShiftManagementRouteImport } from './routes/shift-management'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SearchReservationsRouteImport } from './routes/search-reservations'
+import { Route as SearchInvoiceRouteImport } from './routes/search-invoice'
 import { Route as RoomsRouteImport } from './routes/rooms'
 import { Route as RoomTypesRouteImport } from './routes/room-types'
 import { Route as ReservationsRouteImport } from './routes/reservations'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as ReportQueueRouteImport } from './routes/report-queue'
+import { Route as RemindersRouteImport } from './routes/reminders'
+import { Route as RecentlyViewedRouteImport } from './routes/recently-viewed'
+import { Route as ProductInventoryRouteImport } from './routes/product-inventory'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as OpenFoliosRouteImport } from './routes/open-folios'
+import { Route as NightAuditRouteImport } from './routes/night-audit'
+import { Route as MaintenanceRouteImport } from './routes/maintenance'
+import { Route as LostFoundRouteImport } from './routes/lost-found'
+import { Route as InHouseRouteImport } from './routes/in-house'
+import { Route as HousekeepingRouteImport } from './routes/housekeeping'
+import { Route as HouseInventoryRouteImport } from './routes/house-inventory'
+import { Route as HouseAccountsRouteImport } from './routes/house-accounts'
 import { Route as GuestsRouteImport } from './routes/guests'
+import { Route as GroupMasterRouteImport } from './routes/group-master'
+import { Route as DeparturesRouteImport } from './routes/departures'
+import { Route as BatchProcessRouteImport } from './routes/batch-process'
+import { Route as AvailabilityRouteImport } from './routes/availability'
 import { Route as AuditRouteImport } from './routes/audit'
+import { Route as ArrivalsRouteImport } from './routes/arrivals'
+import { Route as ArchivedReservationsRouteImport } from './routes/archived-reservations'
+import { Route as AdvanceDepositsRouteImport } from './routes/advance-deposits'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
+import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
 
+const ShiftManagementRoute = ShiftManagementRouteImport.update({
+  id: '/shift-management',
+  path: '/shift-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchReservationsRoute = SearchReservationsRouteImport.update({
+  id: '/search-reservations',
+  path: '/search-reservations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchInvoiceRoute = SearchInvoiceRouteImport.update({
+  id: '/search-invoice',
+  path: '/search-invoice',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RoomsRoute = RoomsRouteImport.update({
@@ -44,9 +83,69 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportQueueRoute = ReportQueueRouteImport.update({
+  id: '/report-queue',
+  path: '/report-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RemindersRoute = RemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecentlyViewedRoute = RecentlyViewedRouteImport.update({
+  id: '/recently-viewed',
+  path: '/recently-viewed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductInventoryRoute = ProductInventoryRouteImport.update({
+  id: '/product-inventory',
+  path: '/product-inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpenFoliosRoute = OpenFoliosRouteImport.update({
+  id: '/open-folios',
+  path: '/open-folios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NightAuditRoute = NightAuditRouteImport.update({
+  id: '/night-audit',
+  path: '/night-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaintenanceRoute = MaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LostFoundRoute = LostFoundRouteImport.update({
+  id: '/lost-found',
+  path: '/lost-found',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InHouseRoute = InHouseRouteImport.update({
+  id: '/in-house',
+  path: '/in-house',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HousekeepingRoute = HousekeepingRouteImport.update({
+  id: '/housekeeping',
+  path: '/housekeeping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseInventoryRoute = HouseInventoryRouteImport.update({
+  id: '/house-inventory',
+  path: '/house-inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseAccountsRoute = HouseAccountsRouteImport.update({
+  id: '/house-accounts',
+  path: '/house-accounts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuestsRoute = GuestsRouteImport.update({
@@ -54,9 +153,44 @@ const GuestsRoute = GuestsRouteImport.update({
   path: '/guests',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupMasterRoute = GroupMasterRouteImport.update({
+  id: '/group-master',
+  path: '/group-master',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeparturesRoute = DeparturesRouteImport.update({
+  id: '/departures',
+  path: '/departures',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BatchProcessRoute = BatchProcessRouteImport.update({
+  id: '/batch-process',
+  path: '/batch-process',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvailabilityRoute = AvailabilityRouteImport.update({
+  id: '/availability',
+  path: '/availability',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuditRoute = AuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArrivalsRoute = ArrivalsRouteImport.update({
+  id: '/arrivals',
+  path: '/arrivals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArchivedReservationsRoute = ArchivedReservationsRouteImport.update({
+  id: '/archived-reservations',
+  path: '/archived-reservations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdvanceDepositsRoute = AdvanceDepositsRouteImport.update({
+  id: '/advance-deposits',
+  path: '/advance-deposits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -64,96 +198,295 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BulkRoutingSetupRoute = BulkRoutingSetupRouteImport.update({
+  id: '/bulk-routing/setup',
+  path: '/bulk-routing/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkRoutingFastPostingRoute = BulkRoutingFastPostingRouteImport.update({
+  id: '/bulk-routing/fast-posting',
+  path: '/bulk-routing/fast-posting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/advance-deposits': typeof AdvanceDepositsRoute
+  '/archived-reservations': typeof ArchivedReservationsRoute
+  '/arrivals': typeof ArrivalsRoute
   '/audit': typeof AuditRoute
+  '/availability': typeof AvailabilityRoute
+  '/batch-process': typeof BatchProcessRoute
+  '/departures': typeof DeparturesRoute
+  '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
+  '/house-accounts': typeof HouseAccountsRoute
+  '/house-inventory': typeof HouseInventoryRoute
+  '/housekeeping': typeof HousekeepingRoute
+  '/in-house': typeof InHouseRoute
+  '/lost-found': typeof LostFoundRoute
+  '/maintenance': typeof MaintenanceRoute
+  '/night-audit': typeof NightAuditRoute
+  '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/product-inventory': typeof ProductInventoryRoute
+  '/recently-viewed': typeof RecentlyViewedRoute
+  '/reminders': typeof RemindersRoute
+  '/report-queue': typeof ReportQueueRoute
   '/reports': typeof ReportsRoute
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
+  '/search-invoice': typeof SearchInvoiceRoute
+  '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
+  '/shift-management': typeof ShiftManagementRoute
+  '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
+  '/bulk-routing/setup': typeof BulkRoutingSetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/advance-deposits': typeof AdvanceDepositsRoute
+  '/archived-reservations': typeof ArchivedReservationsRoute
+  '/arrivals': typeof ArrivalsRoute
   '/audit': typeof AuditRoute
+  '/availability': typeof AvailabilityRoute
+  '/batch-process': typeof BatchProcessRoute
+  '/departures': typeof DeparturesRoute
+  '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
+  '/house-accounts': typeof HouseAccountsRoute
+  '/house-inventory': typeof HouseInventoryRoute
+  '/housekeeping': typeof HousekeepingRoute
+  '/in-house': typeof InHouseRoute
+  '/lost-found': typeof LostFoundRoute
+  '/maintenance': typeof MaintenanceRoute
+  '/night-audit': typeof NightAuditRoute
+  '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/product-inventory': typeof ProductInventoryRoute
+  '/recently-viewed': typeof RecentlyViewedRoute
+  '/reminders': typeof RemindersRoute
+  '/report-queue': typeof ReportQueueRoute
   '/reports': typeof ReportsRoute
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
+  '/search-invoice': typeof SearchInvoiceRoute
+  '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
+  '/shift-management': typeof ShiftManagementRoute
+  '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
+  '/bulk-routing/setup': typeof BulkRoutingSetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/advance-deposits': typeof AdvanceDepositsRoute
+  '/archived-reservations': typeof ArchivedReservationsRoute
+  '/arrivals': typeof ArrivalsRoute
   '/audit': typeof AuditRoute
+  '/availability': typeof AvailabilityRoute
+  '/batch-process': typeof BatchProcessRoute
+  '/departures': typeof DeparturesRoute
+  '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
+  '/house-accounts': typeof HouseAccountsRoute
+  '/house-inventory': typeof HouseInventoryRoute
+  '/housekeeping': typeof HousekeepingRoute
+  '/in-house': typeof InHouseRoute
+  '/lost-found': typeof LostFoundRoute
+  '/maintenance': typeof MaintenanceRoute
+  '/night-audit': typeof NightAuditRoute
+  '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/product-inventory': typeof ProductInventoryRoute
+  '/recently-viewed': typeof RecentlyViewedRoute
+  '/reminders': typeof RemindersRoute
+  '/report-queue': typeof ReportQueueRoute
   '/reports': typeof ReportsRoute
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
+  '/search-invoice': typeof SearchInvoiceRoute
+  '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
+  '/shift-management': typeof ShiftManagementRoute
+  '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
+  '/bulk-routing/setup': typeof BulkRoutingSetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/advance-deposits'
+    | '/archived-reservations'
+    | '/arrivals'
     | '/audit'
+    | '/availability'
+    | '/batch-process'
+    | '/departures'
+    | '/group-master'
     | '/guests'
+    | '/house-accounts'
+    | '/house-inventory'
+    | '/housekeeping'
+    | '/in-house'
+    | '/lost-found'
+    | '/maintenance'
+    | '/night-audit'
+    | '/open-folios'
     | '/payments'
+    | '/product-inventory'
+    | '/recently-viewed'
+    | '/reminders'
+    | '/report-queue'
     | '/reports'
     | '/reservations'
     | '/room-types'
     | '/rooms'
+    | '/search-invoice'
+    | '/search-reservations'
     | '/settings'
+    | '/shift-management'
+    | '/bulk-routing/fast-posting'
+    | '/bulk-routing/setup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/advance-deposits'
+    | '/archived-reservations'
+    | '/arrivals'
     | '/audit'
+    | '/availability'
+    | '/batch-process'
+    | '/departures'
+    | '/group-master'
     | '/guests'
+    | '/house-accounts'
+    | '/house-inventory'
+    | '/housekeeping'
+    | '/in-house'
+    | '/lost-found'
+    | '/maintenance'
+    | '/night-audit'
+    | '/open-folios'
     | '/payments'
+    | '/product-inventory'
+    | '/recently-viewed'
+    | '/reminders'
+    | '/report-queue'
     | '/reports'
     | '/reservations'
     | '/room-types'
     | '/rooms'
+    | '/search-invoice'
+    | '/search-reservations'
     | '/settings'
+    | '/shift-management'
+    | '/bulk-routing/fast-posting'
+    | '/bulk-routing/setup'
   id:
     | '__root__'
     | '/'
+    | '/advance-deposits'
+    | '/archived-reservations'
+    | '/arrivals'
     | '/audit'
+    | '/availability'
+    | '/batch-process'
+    | '/departures'
+    | '/group-master'
     | '/guests'
+    | '/house-accounts'
+    | '/house-inventory'
+    | '/housekeeping'
+    | '/in-house'
+    | '/lost-found'
+    | '/maintenance'
+    | '/night-audit'
+    | '/open-folios'
     | '/payments'
+    | '/product-inventory'
+    | '/recently-viewed'
+    | '/reminders'
+    | '/report-queue'
     | '/reports'
     | '/reservations'
     | '/room-types'
     | '/rooms'
+    | '/search-invoice'
+    | '/search-reservations'
     | '/settings'
+    | '/shift-management'
+    | '/bulk-routing/fast-posting'
+    | '/bulk-routing/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdvanceDepositsRoute: typeof AdvanceDepositsRoute
+  ArchivedReservationsRoute: typeof ArchivedReservationsRoute
+  ArrivalsRoute: typeof ArrivalsRoute
   AuditRoute: typeof AuditRoute
+  AvailabilityRoute: typeof AvailabilityRoute
+  BatchProcessRoute: typeof BatchProcessRoute
+  DeparturesRoute: typeof DeparturesRoute
+  GroupMasterRoute: typeof GroupMasterRoute
   GuestsRoute: typeof GuestsRoute
+  HouseAccountsRoute: typeof HouseAccountsRoute
+  HouseInventoryRoute: typeof HouseInventoryRoute
+  HousekeepingRoute: typeof HousekeepingRoute
+  InHouseRoute: typeof InHouseRoute
+  LostFoundRoute: typeof LostFoundRoute
+  MaintenanceRoute: typeof MaintenanceRoute
+  NightAuditRoute: typeof NightAuditRoute
+  OpenFoliosRoute: typeof OpenFoliosRoute
   PaymentsRoute: typeof PaymentsRoute
+  ProductInventoryRoute: typeof ProductInventoryRoute
+  RecentlyViewedRoute: typeof RecentlyViewedRoute
+  RemindersRoute: typeof RemindersRoute
+  ReportQueueRoute: typeof ReportQueueRoute
   ReportsRoute: typeof ReportsRoute
   ReservationsRoute: typeof ReservationsRoute
   RoomTypesRoute: typeof RoomTypesRoute
   RoomsRoute: typeof RoomsRoute
+  SearchInvoiceRoute: typeof SearchInvoiceRoute
+  SearchReservationsRoute: typeof SearchReservationsRoute
   SettingsRoute: typeof SettingsRoute
+  ShiftManagementRoute: typeof ShiftManagementRoute
+  BulkRoutingFastPostingRoute: typeof BulkRoutingFastPostingRoute
+  BulkRoutingSetupRoute: typeof BulkRoutingSetupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/shift-management': {
+      id: '/shift-management'
+      path: '/shift-management'
+      fullPath: '/shift-management'
+      preLoaderRoute: typeof ShiftManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search-reservations': {
+      id: '/search-reservations'
+      path: '/search-reservations'
+      fullPath: '/search-reservations'
+      preLoaderRoute: typeof SearchReservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search-invoice': {
+      id: '/search-invoice'
+      path: '/search-invoice'
+      fullPath: '/search-invoice'
+      preLoaderRoute: typeof SearchInvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rooms': {
@@ -184,11 +517,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/report-queue': {
+      id: '/report-queue'
+      path: '/report-queue'
+      fullPath: '/report-queue'
+      preLoaderRoute: typeof ReportQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reminders': {
+      id: '/reminders'
+      path: '/reminders'
+      fullPath: '/reminders'
+      preLoaderRoute: typeof RemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recently-viewed': {
+      id: '/recently-viewed'
+      path: '/recently-viewed'
+      fullPath: '/recently-viewed'
+      preLoaderRoute: typeof RecentlyViewedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product-inventory': {
+      id: '/product-inventory'
+      path: '/product-inventory'
+      fullPath: '/product-inventory'
+      preLoaderRoute: typeof ProductInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payments': {
       id: '/payments'
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/open-folios': {
+      id: '/open-folios'
+      path: '/open-folios'
+      fullPath: '/open-folios'
+      preLoaderRoute: typeof OpenFoliosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/night-audit': {
+      id: '/night-audit'
+      path: '/night-audit'
+      fullPath: '/night-audit'
+      preLoaderRoute: typeof NightAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lost-found': {
+      id: '/lost-found'
+      path: '/lost-found'
+      fullPath: '/lost-found'
+      preLoaderRoute: typeof LostFoundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/in-house': {
+      id: '/in-house'
+      path: '/in-house'
+      fullPath: '/in-house'
+      preLoaderRoute: typeof InHouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/housekeeping': {
+      id: '/housekeeping'
+      path: '/housekeeping'
+      fullPath: '/housekeeping'
+      preLoaderRoute: typeof HousekeepingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/house-inventory': {
+      id: '/house-inventory'
+      path: '/house-inventory'
+      fullPath: '/house-inventory'
+      preLoaderRoute: typeof HouseInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/house-accounts': {
+      id: '/house-accounts'
+      path: '/house-accounts'
+      fullPath: '/house-accounts'
+      preLoaderRoute: typeof HouseAccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guests': {
@@ -198,11 +615,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/group-master': {
+      id: '/group-master'
+      path: '/group-master'
+      fullPath: '/group-master'
+      preLoaderRoute: typeof GroupMasterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/departures': {
+      id: '/departures'
+      path: '/departures'
+      fullPath: '/departures'
+      preLoaderRoute: typeof DeparturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/batch-process': {
+      id: '/batch-process'
+      path: '/batch-process'
+      fullPath: '/batch-process'
+      preLoaderRoute: typeof BatchProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/availability': {
+      id: '/availability'
+      path: '/availability'
+      fullPath: '/availability'
+      preLoaderRoute: typeof AvailabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/audit': {
       id: '/audit'
       path: '/audit'
       fullPath: '/audit'
       preLoaderRoute: typeof AuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arrivals': {
+      id: '/arrivals'
+      path: '/arrivals'
+      fullPath: '/arrivals'
+      preLoaderRoute: typeof ArrivalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/archived-reservations': {
+      id: '/archived-reservations'
+      path: '/archived-reservations'
+      fullPath: '/archived-reservations'
+      preLoaderRoute: typeof ArchivedReservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/advance-deposits': {
+      id: '/advance-deposits'
+      path: '/advance-deposits'
+      fullPath: '/advance-deposits'
+      preLoaderRoute: typeof AdvanceDepositsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -212,20 +678,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bulk-routing/setup': {
+      id: '/bulk-routing/setup'
+      path: '/bulk-routing/setup'
+      fullPath: '/bulk-routing/setup'
+      preLoaderRoute: typeof BulkRoutingSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk-routing/fast-posting': {
+      id: '/bulk-routing/fast-posting'
+      path: '/bulk-routing/fast-posting'
+      fullPath: '/bulk-routing/fast-posting'
+      preLoaderRoute: typeof BulkRoutingFastPostingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdvanceDepositsRoute: AdvanceDepositsRoute,
+  ArchivedReservationsRoute: ArchivedReservationsRoute,
+  ArrivalsRoute: ArrivalsRoute,
   AuditRoute: AuditRoute,
+  AvailabilityRoute: AvailabilityRoute,
+  BatchProcessRoute: BatchProcessRoute,
+  DeparturesRoute: DeparturesRoute,
+  GroupMasterRoute: GroupMasterRoute,
   GuestsRoute: GuestsRoute,
+  HouseAccountsRoute: HouseAccountsRoute,
+  HouseInventoryRoute: HouseInventoryRoute,
+  HousekeepingRoute: HousekeepingRoute,
+  InHouseRoute: InHouseRoute,
+  LostFoundRoute: LostFoundRoute,
+  MaintenanceRoute: MaintenanceRoute,
+  NightAuditRoute: NightAuditRoute,
+  OpenFoliosRoute: OpenFoliosRoute,
   PaymentsRoute: PaymentsRoute,
+  ProductInventoryRoute: ProductInventoryRoute,
+  RecentlyViewedRoute: RecentlyViewedRoute,
+  RemindersRoute: RemindersRoute,
+  ReportQueueRoute: ReportQueueRoute,
   ReportsRoute: ReportsRoute,
   ReservationsRoute: ReservationsRoute,
   RoomTypesRoute: RoomTypesRoute,
   RoomsRoute: RoomsRoute,
+  SearchInvoiceRoute: SearchInvoiceRoute,
+  SearchReservationsRoute: SearchReservationsRoute,
   SettingsRoute: SettingsRoute,
+  ShiftManagementRoute: ShiftManagementRoute,
+  BulkRoutingFastPostingRoute: BulkRoutingFastPostingRoute,
+  BulkRoutingSetupRoute: BulkRoutingSetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
