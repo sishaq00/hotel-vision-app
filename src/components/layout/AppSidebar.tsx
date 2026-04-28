@@ -112,8 +112,8 @@ export function AppSidebar() {
   const bulkOpen = bulkRoutingItems.some((i) => isActive(i.url));
   const moreOpen = moreItems.some((i) => isActive(i.url));
 
-  const [bulkExpanded, setBulkExpanded] = useState(bulkOpen);
-  const [moreExpanded, setMoreExpanded] = useState(moreOpen || true);
+  const [bulkExpanded, setBulkExpanded] = useState<boolean>(bulkOpen);
+  const [moreExpanded, setMoreExpanded] = useState<boolean>(true);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
