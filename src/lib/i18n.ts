@@ -176,6 +176,12 @@ const en: Dict = {
   "co.checkout-pdf": "Check-out & download PDF",
   "co.success": "Checked out",
   "co.failed": "Could not complete check-out",
+  "notifications.title": "Notifications",
+  "notifications.empty": "All clear — no pending alerts",
+  "notifications.arrivals": "Arrivals today",
+  "notifications.departures": "Departures today",
+  "notifications.overdue": "Overdue checkouts",
+  "notifications.ooo": "Rooms out of service",
 };
 
 const ar: Dict = {
