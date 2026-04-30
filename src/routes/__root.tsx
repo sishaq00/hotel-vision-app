@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppBoot } from "@/components/system/AppBoot";
 import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
 import { GlobalSearch } from "@/components/system/GlobalSearch";
+import { ConfirmProvider } from "@/components/system/ConfirmDialog";
 
 import appCss from "../styles.css?url";
 
@@ -72,12 +73,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <>
+    <ConfirmProvider>
       <AppBoot />
       <Outlet />
       <ShortcutsDialog />
       <GlobalSearch />
       <Toaster />
-    </>
+    </ConfirmProvider>
   );
 }
