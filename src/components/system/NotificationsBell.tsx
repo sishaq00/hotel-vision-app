@@ -104,6 +104,13 @@ export function NotificationsBell() {
                 <span className="font-semibold">{alerts.ooo.length}</span>
               </DropdownMenuItem>
             )}
+            {alerts.auditDue && (
+              <DropdownMenuItem onClick={() => navigate({ to: "/night-audit" })} className="gap-2 text-xs text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span className="flex-1">Night Audit pending</span>
+                <span className="font-semibold">!</span>
+              </DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenuContent>
