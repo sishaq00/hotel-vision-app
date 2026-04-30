@@ -351,6 +351,8 @@ interface HotelState {
   productItems: ProductItem[];
   routingRules: RoutingRule[];
   reportRuns: ReportRun[];
+  productSales: ProductSale[];
+  lastNightAuditDate?: string;
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
