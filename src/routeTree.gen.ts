@@ -45,6 +45,7 @@ import { Route as ArrivalsRouteImport } from './routes/arrivals'
 import { Route as ArchivedReservationsRouteImport } from './routes/archived-reservations'
 import { Route as AdvanceDepositsRouteImport } from './routes/advance-deposits'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReportsUserActivityRouteImport } from './routes/reports.user-activity'
 import { Route as PrintReceiptReservationIdRouteImport } from './routes/print-receipt.$reservationId'
 import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-invoice.$reservationId'
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
@@ -231,6 +232,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsUserActivityRoute = ReportsUserActivityRouteImport.update({
+  id: '/user-activity',
+  path: '/user-activity',
+  getParentRoute: () => ReportsRoute,
+} as any)
 const PrintReceiptReservationIdRoute =
   PrintReceiptReservationIdRouteImport.update({
     id: '/print-receipt/$reservationId',
@@ -286,7 +292,7 @@ export interface FileRoutesByFullPath {
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
   '/report-queue': typeof ReportQueueRoute
-  '/reports': typeof ReportsRoute
+  '/reports': typeof ReportsRouteWithChildren
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
@@ -301,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -329,7 +336,7 @@ export interface FileRoutesByTo {
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
   '/report-queue': typeof ReportQueueRoute
-  '/reports': typeof ReportsRoute
+  '/reports': typeof ReportsRouteWithChildren
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
@@ -344,6 +351,7 @@ export interface FileRoutesByTo {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -373,7 +381,7 @@ export interface FileRoutesById {
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
   '/report-queue': typeof ReportQueueRoute
-  '/reports': typeof ReportsRoute
+  '/reports': typeof ReportsRouteWithChildren
   '/reservations': typeof ReservationsRoute
   '/room-types': typeof RoomTypesRoute
   '/rooms': typeof RoomsRoute
@@ -388,6 +396,7 @@ export interface FileRoutesById {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -433,6 +442,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/reports/user-activity'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -476,6 +486,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/reports/user-activity'
   id:
     | '__root__'
     | '/'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/reports/user-activity'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -548,7 +560,7 @@ export interface RootRouteChildren {
   RecentlyViewedRoute: typeof RecentlyViewedRoute
   RemindersRoute: typeof RemindersRoute
   ReportQueueRoute: typeof ReportQueueRoute
-  ReportsRoute: typeof ReportsRoute
+  ReportsRoute: typeof ReportsRouteWithChildren
   ReservationsRoute: typeof ReservationsRoute
   RoomTypesRoute: typeof RoomTypesRoute
   RoomsRoute: typeof RoomsRoute
@@ -819,6 +831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/user-activity': {
+      id: '/reports/user-activity'
+      path: '/user-activity'
+      fullPath: '/reports/user-activity'
+      preLoaderRoute: typeof ReportsUserActivityRouteImport
+      parentRoute: typeof ReportsRoute
+    }
     '/print-receipt/$reservationId': {
       id: '/print-receipt/$reservationId'
       path: '/print-receipt/$reservationId'
@@ -857,6 +876,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ReportsRouteChildren {
+  ReportsUserActivityRoute: typeof ReportsUserActivityRoute
+}
+
+const ReportsRouteChildren: ReportsRouteChildren = {
+  ReportsUserActivityRoute: ReportsUserActivityRoute,
+}
+
+const ReportsRouteWithChildren =
+  ReportsRoute._addFileChildren(ReportsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdvanceDepositsRoute: AdvanceDepositsRoute,
@@ -884,7 +914,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecentlyViewedRoute: RecentlyViewedRoute,
   RemindersRoute: RemindersRoute,
   ReportQueueRoute: ReportQueueRoute,
-  ReportsRoute: ReportsRoute,
+  ReportsRoute: ReportsRouteWithChildren,
   ReservationsRoute: ReservationsRoute,
   RoomTypesRoute: RoomTypesRoute,
   RoomsRoute: RoomsRoute,
