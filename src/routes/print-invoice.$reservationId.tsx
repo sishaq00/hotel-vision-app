@@ -92,7 +92,7 @@ function PrintInvoice() {
             <h1>{settings.hotelName}</h1>
             <div className="muted">{settings.hotelCode}</div>
             {settings.address && <div className="muted">{settings.address}</div>}
-            {settings.phone && <div className="muted">{settings.phone}</div>}
+            {settings.contactPhone && <div className="muted">{settings.contactPhone}</div>}
           </div>
           <div style={{ textAlign: "right" }}>
             <h1>INVOICE</h1>
@@ -107,7 +107,7 @@ function PrintInvoice() {
         <div style={{ display: "flex", gap: 24, marginTop: 16 }}>
           <div style={{ flex: 1 }}>
             <div className="muted">Bill To</div>
-            <div style={{ fontWeight: 600 }}>{guest?.fullName ?? "—"}</div>
+            <div style={{ fontWeight: 600 }}>{guest?.name ?? "—"}</div>
             <div className="muted">{guest?.email ?? ""}</div>
             <div className="muted">{guest?.phone ?? ""}</div>
           </div>
