@@ -423,7 +423,8 @@ export type AuditEntity =
   | "inventory"
   | "product"
   | "routing"
-  | "report";
+  | "report"
+  | "invoice";
 
 export type AuditAction =
   | "create"
@@ -435,7 +436,8 @@ export type AuditAction =
   | "archive"
   | "restore"
   | "rename"
-  | "price-change";
+  | "price-change"
+  | "credit-note";
 
 export interface AuditEntry {
   id: string;
