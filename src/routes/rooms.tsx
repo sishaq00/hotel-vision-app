@@ -17,6 +17,7 @@ import { NewRoomDialog } from "@/components/rooms/NewRoomDialog";
 import { Input } from "@/components/ui/input";
 import { useHotelStore, type RoomStatus } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
+import { useConfirm } from "@/components/system/ConfirmDialog";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { useT } from "@/lib/i18n";
