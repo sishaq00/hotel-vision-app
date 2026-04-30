@@ -1057,7 +1057,14 @@ export const useHotelStore = create<HotelState>()(
                 : r,
             ),
             rooms: s.rooms.map((rm) =>
-              rm.id === res.roomId ? { ...rm, status: "cleaning" as RoomStatus } : rm,
+              rm.id === res.roomId
+                ? {
+                    ...rm,
+                    status: "cleaning" as RoomStatus,
+                    housekeepingStatus: "dirty" as HousekeepingStatus,
+                    taskType: "departure" as HousekeepingTaskType,
+                  }
+                : rm,
             ),
             settings: { ...s.settings, invoiceCounter: s.settings.invoiceCounter + 1 },
           }));
