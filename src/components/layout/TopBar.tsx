@@ -42,9 +42,25 @@ export function TopBar(_props: TopBarProps) {
   const settings = useHotelStore((s) => s.settings);
   const updateSettings = useHotelStore((s) => s.updateSettings);
   const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
+  const me = useCurrentUser();
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
   // Render date only after mount to avoid SSR/CSR hydration mismatch
   const [today, setToday] = useState<string>("");
   useEffect(() => setToday(formatToday()), []);
+
+  const displayName = me?.fullName || me?.username || "User";
+  const isAdmin = me?.role === "admin";
+
+  const handleLogout = () => {
+    logActivity({
+      action: "logout",
+      entityType: "system",
+      description: `Signed out (${displayName})`,
+    });
+    logout();
+    navigate({ to: "/" });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card px-2 sm:gap-3 sm:px-3 md:px-4">
