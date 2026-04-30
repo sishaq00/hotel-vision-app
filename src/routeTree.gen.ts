@@ -23,6 +23,7 @@ import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as RecentlyViewedRouteImport } from './routes/recently-viewed'
 import { Route as RatePlansRouteImport } from './routes/rate-plans'
 import { Route as ProductInventoryRouteImport } from './routes/product-inventory'
+import { Route as PrintLogRouteImport } from './routes/print-log'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as OpenFoliosRouteImport } from './routes/open-folios'
 import { Route as NightAuditRouteImport } from './routes/night-audit'
@@ -116,6 +117,11 @@ const RatePlansRoute = RatePlansRouteImport.update({
 const ProductInventoryRoute = ProductInventoryRouteImport.update({
   id: '/product-inventory',
   path: '/product-inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrintLogRoute = PrintLogRouteImport.update({
+  id: '/print-log',
+  path: '/print-log',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
@@ -342,6 +350,7 @@ export interface FileRoutesById {
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
+  '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
@@ -384,6 +393,7 @@ export interface FileRouteTypes {
     | '/night-audit'
     | '/open-folios'
     | '/payments'
+    | '/print-log'
     | '/product-inventory'
     | '/rate-plans'
     | '/recently-viewed'
@@ -424,6 +434,7 @@ export interface FileRouteTypes {
     | '/night-audit'
     | '/open-folios'
     | '/payments'
+    | '/print-log'
     | '/product-inventory'
     | '/rate-plans'
     | '/recently-viewed'
@@ -464,6 +475,7 @@ export interface FileRouteTypes {
     | '/night-audit'
     | '/open-folios'
     | '/payments'
+    | '/print-log'
     | '/product-inventory'
     | '/rate-plans'
     | '/recently-viewed'
@@ -505,6 +517,7 @@ export interface RootRouteChildren {
   NightAuditRoute: typeof NightAuditRoute
   OpenFoliosRoute: typeof OpenFoliosRoute
   PaymentsRoute: typeof PaymentsRoute
+  PrintLogRoute: typeof PrintLogRoute
   ProductInventoryRoute: typeof ProductInventoryRoute
   RatePlansRoute: typeof RatePlansRoute
   RecentlyViewedRoute: typeof RecentlyViewedRoute
@@ -624,6 +637,13 @@ declare module '@tanstack/react-router' {
       path: '/product-inventory'
       fullPath: '/product-inventory'
       preLoaderRoute: typeof ProductInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/print-log': {
+      id: '/print-log'
+      path: '/print-log'
+      fullPath: '/print-log'
+      preLoaderRoute: typeof PrintLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -817,6 +837,7 @@ const rootRouteChildren: RootRouteChildren = {
   NightAuditRoute: NightAuditRoute,
   OpenFoliosRoute: OpenFoliosRoute,
   PaymentsRoute: PaymentsRoute,
+  PrintLogRoute: PrintLogRoute,
   ProductInventoryRoute: ProductInventoryRoute,
   RatePlansRoute: RatePlansRoute,
   RecentlyViewedRoute: RecentlyViewedRoute,
