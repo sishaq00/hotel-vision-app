@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsersRouteImport } from './routes/users'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as ShiftManagementRouteImport } from './routes/shift-management'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -22,6 +23,7 @@ import { Route as ReportQueueRouteImport } from './routes/report-queue'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as RecentlyViewedRouteImport } from './routes/recently-viewed'
 import { Route as RatePlansRouteImport } from './routes/rate-plans'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductInventoryRouteImport } from './routes/product-inventory'
 import { Route as PrintLogRouteImport } from './routes/print-log'
 import { Route as PaymentsRouteImport } from './routes/payments'
@@ -49,6 +51,11 @@ import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
 import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
 
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
@@ -112,6 +119,11 @@ const RecentlyViewedRoute = RecentlyViewedRouteImport.update({
 const RatePlansRoute = RatePlansRouteImport.update({
   id: '/rate-plans',
   path: '/rate-plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductInventoryRoute = ProductInventoryRouteImport.update({
@@ -269,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
+  '/profile': typeof ProfileRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -282,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
   '/templates': typeof TemplatesRoute
+  '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
@@ -310,6 +324,7 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsRoute
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
+  '/profile': typeof ProfileRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -323,6 +338,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
   '/templates': typeof TemplatesRoute
+  '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
@@ -352,6 +368,7 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
+  '/profile': typeof ProfileRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -365,6 +382,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
   '/templates': typeof TemplatesRoute
+  '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
@@ -395,6 +413,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/print-log'
     | '/product-inventory'
+    | '/profile'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -408,6 +427,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shift-management'
     | '/templates'
+    | '/users'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
@@ -436,6 +456,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/print-log'
     | '/product-inventory'
+    | '/profile'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -449,6 +470,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shift-management'
     | '/templates'
+    | '/users'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
@@ -477,6 +499,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/print-log'
     | '/product-inventory'
+    | '/profile'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -490,6 +513,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shift-management'
     | '/templates'
+    | '/users'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
@@ -519,6 +543,7 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   PrintLogRoute: typeof PrintLogRoute
   ProductInventoryRoute: typeof ProductInventoryRoute
+  ProfileRoute: typeof ProfileRoute
   RatePlansRoute: typeof RatePlansRoute
   RecentlyViewedRoute: typeof RecentlyViewedRoute
   RemindersRoute: typeof RemindersRoute
@@ -532,6 +557,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ShiftManagementRoute: typeof ShiftManagementRoute
   TemplatesRoute: typeof TemplatesRoute
+  UsersRoute: typeof UsersRoute
   BulkRoutingFastPostingRoute: typeof BulkRoutingFastPostingRoute
   BulkRoutingSetupRoute: typeof BulkRoutingSetupRoute
   GuestGuestIdRoute: typeof GuestGuestIdRoute
@@ -541,6 +567,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/templates': {
       id: '/templates'
       path: '/templates'
@@ -630,6 +663,13 @@ declare module '@tanstack/react-router' {
       path: '/rate-plans'
       fullPath: '/rate-plans'
       preLoaderRoute: typeof RatePlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product-inventory': {
@@ -839,6 +879,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   PrintLogRoute: PrintLogRoute,
   ProductInventoryRoute: ProductInventoryRoute,
+  ProfileRoute: ProfileRoute,
   RatePlansRoute: RatePlansRoute,
   RecentlyViewedRoute: RecentlyViewedRoute,
   RemindersRoute: RemindersRoute,
@@ -852,6 +893,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ShiftManagementRoute: ShiftManagementRoute,
   TemplatesRoute: TemplatesRoute,
+  UsersRoute: UsersRoute,
   BulkRoutingFastPostingRoute: BulkRoutingFastPostingRoute,
   BulkRoutingSetupRoute: BulkRoutingSetupRoute,
   GuestGuestIdRoute: GuestGuestIdRoute,
