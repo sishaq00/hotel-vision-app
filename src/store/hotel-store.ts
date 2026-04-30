@@ -61,6 +61,7 @@ export interface Reservation {
   groupMasterId?: string;
   confirmationNumber?: string;
   recentlyViewedAt?: string;
+  notes?: string; // free-text guest requests / special instructions
 }
 
 export interface Guest {

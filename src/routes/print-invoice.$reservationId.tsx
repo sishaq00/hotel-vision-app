@@ -2,6 +2,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useHotelStore } from "@/store/hotel-store";
+import { recordPrint } from "@/lib/print-log";
 
 export const Route = createFileRoute("/print-invoice/$reservationId")({
   component: PrintInvoice,
@@ -24,9 +25,11 @@ function PrintInvoice() {
   const settings = useHotelStore((s) => s.settings);
 
   useEffect(() => {
+    if (reservation?.invoice) recordPrint(reservationId, "invoice-a4");
     const t = setTimeout(() => window.print(), 400);
     return () => clearTimeout(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
 
   if (!reservation || !reservation.invoice) {
     return (
@@ -220,6 +223,13 @@ function PrintInvoice() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {reservation.notes && (
+          <div style={{ marginTop: 18, padding: 10, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 4, position: "relative", zIndex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Notes</div>
+            <div style={{ fontSize: 11, whiteSpace: "pre-wrap", color: "#78350f" }}>{reservation.notes}</div>
           </div>
         )}
 

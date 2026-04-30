@@ -30,6 +30,7 @@ import {
   GraduationCap,
   Hotel,
   History,
+  Printer,
   Settings as SettingsIcon,
   ExternalLink,
   Tag,
@@ -306,6 +307,21 @@ export function AppSidebar() {
                   <Link to="/audit">
                     <History className="h-4 w-4" />
                     <span>{t("nav.audit")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Print Log"
+                  className={cn(
+                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    isActive("/print-log") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                  )}
+                >
+                  <Link to="/print-log">
+                    <Printer className="h-4 w-4" />
+                    <span>Print Log</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -2,6 +2,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useHotelStore } from "@/store/hotel-store";
+import { recordPrint } from "@/lib/print-log";
 
 export const Route = createFileRoute("/print-receipt/$reservationId")({
   component: PrintReceipt,
@@ -24,9 +25,11 @@ function PrintReceipt() {
   const settings = useHotelStore((s) => s.settings);
 
   useEffect(() => {
+    if (reservation?.invoice) recordPrint(reservationId, "receipt-80mm");
     const t = setTimeout(() => window.print(), 400);
     return () => clearTimeout(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
 
   if (!reservation || !reservation.invoice) {
     return <div style={{ padding: 24, fontSize: 12 }}>Not found.</div>;
@@ -124,6 +127,13 @@ function PrintReceipt() {
           </>
         )}
         <hr />
+        {reservation.notes && (
+          <>
+            <div className="bold">Notes:</div>
+            <div>{reservation.notes}</div>
+            <hr />
+          </>
+        )}
         <div className="center">
           {settings.invoiceFooter || "Thank you for your stay!"}
         </div>

@@ -54,6 +54,7 @@ export function NewReservationDialog({
   const [country, setCountry] = useState("");
   const [existingGuestId, setExistingGuestId] = useState<string>("__new__");
   const [roomId, setRoomId] = useState<string>("");
+  const [notes, setNotes] = useState("");
   const [checkIn, setCheckIn] = useState(new Date().toISOString().slice(0, 10));
   const [checkOut, setCheckOut] = useState(
     new Date(Date.now() + 86400000).toISOString().slice(0, 10),
@@ -81,7 +82,7 @@ export function NewReservationDialog({
 
   const reset = () => {
     setName(""); setEmail(""); setPhone(""); setCountry("");
-    setExistingGuestId("__new__"); setRoomId("");
+    setExistingGuestId("__new__"); setRoomId(""); setNotes("");
     setCheckIn(new Date().toISOString().slice(0, 10));
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   };
@@ -117,6 +118,7 @@ export function NewReservationDialog({
       checkOut,
       status: "confirmed",
       totalAmount: total,
+      notes: notes.trim() || undefined,
     });
 
     if (!result.ok) {
@@ -213,6 +215,19 @@ export function NewReservationDialog({
               <Label htmlFor="checkout">{t("res.checkout")}</Label>
               <Input id="checkout" type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="res-notes">Notes / Special requests</Label>
+            <textarea
+              id="res-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Extra bed, late check-in, allergy info…"
+              rows={2}
+              maxLength={500}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
           </div>
 
           {!datesValid && checkIn && checkOut && (

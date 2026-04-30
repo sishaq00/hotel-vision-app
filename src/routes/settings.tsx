@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Save, Upload, Download, Trash2, RotateCcw, Image as ImageIcon } from "lucide-react";
+import { Save, Upload, Download, Trash2, RotateCcw, Image as ImageIcon, FileSpreadsheet } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
   listAutoBackups,
   restoreAutoBackup,
 } from "@/lib/backup";
+import { exportAllToExcel } from "@/lib/full-export";
 import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/settings")({
@@ -244,6 +245,10 @@ function SettingsPage() {
           <Button type="button" variant="outline" size="sm"
             onClick={() => fileRef.current?.click()}>
             <Upload className="me-1 h-4 w-4" /> {t("backup.import")}
+          </Button>
+          <Button type="button" variant="outline" size="sm"
+            onClick={() => { exportAllToExcel(); toast.success("Full Excel workbook exported"); }}>
+            <FileSpreadsheet className="me-1 h-4 w-4" /> Full Excel Export
           </Button>
         </div>
 
