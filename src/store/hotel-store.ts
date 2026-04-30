@@ -2268,6 +2268,10 @@ export const useHotelStore = create<HotelState>()(
           state.housekeepingTeams ??= [];
           state.housekeeperReports ??= [];
         }
+        // v4 → v5: credit notes
+        if (version < 5) {
+          (state as Partial<HotelState>).creditNotes ??= [];
+        }
         return state as HotelState;
       },
     },
