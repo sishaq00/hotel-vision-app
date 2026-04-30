@@ -29,6 +29,7 @@ import { Route as PrintLogRouteImport } from './routes/print-log'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as OpenFoliosRouteImport } from './routes/open-folios'
 import { Route as NightAuditRouteImport } from './routes/night-audit'
+import { Route as MyHousekeepingRouteImport } from './routes/my-housekeeping'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as LostFoundRouteImport } from './routes/lost-found'
 import { Route as InHouseRouteImport } from './routes/in-house'
@@ -52,6 +53,10 @@ import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-in
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
 import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
+import { Route as PrintHousekeepingSummaryRouteImport } from './routes/print.housekeeping.summary'
+import { Route as PrintHousekeepingByFloorRouteImport } from './routes/print.housekeeping.by-floor'
+import { Route as PrintHousekeepingAllRouteImport } from './routes/print.housekeeping.all'
+import { Route as PrintHousekeeperReportReportIdRouteImport } from './routes/print.housekeeper-report.$reportId'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -151,6 +156,11 @@ const OpenFoliosRoute = OpenFoliosRouteImport.update({
 const NightAuditRoute = NightAuditRouteImport.update({
   id: '/night-audit',
   path: '/night-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyHousekeepingRoute = MyHousekeepingRouteImport.update({
+  id: '/my-housekeeping',
+  path: '/my-housekeeping',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MaintenanceRoute = MaintenanceRouteImport.update({
@@ -270,6 +280,29 @@ const BulkRoutingFastPostingRoute = BulkRoutingFastPostingRouteImport.update({
   path: '/bulk-routing/fast-posting',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintHousekeepingSummaryRoute =
+  PrintHousekeepingSummaryRouteImport.update({
+    id: '/print/housekeeping/summary',
+    path: '/print/housekeeping/summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PrintHousekeepingByFloorRoute =
+  PrintHousekeepingByFloorRouteImport.update({
+    id: '/print/housekeeping/by-floor',
+    path: '/print/housekeeping/by-floor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PrintHousekeepingAllRoute = PrintHousekeepingAllRouteImport.update({
+  id: '/print/housekeeping/all',
+  path: '/print/housekeeping/all',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrintHousekeeperReportReportIdRoute =
+  PrintHousekeeperReportReportIdRouteImport.update({
+    id: '/print/housekeeper-report/$reportId',
+    path: '/print/housekeeper-report/$reportId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -288,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
   '/maintenance': typeof MaintenanceRoute
+  '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
@@ -315,6 +349,10 @@ export interface FileRoutesByFullPath {
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
+  '/print/housekeeper-report/$reportId': typeof PrintHousekeeperReportReportIdRoute
+  '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
+  '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
+  '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -333,6 +371,7 @@ export interface FileRoutesByTo {
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
   '/maintenance': typeof MaintenanceRoute
+  '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
@@ -360,6 +399,10 @@ export interface FileRoutesByTo {
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
+  '/print/housekeeper-report/$reportId': typeof PrintHousekeeperReportReportIdRoute
+  '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
+  '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
+  '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -379,6 +422,7 @@ export interface FileRoutesById {
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
   '/maintenance': typeof MaintenanceRoute
+  '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
   '/open-folios': typeof OpenFoliosRoute
   '/payments': typeof PaymentsRoute
@@ -406,6 +450,10 @@ export interface FileRoutesById {
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
+  '/print/housekeeper-report/$reportId': typeof PrintHousekeeperReportReportIdRoute
+  '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
+  '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
+  '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -426,6 +474,7 @@ export interface FileRouteTypes {
     | '/in-house'
     | '/lost-found'
     | '/maintenance'
+    | '/my-housekeeping'
     | '/night-audit'
     | '/open-folios'
     | '/payments'
@@ -453,6 +502,10 @@ export interface FileRouteTypes {
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
     | '/reports/user-activity'
+    | '/print/housekeeper-report/$reportId'
+    | '/print/housekeeping/all'
+    | '/print/housekeeping/by-floor'
+    | '/print/housekeeping/summary'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -471,6 +524,7 @@ export interface FileRouteTypes {
     | '/in-house'
     | '/lost-found'
     | '/maintenance'
+    | '/my-housekeeping'
     | '/night-audit'
     | '/open-folios'
     | '/payments'
@@ -498,6 +552,10 @@ export interface FileRouteTypes {
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
     | '/reports/user-activity'
+    | '/print/housekeeper-report/$reportId'
+    | '/print/housekeeping/all'
+    | '/print/housekeeping/by-floor'
+    | '/print/housekeeping/summary'
   id:
     | '__root__'
     | '/'
@@ -516,6 +574,7 @@ export interface FileRouteTypes {
     | '/in-house'
     | '/lost-found'
     | '/maintenance'
+    | '/my-housekeeping'
     | '/night-audit'
     | '/open-folios'
     | '/payments'
@@ -543,6 +602,10 @@ export interface FileRouteTypes {
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
     | '/reports/user-activity'
+    | '/print/housekeeper-report/$reportId'
+    | '/print/housekeeping/all'
+    | '/print/housekeeping/by-floor'
+    | '/print/housekeeping/summary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -562,6 +625,7 @@ export interface RootRouteChildren {
   InHouseRoute: typeof InHouseRoute
   LostFoundRoute: typeof LostFoundRoute
   MaintenanceRoute: typeof MaintenanceRoute
+  MyHousekeepingRoute: typeof MyHousekeepingRoute
   NightAuditRoute: typeof NightAuditRoute
   OpenFoliosRoute: typeof OpenFoliosRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -588,6 +652,10 @@ export interface RootRouteChildren {
   PrintInvoiceReservationIdRoute: typeof PrintInvoiceReservationIdRoute
   PrintReceiptReservationIdRoute: typeof PrintReceiptReservationIdRoute
   PrintShiftShiftIdRoute: typeof PrintShiftShiftIdRoute
+  PrintHousekeeperReportReportIdRoute: typeof PrintHousekeeperReportReportIdRoute
+  PrintHousekeepingAllRoute: typeof PrintHousekeepingAllRoute
+  PrintHousekeepingByFloorRoute: typeof PrintHousekeepingByFloorRoute
+  PrintHousekeepingSummaryRoute: typeof PrintHousekeepingSummaryRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -730,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/night-audit'
       fullPath: '/night-audit'
       preLoaderRoute: typeof NightAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-housekeeping': {
+      id: '/my-housekeeping'
+      path: '/my-housekeeping'
+      fullPath: '/my-housekeeping'
+      preLoaderRoute: typeof MyHousekeepingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/maintenance': {
@@ -893,6 +968,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BulkRoutingFastPostingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print/housekeeping/summary': {
+      id: '/print/housekeeping/summary'
+      path: '/print/housekeeping/summary'
+      fullPath: '/print/housekeeping/summary'
+      preLoaderRoute: typeof PrintHousekeepingSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/print/housekeeping/by-floor': {
+      id: '/print/housekeeping/by-floor'
+      path: '/print/housekeeping/by-floor'
+      fullPath: '/print/housekeeping/by-floor'
+      preLoaderRoute: typeof PrintHousekeepingByFloorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/print/housekeeping/all': {
+      id: '/print/housekeeping/all'
+      path: '/print/housekeeping/all'
+      fullPath: '/print/housekeeping/all'
+      preLoaderRoute: typeof PrintHousekeepingAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/print/housekeeper-report/$reportId': {
+      id: '/print/housekeeper-report/$reportId'
+      path: '/print/housekeeper-report/$reportId'
+      fullPath: '/print/housekeeper-report/$reportId'
+      preLoaderRoute: typeof PrintHousekeeperReportReportIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -924,6 +1027,7 @@ const rootRouteChildren: RootRouteChildren = {
   InHouseRoute: InHouseRoute,
   LostFoundRoute: LostFoundRoute,
   MaintenanceRoute: MaintenanceRoute,
+  MyHousekeepingRoute: MyHousekeepingRoute,
   NightAuditRoute: NightAuditRoute,
   OpenFoliosRoute: OpenFoliosRoute,
   PaymentsRoute: PaymentsRoute,
@@ -950,6 +1054,10 @@ const rootRouteChildren: RootRouteChildren = {
   PrintInvoiceReservationIdRoute: PrintInvoiceReservationIdRoute,
   PrintReceiptReservationIdRoute: PrintReceiptReservationIdRoute,
   PrintShiftShiftIdRoute: PrintShiftShiftIdRoute,
+  PrintHousekeeperReportReportIdRoute: PrintHousekeeperReportReportIdRoute,
+  PrintHousekeepingAllRoute: PrintHousekeepingAllRoute,
+  PrintHousekeepingByFloorRoute: PrintHousekeepingByFloorRoute,
+  PrintHousekeepingSummaryRoute: PrintHousekeepingSummaryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

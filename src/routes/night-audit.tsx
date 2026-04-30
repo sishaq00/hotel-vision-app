@@ -51,6 +51,7 @@ function NightAuditWizard() {
   const settings = useHotelStore((s) => s.settings);
   const guests = useHotelStore((s) => s.guests);
   const markNoShow = useHotelStore((s) => s.markNoShow);
+  const runHkReclassify = useHotelStore((s) => s.runNightAuditHousekeeping);
 
   const setLastNightAuditDate = useHotelStore((s) => s.setLastNightAuditDate);
   const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
@@ -175,8 +176,10 @@ function NightAuditWizard() {
     });
     markStepDone("report");
     setLastNightAuditDate(auditDate);
+    // Reclassify housekeeping rooms based on reservations
+    const hk = runHkReclassify();
     toast.success("Night audit completed", {
-      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy`,
+      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy · HK: ${hk.stayover} stayover, ${hk.departure} departure`,
     });
   };
 

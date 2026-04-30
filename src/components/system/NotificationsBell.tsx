@@ -17,10 +17,12 @@ import { useT } from "@/lib/i18n";
 export function NotificationsBell() {
   const reservations = useHotelStore((s) => s.reservations);
   const rooms = useHotelStore((s) => s.rooms);
+  const hkReports = useHotelStore((s) => s.housekeeperReports);
   const navigate = useNavigate();
   const { t } = useT();
 
   const lastNightAuditDate = useHotelStore((s) => s.lastNightAuditDate);
+  const pendingHkReports = hkReports.filter((r) => r.status === "submitted").length;
 
   const alerts = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -46,6 +48,7 @@ export function NotificationsBell() {
     alerts.departures.length +
     alerts.overdue.length +
     alerts.ooo.length +
+    pendingHkReports +
     (alerts.auditDue ? 1 : 0);
 
   return (
@@ -109,6 +112,13 @@ export function NotificationsBell() {
                 <AlertTriangle className="h-3.5 w-3.5" />
                 <span className="flex-1">Night Audit pending</span>
                 <span className="font-semibold">!</span>
+              </DropdownMenuItem>
+            )}
+            {pendingHkReports > 0 && (
+              <DropdownMenuItem onClick={() => navigate({ to: "/housekeeping" })} className="gap-2 text-xs">
+                <BedDouble className="h-3.5 w-3.5 text-primary" />
+                <span className="flex-1">Housekeeper reports pending</span>
+                <span className="font-semibold">{pendingHkReports}</span>
               </DropdownMenuItem>
             )}
           </>
