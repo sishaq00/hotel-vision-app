@@ -97,6 +97,7 @@ const moreItems: ReadonlyArray<NavItem> = [
   { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen, permission: "payments.view" },
   { key: "nav.maintenance", url: "/maintenance", icon: Wrench, permission: "maintenance.manage" },
   { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles, permission: "housekeeping.view" },
+  { key: "My Rooms (HK)", url: "/my-housekeeping", icon: Sparkles, permission: "housekeeping.update" },
   { key: "nav.reminders", url: "/reminders", icon: Bell },
   { key: "nav.night-audit", url: "/night-audit", icon: Moon, permission: "night-audit.run" },
   { key: "nav.house-inventory", url: "/house-inventory", icon: Package, permission: "rooms.manage" },

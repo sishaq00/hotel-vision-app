@@ -21,7 +21,10 @@ export type ActivityAction =
   | "room.status-change"
   | "user.create"
   | "user.update"
-  | "user.delete";
+  | "user.delete"
+  | "housekeeping.assign"
+  | "housekeeping.report"
+  | "housekeeping.review";
 
 export type ActivityEntityType =
   | "reservation"
@@ -30,7 +33,8 @@ export type ActivityEntityType =
   | "guest"
   | "user"
   | "shift"
-  | "system";
+  | "system"
+  | "housekeeping";
 
 export interface ActivityEntry {
   id: string;
