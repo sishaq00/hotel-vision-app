@@ -66,11 +66,20 @@ function cellStateFor(room: Room, iso: string, reservations: Reservation[]): Cel
 }
 
 function AvailabilityPage() {
-  const rooms = useHotelStore((s) => (Array.isArray(s.rooms) ? s.rooms.filter((r) => !r.archived) : []));
-  const reservations = useHotelStore((s) => (Array.isArray(s.reservations) ? s.reservations : []));
-  const guests = useHotelStore((s) => (Array.isArray(s.guests) ? s.guests : []));
+  const allRooms = useHotelStore((s) => s.rooms);
+  const allReservations = useHotelStore((s) => s.reservations);
+  const guests = useHotelStore((s) => s.guests);
   const checkInAction = useHotelStore((s) => s.checkIn);
   const cancelAction = useHotelStore((s) => s.cancelReservation);
+
+  const rooms = useMemo(
+    () => (Array.isArray(allRooms) ? allRooms.filter((r) => !r.archived) : []),
+    [allRooms],
+  );
+  const reservations = useMemo(
+    () => (Array.isArray(allReservations) ? allReservations : []),
+    [allReservations],
+  );
   const { t } = useT();
 
   const [offset, setOffset] = useState(0);
