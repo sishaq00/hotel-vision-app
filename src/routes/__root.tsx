@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppBoot } from "@/components/system/AppBoot";
 import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
 import { GlobalSearch } from "@/components/system/GlobalSearch";
+import { PrintPicker } from "@/components/system/PrintPicker";
 import { ConfirmProvider } from "@/components/system/ConfirmDialog";
 
 import appCss from "../styles.css?url";
@@ -78,6 +79,7 @@ function RootComponent() {
       <Outlet />
       <ShortcutsDialog />
       <GlobalSearch />
+      <PrintPicker />
       <Toaster />
     </ConfirmProvider>
   );
