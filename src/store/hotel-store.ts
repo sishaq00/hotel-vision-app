@@ -692,6 +692,9 @@ export const useHotelStore = create<HotelState>()(
         reportRuns: [],
         productSales: [],
         lastNightAuditDate: undefined,
+        housekeepers: [],
+        housekeepingTeams: [],
+        housekeeperReports: [],
         settings: {
           hotelName: "NEXORA OS",
           hotelCode: "NXR",
