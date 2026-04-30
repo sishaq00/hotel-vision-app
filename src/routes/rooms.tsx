@@ -39,6 +39,7 @@ function RoomsPage() {
   const allRooms = useHotelStore((s) => s.rooms);
   const updateStatus = useHotelStore((s) => s.updateRoomStatus);
   const archiveRoom = useHotelStore((s) => s.archiveRoom);
+  const confirm = useConfirm();
   const [query, setQuery] = useState("");
 
   // Hide archived rooms from the active inventory view
