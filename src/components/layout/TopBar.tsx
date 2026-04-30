@@ -1,9 +1,12 @@
-import { HelpCircle, ChevronDown, Globe, Search } from "lucide-react";
+import { HelpCircle, ChevronDown, Globe, Search, LogOut, KeyRound, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useHotelStore } from "@/store/hotel-store";
+import { useAuthStore, useCurrentUser } from "@/store/auth-store";
+import { logActivity } from "@/store/activity-store";
 import { NotificationsBell } from "@/components/system/NotificationsBell";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import {
