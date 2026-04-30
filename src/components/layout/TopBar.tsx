@@ -109,6 +109,8 @@ export function TopBar(_props: TopBarProps) {
           <kbd className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px]">Ctrl K</kbd>
         </Button>
 
+        <NotificationsBell />
+
         <Button
           variant="ghost"
           size="sm"
