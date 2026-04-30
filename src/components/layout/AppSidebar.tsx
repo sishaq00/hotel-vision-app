@@ -37,6 +37,7 @@ import {
   MessageSquareText,
   ShieldCheck,
   UserCog,
+  FileMinus,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -94,6 +95,7 @@ const moreItems: ReadonlyArray<NavItem> = [
   { key: "nav.group-master", url: "/group-master", icon: Users, permission: "reservations.view" },
   { key: "nav.guest-profiles", url: "/guests", icon: Users, permission: "guests.view" },
   { key: "nav.search-invoice", url: "/search-invoice", icon: FileSearch, permission: "payments.view" },
+  { key: "Credit Notes", url: "/credit-notes", icon: FileMinus, permission: "payments.view" },
   { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen, permission: "payments.view" },
   { key: "nav.maintenance", url: "/maintenance", icon: Wrench, permission: "maintenance.manage" },
   { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles, permission: "housekeeping.view" },
