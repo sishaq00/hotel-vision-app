@@ -28,6 +28,17 @@ export const Route = createFileRoute("/availability")({
     ],
   }),
   component: AvailabilityPage,
+  errorComponent: ({ error, reset }) => (
+    <AppLayout title="Availability" subtitle="Something went wrong loading the grid">
+      <Card className="border-destructive/40 p-6">
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-destructive">Unable to render availability</h2>
+          <p className="text-sm text-muted-foreground break-all">{error?.message ?? "Unknown error"}</p>
+          <Button onClick={reset} variant="outline">Try again</Button>
+        </div>
+      </Card>
+    </AppLayout>
+  ),
 });
 
 const DAYS = 14;
@@ -68,7 +79,10 @@ function AvailabilityPage() {
   const todayIso = isoDate(new Date());
 
   const sortedRooms = useMemo(
-    () => [...rooms].sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true })),
+    () =>
+      [...rooms].sort((a, b) =>
+        String(a.number ?? "").localeCompare(String(b.number ?? ""), undefined, { numeric: true }),
+      ),
     [rooms],
   );
 
@@ -210,7 +224,7 @@ function AvailabilityPage() {
             <div className="space-y-2 text-sm">
               <Detail k="Status" v={viewRes.status} />
               <Detail k="Confirmation" v={viewRes.confirmationNumber ?? viewRes.id.slice(0, 8)} />
-              <Detail k="Total" v={`${viewRes.totalAmount.toFixed(2)}`} />
+              <Detail k="Total" v={`${(viewRes.totalAmount ?? 0).toFixed(2)}`} />
               {viewRes.invoice && (
                 <Detail k="Invoice" v={viewRes.invoice.invoiceNumber} />
               )}
