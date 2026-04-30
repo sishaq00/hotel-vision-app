@@ -437,6 +437,22 @@ interface HotelState {
   // Products
   addProductItem: (p: Omit<ProductItem, "id">) => string;
   updateProductStock: (id: string, stock: number) => void;
+  recordProductSale: (input: {
+    productId: string;
+    quantity: number;
+    roomId?: string;
+    reservationId?: string;
+  }) => { ok: true; sale: ProductSale } | { ok: false; error: string };
+
+  // Reservation extend / shorten
+  extendStay: (
+    reservationId: string,
+    newCheckOut: string,
+    reason?: string,
+  ) => { ok: true; nightsDelta: number; amountDelta: number } | { ok: false; error: string };
+
+  // Night audit tracking
+  setLastNightAuditDate: (date: string) => void;
 
   // Routing
   addRoutingRule: (r: Omit<RoutingRule, "id">) => string;
