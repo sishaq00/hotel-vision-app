@@ -430,6 +430,10 @@ interface HotelState {
   reportRuns: ReportRun[];
   productSales: ProductSale[];
   lastNightAuditDate?: string;
+  // v4 collections
+  housekeepers: Housekeeper[];
+  housekeepingTeams: HousekeepingTeam[];
+  housekeeperReports: HousekeeperReport[];
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
@@ -491,6 +495,44 @@ interface HotelState {
   // Housekeeping tasks
   addHousekeepingTask: (t: Omit<HousekeepingTask, "id" | "createdAt" | "status">) => string;
   updateHousekeepingTaskStatus: (id: string, status: HousekeepingTask["status"]) => void;
+
+  // Housekeepers (staff)
+  addHousekeeper: (h: Omit<Housekeeper, "id" | "createdAt">) => string;
+  updateHousekeeper: (id: string, patch: Partial<Omit<Housekeeper, "id" | "createdAt">>) => void;
+  deleteHousekeeper: (id: string) => void;
+
+  // Housekeeping teams
+  addHousekeepingTeam: (t: Omit<HousekeepingTeam, "id" | "createdAt">) => string;
+  updateHousekeepingTeam: (id: string, patch: Partial<Omit<HousekeepingTeam, "id" | "createdAt">>) => void;
+  deleteHousekeepingTeam: (id: string) => void;
+
+  // Room assignment & cleaning lifecycle
+  assignRoomsToHousekeeper: (
+    roomIds: string[],
+    housekeeperId: string,
+    taskType?: HousekeepingTaskType,
+  ) => number;
+  assignRoomsToTeam: (
+    roomIds: string[],
+    teamId: string,
+    taskType?: HousekeepingTaskType,
+  ) => number;
+  autoDistributeDirtyRooms: (taskType?: HousekeepingTaskType) => number;
+  unassignRooms: (roomIds: string[]) => void;
+  setRoomDND: (roomId: string, flag: boolean) => void;
+  setRoomRefused: (roomId: string, flag: boolean) => void;
+  startCleaning: (roomId: string) => void;
+  finishCleaning: (roomId: string, notes?: string, photos?: string[]) => void;
+
+  // Housekeeper reports
+  submitHousekeeperReport: (housekeeperId: string) => string | null;
+  reviewHousekeeperReport: (
+    reportId: string,
+    decisions: Array<{ roomId: string; newStatus: HousekeepingStatus }>,
+  ) => void;
+
+  // Night audit reclassify
+  runNightAuditHousekeeping: () => { stayover: number; departure: number; cleared: number };
 
   // Lost & Found
   addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
