@@ -89,7 +89,7 @@ function ReportsHub() {
 
   const runReport = (def: ReportDefinition, format: "csv" | "xlsx" | "pdf" | "preview") => {
     try {
-      const rows = def.run(ctx);
+      const rows = applyDateFilter(def.run(ctx));
       if (format === "preview") {
         setPreviewReport({ def, rows });
         return;
@@ -141,6 +141,31 @@ function ReportsHub() {
                 )}
               >{c}</button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-9 w-[140px] text-xs"
+              title="From date"
+            />
+            <span className="text-xs text-muted-foreground">→</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-9 w-[140px] text-xs"
+              title="To date"
+            />
+            {(dateFrom || dateTo) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs"
+                onClick={() => { setDateFrom(""); setDateTo(""); }}
+              >Clear</Button>
+            )}
           </div>
         </div>
 
