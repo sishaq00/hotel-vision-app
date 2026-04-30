@@ -1,9 +1,10 @@
 // Mounts once at app root: applies dir/lang to <html>, runs daily auto-backup,
-// and registers global keyboard shortcuts.
+// reminds user weekly to save an external backup, and registers global shortcuts.
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useHotelStore } from "@/store/hotel-store";
-import { runDailyAutoBackup } from "@/lib/backup";
+import { runDailyAutoBackup, daysSinceLastDownload, downloadBackup } from "@/lib/backup";
 
 export function AppBoot() {
   const lang = useHotelStore((s) => s.settings.language) ?? "en";
@@ -16,10 +17,42 @@ export function AppBoot() {
     document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
   }, [lang]);
 
-  // Run daily auto-backup once per day
+  // Run daily auto-backup; warn if no external download in 7+ days
   useEffect(() => {
     runDailyAutoBackup();
-  }, []);
+    const days = daysSinceLastDownload();
+    const isAr = lang === "ar";
+    const t = setTimeout(() => {
+      if (days === null) {
+        toast.warning(
+          isAr ? "احفظ نسخة احتياطية على القرص" : "Save your first backup file",
+          {
+            description: isAr
+              ? "كل بياناتك محفوظة محلياً فقط. حمّل نسخة JSON الآن لحمايتها."
+              : "All data is stored locally only. Download a JSON copy now to protect it.",
+            duration: 10_000,
+            action: {
+              label: isAr ? "تحميل" : "Download",
+              onClick: () => downloadBackup(),
+            },
+          },
+        );
+      } else if (days >= 7) {
+        toast.warning(
+          isAr ? `مرّ ${days} يوماً منذ آخر نسخة احتياطية` : `${days} days since last backup`,
+          {
+            description: isAr ? "احفظ نسخة محدّثة لتفادي ضياع البيانات." : "Save a fresh copy.",
+            duration: 10_000,
+            action: {
+              label: isAr ? "تحميل" : "Download",
+              onClick: () => downloadBackup(),
+            },
+          },
+        );
+      }
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [lang]);
 
   // Global shortcuts
   useEffect(() => {

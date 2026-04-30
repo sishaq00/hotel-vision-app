@@ -42,6 +42,7 @@ import { Route as ArrivalsRouteImport } from './routes/arrivals'
 import { Route as ArchivedReservationsRouteImport } from './routes/archived-reservations'
 import { Route as AdvanceDepositsRouteImport } from './routes/advance-deposits'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrintReceiptReservationIdRouteImport } from './routes/print-receipt.$reservationId'
 import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-invoice.$reservationId'
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
@@ -212,6 +213,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintReceiptReservationIdRoute =
+  PrintReceiptReservationIdRouteImport.update({
+    id: '/print-receipt/$reservationId',
+    path: '/print-receipt/$reservationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PrintInvoiceReservationIdRoute =
   PrintInvoiceReservationIdRouteImport.update({
     id: '/print-invoice/$reservationId',
@@ -272,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
+  '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -311,6 +319,7 @@ export interface FileRoutesByTo {
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
+  '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -351,6 +360,7 @@ export interface FileRoutesById {
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
+  '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/setup'
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
+    | '/print-receipt/$reservationId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/setup'
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
+    | '/print-receipt/$reservationId'
   id:
     | '__root__'
     | '/'
@@ -470,6 +482,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/setup'
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
+    | '/print-receipt/$reservationId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -510,6 +523,7 @@ export interface RootRouteChildren {
   BulkRoutingSetupRoute: typeof BulkRoutingSetupRoute
   GuestGuestIdRoute: typeof GuestGuestIdRoute
   PrintInvoiceReservationIdRoute: typeof PrintInvoiceReservationIdRoute
+  PrintReceiptReservationIdRoute: typeof PrintReceiptReservationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -745,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print-receipt/$reservationId': {
+      id: '/print-receipt/$reservationId'
+      path: '/print-receipt/$reservationId'
+      fullPath: '/print-receipt/$reservationId'
+      preLoaderRoute: typeof PrintReceiptReservationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print-invoice/$reservationId': {
       id: '/print-invoice/$reservationId'
       path: '/print-invoice/$reservationId'
@@ -814,6 +835,7 @@ const rootRouteChildren: RootRouteChildren = {
   BulkRoutingSetupRoute: BulkRoutingSetupRoute,
   GuestGuestIdRoute: GuestGuestIdRoute,
   PrintInvoiceReservationIdRoute: PrintInvoiceReservationIdRoute,
+  PrintReceiptReservationIdRoute: PrintReceiptReservationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
