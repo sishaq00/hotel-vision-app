@@ -325,6 +325,7 @@ interface HotelState {
   inventoryItems: InventoryItem[];
   productItems: ProductItem[];
   routingRules: RoutingRule[];
+  reportRuns: ReportRun[];
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
