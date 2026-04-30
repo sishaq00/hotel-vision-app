@@ -76,6 +76,7 @@ function RootComponent() {
       <AppBoot />
       <Outlet />
       <ShortcutsDialog />
+      <GlobalSearch />
       <Toaster />
     </>
   );
