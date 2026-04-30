@@ -71,11 +71,11 @@ export function exportAllToExcel() {
 
   const audit = state.auditLog.map((a) => ({
     "Time": a.timestamp,
-    "User": a.userName ?? "",
     "Action": a.action,
-    "Entity": a.entityType,
+    "Entity": a.entity,
     "Entity ID": a.entityId,
-    "Details": typeof a.details === "string" ? a.details : JSON.stringify(a.details ?? ""),
+    "Description": a.description,
+    "Metadata": a.metadata ? JSON.stringify(a.metadata) : "",
   }));
 
   const printLog = listPrintLog().map((e) => ({
