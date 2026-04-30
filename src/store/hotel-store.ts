@@ -897,7 +897,7 @@ export const useHotelStore = create<HotelState>()(
                   id: pid,
                   reservationId: id,
                   amount: invoice.total,
-                  method: opts.paymentMethod ?? "card",
+                  method: opts.paymentMethod ?? "cash",
                   status: "paid",
                   date: now.slice(0, 10),
                 },
