@@ -2,6 +2,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useHotelStore } from "@/store/hotel-store";
+import { recordPrint } from "@/lib/print-log";
 
 export const Route = createFileRoute("/print-invoice/$reservationId")({
   component: PrintInvoice,
