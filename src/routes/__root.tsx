@@ -5,6 +5,7 @@ import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
 import { GlobalSearch } from "@/components/system/GlobalSearch";
 import { PrintPicker } from "@/components/system/PrintPicker";
 import { ConfirmProvider } from "@/components/system/ConfirmDialog";
+import { AuthGate } from "@/components/auth/AuthGate";
 
 import appCss from "../styles.css?url";
 
@@ -75,11 +76,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <ConfirmProvider>
-      <AppBoot />
-      <Outlet />
-      <ShortcutsDialog />
-      <GlobalSearch />
-      <PrintPicker />
+      <AuthGate>
+        <AppBoot />
+        <Outlet />
+        <ShortcutsDialog />
+        <GlobalSearch />
+        <PrintPicker />
+      </AuthGate>
       <Toaster />
     </ConfirmProvider>
   );

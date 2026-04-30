@@ -1,9 +1,12 @@
-import { HelpCircle, ChevronDown, Globe, Search } from "lucide-react";
+import { HelpCircle, ChevronDown, Globe, Search, LogOut, KeyRound, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useHotelStore } from "@/store/hotel-store";
+import { useAuthStore, useCurrentUser } from "@/store/auth-store";
+import { logActivity } from "@/store/activity-store";
 import { NotificationsBell } from "@/components/system/NotificationsBell";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import {
@@ -39,9 +42,25 @@ export function TopBar(_props: TopBarProps) {
   const settings = useHotelStore((s) => s.settings);
   const updateSettings = useHotelStore((s) => s.updateSettings);
   const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
+  const me = useCurrentUser();
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
   // Render date only after mount to avoid SSR/CSR hydration mismatch
   const [today, setToday] = useState<string>("");
   useEffect(() => setToday(formatToday()), []);
+
+  const displayName = me?.fullName || me?.username || "User";
+  const isAdmin = me?.role === "admin";
+
+  const handleLogout = () => {
+    logActivity({
+      action: "logout",
+      entityType: "system",
+      description: `Signed out (${displayName})`,
+    });
+    logout();
+    navigate({ to: "/" });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card px-2 sm:gap-3 sm:px-3 md:px-4">
@@ -132,7 +151,7 @@ export function TopBar(_props: TopBarProps) {
             >
               <Avatar className="h-7 w-7 border border-border">
                 <AvatarFallback className="bg-primary text-[10px] font-semibold text-primary-foreground">
-                  {(openShift?.userName ?? "Front Desk")
+                  {displayName
                     .split(" ")
                     .map((s) => s[0])
                     .join("")
@@ -141,21 +160,51 @@ export function TopBar(_props: TopBarProps) {
                 </AvatarFallback>
               </Avatar>
               <span className="hidden text-xs font-medium text-foreground sm:inline">
-                {openShift?.userName ?? "Front Desk"}
+                {displayName}
               </span>
               <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="text-xs">
-              {openShift ? `Shift open · ${openShift.userName}` : "No active shift"}
+              <div className="flex flex-col">
+                <span className="font-semibold">{displayName}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-[10px] font-normal text-muted-foreground">
+                  {isAdmin && <ShieldCheck className="h-3 w-3 text-primary" />}
+                  {isAdmin ? "Administrator" : "Staff"}
+                  {openShift && <> · Shift open</>}
+                </span>
+              </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <a href="/settings" className="text-xs">Settings</a>
+              <Link to="/profile" className="text-xs">
+                <KeyRound className="mr-2 h-3.5 w-3.5" />
+                Change password
+              </Link>
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/users" className="text-xs">
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />
+                  Manage users
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link to="/shift-management" className="text-xs">
+                Shift Management
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a href="/shift-management" className="text-xs">Shift Management</a>
+              <Link to="/settings" className="text-xs">
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-xs text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -45,7 +45,7 @@ export type ReservationInput = z.infer<typeof reservationSchema>;
 export const paymentSchema = z.object({
   reservationId: z.string().min(1, { message: "Reservation is required" }),
   amount: z.coerce.number().positive({ message: "Amount must be > 0" }).max(10_000_000),
-  method: z.enum(["cash", "card", "bank-transfer", "online"]),
+  method: z.literal("cash"),
 });
 export type PaymentInput = z.infer<typeof paymentSchema>;
 

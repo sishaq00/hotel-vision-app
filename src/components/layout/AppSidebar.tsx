@@ -35,6 +35,8 @@ import {
   ExternalLink,
   Tag,
   MessageSquareText,
+  ShieldCheck,
+  UserCog,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -60,54 +62,61 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useT } from "@/lib/i18n";
+import { useAuthStore } from "@/store/auth-store";
+import type { Permission } from "@/lib/permissions";
 
-// Top-level items (always visible) — matches HOTEL KEY layout
-const topItems = [
-  { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
-  { key: "nav.in-house", url: "/in-house", icon: BedDouble },
-  { key: "nav.departures", url: "/departures", icon: LogOut },
-  { key: "nav.arrivals", url: "/arrivals", icon: CalendarCheck },
-  { key: "nav.recently-viewed", url: "/recently-viewed", icon: Eye },
-  { key: "nav.availability", url: "/availability", icon: Grid3x3 },
-  { key: "nav.search-reservations", url: "/search-reservations", icon: Search },
-] as const;
-
-// Bulk Routing & Postings group
-const bulkRoutingItems = [
-  { key: "nav.bulk-setup", url: "/bulk-routing/setup", icon: Receipt },
-  { key: "nav.fast-posting", url: "/bulk-routing/fast-posting", icon: Zap },
-] as const;
-
-// "More" expandable group
-const moreItems = [
-  { key: "nav.archived", url: "/archived-reservations", icon: Archive },
-  { key: "nav.batch-process", url: "/batch-process", icon: Layers },
-  { key: "nav.group-master", url: "/group-master", icon: Users },
-  { key: "nav.guest-profiles", url: "/guests", icon: Users },
-  { key: "nav.search-invoice", url: "/search-invoice", icon: FileSearch },
-  { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen },
-  { key: "nav.maintenance", url: "/maintenance", icon: Wrench },
-  { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles },
-  { key: "nav.reminders", url: "/reminders", icon: Bell },
-  { key: "nav.night-audit", url: "/night-audit", icon: Moon },
-  { key: "nav.house-inventory", url: "/house-inventory", icon: Package },
-  { key: "nav.product-inventory", url: "/product-inventory", icon: ShoppingBag },
-  { key: "nav.house-accounts", url: "/house-accounts", icon: Wallet },
-  { key: "nav.lost-found", url: "/lost-found", icon: PackageSearch },
-  { key: "nav.shift-management", url: "/shift-management", icon: Clock },
-  { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard },
-  { key: "nav.rate-plans", url: "/rate-plans", icon: Tag },
-  { key: "nav.templates", url: "/templates", icon: MessageSquareText },
-] as const;
-
-const bottomItems: ReadonlyArray<{
+type NavItem = {
   key: string;
   url: string;
-  icon: typeof BarChart3;
+  icon: typeof LayoutDashboard;
+  permission?: Permission;
   external?: boolean;
-}> = [
-  { key: "nav.report-queue", url: "/report-queue", icon: ListChecks },
-  { key: "nav.reports", url: "/reports", icon: BarChart3, external: true },
+};
+
+const topItems: ReadonlyArray<NavItem> = [
+  { key: "nav.dashboard", url: "/", icon: LayoutDashboard, permission: "dashboard.view" },
+  { key: "nav.in-house", url: "/in-house", icon: BedDouble, permission: "reservations.view" },
+  { key: "nav.departures", url: "/departures", icon: LogOut, permission: "reservations.view" },
+  { key: "nav.arrivals", url: "/arrivals", icon: CalendarCheck, permission: "reservations.view" },
+  { key: "nav.recently-viewed", url: "/recently-viewed", icon: Eye, permission: "reservations.view" },
+  { key: "nav.availability", url: "/availability", icon: Grid3x3, permission: "rooms.view" },
+  { key: "nav.search-reservations", url: "/search-reservations", icon: Search, permission: "reservations.view" },
+];
+
+const bulkRoutingItems: ReadonlyArray<NavItem> = [
+  { key: "nav.bulk-setup", url: "/bulk-routing/setup", icon: Receipt, permission: "reservations.edit" },
+  { key: "nav.fast-posting", url: "/bulk-routing/fast-posting", icon: Zap, permission: "payments.record" },
+];
+
+const moreItems: ReadonlyArray<NavItem> = [
+  { key: "nav.archived", url: "/archived-reservations", icon: Archive, permission: "reservations.view" },
+  { key: "nav.batch-process", url: "/batch-process", icon: Layers, permission: "reservations.edit" },
+  { key: "nav.group-master", url: "/group-master", icon: Users, permission: "reservations.view" },
+  { key: "nav.guest-profiles", url: "/guests", icon: Users, permission: "guests.view" },
+  { key: "nav.search-invoice", url: "/search-invoice", icon: FileSearch, permission: "payments.view" },
+  { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen, permission: "payments.view" },
+  { key: "nav.maintenance", url: "/maintenance", icon: Wrench, permission: "maintenance.manage" },
+  { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles, permission: "housekeeping.view" },
+  { key: "nav.reminders", url: "/reminders", icon: Bell },
+  { key: "nav.night-audit", url: "/night-audit", icon: Moon, permission: "night-audit.run" },
+  { key: "nav.house-inventory", url: "/house-inventory", icon: Package, permission: "rooms.manage" },
+  { key: "nav.product-inventory", url: "/product-inventory", icon: ShoppingBag, permission: "rooms.manage" },
+  { key: "nav.house-accounts", url: "/house-accounts", icon: Wallet, permission: "payments.view" },
+  { key: "nav.lost-found", url: "/lost-found", icon: PackageSearch },
+  { key: "nav.shift-management", url: "/shift-management", icon: Clock, permission: "shifts.manage" },
+  { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard, permission: "payments.view" },
+  { key: "nav.rate-plans", url: "/rate-plans", icon: Tag, permission: "rooms.manage" },
+  { key: "nav.templates", url: "/templates", icon: MessageSquareText },
+];
+
+const bottomItems: ReadonlyArray<NavItem> = [
+  { key: "nav.report-queue", url: "/report-queue", icon: ListChecks, permission: "reports.view" },
+  { key: "User Activity", url: "/reports/user-activity", icon: BarChart3, permission: "reports.user-activity" },
+  { key: "nav.reports", url: "/reports", icon: BarChart3, permission: "reports.view", external: true },
+];
+
+const adminItems: ReadonlyArray<NavItem> = [
+  { key: "Users & Permissions", url: "/users", icon: UserCog, permission: "users.manage" },
 ];
 
 export function AppSidebar() {
@@ -116,13 +125,29 @@ export function AppSidebar() {
   const location = useLocation();
   const path = location.pathname;
   const { t } = useT();
+  const me = useAuthStore((s) =>
+    s.currentUserId ? s.users.find((u) => u.id === s.currentUserId) ?? null : null,
+  );
+
+  const can = (perm?: Permission) => {
+    if (!perm) return true;
+    if (!me || !me.active) return false;
+    if (me.role === "admin") return true;
+    return me.permissions.includes(perm);
+  };
+
+  const filterNav = (items: ReadonlyArray<NavItem>) => items.filter((i) => can(i.permission));
+
+  const visibleTop = filterNav(topItems);
+  const visibleBulk = filterNav(bulkRoutingItems);
+  const visibleMore = filterNav(moreItems);
+  const visibleBottom = filterNav(bottomItems);
+  const visibleAdmin = filterNav(adminItems);
 
   const isActive = (url: string) =>
     url === "/" ? path === "/" : path === url || path.startsWith(url + "/");
 
-  // Auto-open groups if any child matches current route
-  const bulkOpen = bulkRoutingItems.some((i) => isActive(i.url));
-  const _moreOpen = moreItems.some((i) => isActive(i.url));
+  const bulkOpen = visibleBulk.some((i) => isActive(i.url));
 
   const [bulkExpanded, setBulkExpanded] = useState<boolean>(bulkOpen);
   const [moreExpanded, setMoreExpanded] = useState<boolean>(true);
@@ -152,7 +177,7 @@ export function AppSidebar() {
         <SidebarGroup className="px-1 py-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {topItems.map((item) => (
+              {visibleTop.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
@@ -198,7 +223,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
-                  {bulkRoutingItems.map((item) => (
+                  {visibleBulk.map((item) => (
                     <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
@@ -241,7 +266,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
-                  {moreItems.map((item) => (
+                  {visibleMore.map((item) => (
                     <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
@@ -265,7 +290,7 @@ export function AppSidebar() {
         <SidebarGroup className="px-1 py-0 mt-1">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {bottomItems.map((item) => (
+              {visibleBottom.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
@@ -291,55 +316,90 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Admin section — only visible to users with admin permissions */}
+        {visibleAdmin.length > 0 && (
+          <SidebarGroup className="px-1 py-0 mt-2 border-t border-sidebar-border pt-2">
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {visibleAdmin.map((item) => (
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.key}
+                      className={cn(
+                        "h-8 rounded text-[13px] text-sidebar-foreground/90",
+                        "hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                        isActive(item.url) &&
+                          "border-l-2 border-primary bg-sidebar-accent text-sidebar-foreground font-medium",
+                      )}
+                    >
+                      <Link to={item.url}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span>{item.key}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Audit + Settings (NEXORA additions) */}
         <SidebarGroup className="px-1 py-0 mt-2 border-t border-sidebar-border pt-2">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={t("nav.audit")}
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/audit">
-                    <History className="h-4 w-4" />
-                    <span>{t("nav.audit")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip="Print Log"
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/print-log") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/print-log">
-                    <Printer className="h-4 w-4" />
-                    <span>Print Log</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={t("nav.settings")}
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/settings">
-                    <SettingsIcon className="h-4 w-4" />
-                    <span>{t("nav.settings")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {can("audit.view") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={t("nav.audit")}
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/audit">
+                      <History className="h-4 w-4" />
+                      <span>{t("nav.audit")}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {can("audit.view") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="Print Log"
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/print-log") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/print-log">
+                      <Printer className="h-4 w-4" />
+                      <span>Print Log</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {can("settings.manage") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={t("nav.settings")}
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/settings">
+                      <SettingsIcon className="h-4 w-4" />
+                      <span>{t("nav.settings")}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

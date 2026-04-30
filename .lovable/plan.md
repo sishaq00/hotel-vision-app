@@ -1,155 +1,188 @@
-# خطة بناء NEXORA OS بهيكل HOTEL KEY الكامل (بدون أي ميزات أونلاين)
+## الفهم الكامل للمتطلبات
 
-نعتمد القائمة الجانبية في الصورة كمرجع رسمي لـ NEXORA OS، مع استبعاد كل ما يخص الحجز الأونلاين أو برامج الولاء العالمية أو قنوات OTA.
+1. **النظام يبقى أوفلاين 100%** — لا Cloud، لا Supabase، كل البيانات في `localStorage`.
+2. **حساب مدير (Admin)** بصلاحيات كاملة + إنشاء حسابات موظفين (Reception/Staff).
+3. **صلاحيات مرنة لكل موظف** — المدير يحدّد ما يستطيع كل موظف فعله.
+4. **الدفع نقداً فقط (Cash)** — حذف بطاقات/بوابات إلكترونية.
+5. **Night Audit يدوي** يشغّله الموظف، مع نظام إشعارات.
+6. **🆕 تقارير محاسبية تفصيلية لكل مستخدم** — كل عملية تُنسب لمن قام بها (مدّد ليلة، قبض مبلغ، سجّل دخول/خروج…).
 
 ---
 
-## 1. الهيكل العام للواجهة (مطابق للصورة)
+## 1. نظام المستخدمين والصلاحيات (Offline)
 
-### Header (شريط علوي)
-- **يسار**: لوغو + اسم الفندق + كود مختصر (مثال: `Staybridge Suites - Detroit (DTTSH)`)
-- **وسط**: التاريخ الحالي بصيغة `Tue, Apr 28, 2026`
-- **يمين**: 
-  - قائمة اللغة (عربي/إنجليزي)
-  - زر Help
-  - بروفايل المستخدم مع اسم الموظف الحالي + قائمة منسدلة (Profile, Logout)
+**ملف جديد:** `src/store/auth-store.ts` (Zustand + persist)
 
-### Sidebar (قائمة جانبية يسرى — قابلة للطي)
-ترتيب العناصر بالضبط كما في الصورة (مع حذف IHG):
+- جدول `users`: `{ id, username, passwordHash, fullName, role: "admin" | "staff", permissions: string[], active, createdAt }`
+- جلسة حالية: `{ userId, loginAt }`
+- كلمات السر بـ **SHA-256** عبر Web Crypto API.
+- مستخدم افتراضي عند أول تشغيل: `admin / admin123` مع تنبيه لتغييرها.
 
-```text
-Dashboard
-In House
-Departures
-Arrivals
-Recently Viewed
-Availability
-Search Reservations
-Bulk Routing and Postings ▼
-  ├─ Bulk Routing Setup
-  └─ Fast Posting
-More ▼
-  ├─ Archived Reservations
-  ├─ Batch Process
-  ├─ Group Master
-  ├─ Guest Profiles
-  ├─ Search Invoice
-  ├─ Open Folios
-  ├─ Maintenance
-  ├─ Housekeeping
-  ├─ Reminders
-  ├─ Night Audit
-  ├─ House Inventory
-  ├─ Product Inventory
-  ├─ House Accounts
-  ├─ Lost and Found
-  ├─ Shift Management
-  └─ Advance Deposits
-Report Queue
-Reports ↗ (يفتح صفحة كاملة)
-─────────
-TrainKey (في الأسفل — اختياري)
-Default (في الأسفل — Brand)
+**قائمة الصلاحيات:**
+```
+dashboard.view
+reservations.view / .create / .edit / .cancel / .extend
+checkin.perform / checkout.perform
+rooms.view / rooms.manage
+guests.view / guests.manage
+housekeeping.view / .update
+maintenance.manage
+payments.view / payments.record / payments.refund
+reports.view / reports.export / reports.user-activity
+night-audit.run
+shifts.manage
+users.manage          ← Admin فقط
+settings.manage       ← Admin فقط
+audit.view            ← Admin فقط
 ```
 
-### Dashboard (الصفحة الرئيسية)
-ثلاثة أقسام أفقية مع شارات:
-1. **House** — In House, Departures, Dirty Rooms, Ready Rooms
-2. **Bookings** — Arrivals, No Show/Late Cancel, Advance Deposits, Booked Today
-3. **Availability** — Total Rooms, Out Of Order, Sold, Available
-
-تحت كل قسم: KPI Cards بنفس تصميم الصورة (رقم كبير + label + Footer بمعلومات إضافية مثل "Stay Overs: 51 — Arrivals: 0").
-
-**6 أزرار Quick Actions كبيرة (3×2)**:
-| Walk In | New Booking | New Group Master |
-| Start Shift | Search Reservations | Grid View and Floor Plan |
-
-زر **Start Shift** يتبدّل لـ **End Shift** بعد فتح الوردية.
+المدير يحصل تلقائياً على كل الصلاحيات.
 
 ---
 
-## 2. مراحل التنفيذ (5 مراحل)
+## 2. صفحات جديدة
 
-### المرحلة A — الواجهة الجديدة + Dashboard كامل + Quick Actions
-- بناء AppShell جديد: Header + Sidebar مطابقة للصورة
-- إعادة هيكلة `src/store/hotel-store.ts` إلى **v3**:
-  - Room: `housekeepingStatus` (clean/dirty/inspected/out-of-order), `smokingAllowed`, `accessible`, `floor`
-  - Reservation: `source` (walk-in/phone/group فقط — **بدون online/OTA**), `noShow`, `groupMasterId?`, `confirmationNumber`, `recentlyViewedAt`
-  - Guest: `phone`, `country`, `doNotRent`, `vip`
-  - كيانات جديدة: `Shift`, `Reminder`, `AdvanceDeposit`, `MaintenanceTicket`, `HousekeepingTask`, `LostFoundItem`, `GroupMaster`, `Folio`, `HouseAccount`, `InventoryItem`, `ProductItem`, `RoutingRule`
-- صفحة Dashboard الجديدة بـ 3 أقسام (House/Bookings/Availability) و12+ KPI Card
-- شريط 6 Quick Actions
-- Header (اللغة + Help + User Menu)
-
-### المرحلة B — صفحات Front Desk الأساسية
-- `/in-house` — جدول الإقامات الحالية
-- `/departures` — مغادرات اليوم مع زر Check-out
-- `/arrivals` — وصول اليوم مع زر Check-in
-- `/recently-viewed` — آخر 20 حجز فُتح
-- `/availability` — Grid View (مخطط الغرف × التواريخ) + Floor Plan
-- `/search-reservations` — بحث متقدم: اسم/هاتف/تأكيد/رقم غرفة
-- `/archived-reservations` — أرشيف
-- `/guest-profiles` — توسعة صفحة Guests الحالية
-
-### المرحلة C — Operations
-- `/housekeeping` — تبديل حالة الغرف، تعيين موظفة
-- `/maintenance` — تذاكر صيانة (وصف، أولوية، حالة)
-- `/shift-management` — Start/End Shift، رصيد كاش، ملخص الوردية
-- `/reminders` — إدارة التذكيرات
-- `/lost-found` — تسجيل المفقودات
-- `/night-audit` — معالج إغلاق ليلي + تقرير + backup JSON
-- `/batch-process` — إلغاء No-Show تلقائياً، تحديث أسعار جماعي
-
-### المرحلة D — Billing & Inventory
-- `/open-folios` — Folios المفتوحة
-- `/search-invoice` — بحث في كل الفواتير
-- `/advance-deposits` — تسجيل/تطبيق/استرجاع
-- `/bulk-routing/setup` — قواعد توجيه المصاريف
-- `/bulk-routing/fast-posting` — إضافة مصاريف سريعة لعدة غرف
-- `/group-master` — Group Master (حجز جماعي بسعر موحّد)
-- `/house-accounts` — حسابات داخلية (Staff, Promo, Owner)
-- `/house-inventory` — مناشف، شراشف، أدوات نظافة
-- `/product-inventory` — مينيبار، spa (مرتبط بـ Fast Posting)
-
-### المرحلة E — Reports Hub + Report Queue
-- `/reports` — Hub بـ 14 فئة (مرجع: قائمتك السابقة من 120+ تقرير)
-- `/report-queue` — جدولة + سجل تشغيل
-- تنفيذ التقارير على 3 موجات (F1: 25 أساسية، F2: 30 مالية، F3: 30 متخصصة)
-- **حذف**: أي تقرير يخص OTA/Channel/Online Booking Source/Travel Agent Online
-
----
-
-## 3. الميزات المُستبعدة صراحةً (لا أونلاين)
-
-| ميزة | السبب |
+| المسار | الوصف |
 |---|---|
-| IHG One Rewards Member | برنامج ولاء IHG العالمي — مرتبط بـ OTA |
-| Online Check-in / Mobile Key | ميزة أونلاين |
-| Web Booking Engine | ميزة أونلاين |
-| Channel Manager (Booking.com, Expedia) | ميزة أونلاين |
-| Travel Agent Online Portal | ميزة أونلاين |
-| Reservation Source = Online/OTA | يبقى فقط: Walk-in / Phone / Group / Direct |
-| Email Confirmations الآلية للحجز الأونلاين | غير مطلوب |
-
-**مع الإبقاء على**: طباعة الفواتير PDF، تصدير Excel، تذكيرات داخلية، كل عمليات الفرونت ديسك اليدوية.
+| `/login` | تسجيل دخول (username + password). |
+| `/_authenticated/*` | Layout يحمي كل الصفحات الداخلية. |
+| `/users` | إدارة المستخدمين — Admin فقط. إضافة/تعطيل/إعادة كلمة سر/تعديل صلاحيات. |
+| `/profile` | تغيير كلمة السر الشخصية. |
+| `/reports/user-activity` | **🆕 تقرير نشاط المستخدمين** (تفاصيل أدناه). |
 
 ---
 
-## 4. الجوانب التقنية
+## 3. 🆕 نظام تتبّع نشاط المستخدمين (Activity Log)
 
-- **التخزين**: Zustand + persist (localStorage فقط، بدون Cloud)
-- **Migrations**: v2 → v3 تدريجي مع الحفاظ على البيانات الحالية
-- **Audit Log**: كل عملية تُسجَّل تلقائياً
-- **Smart Search**: Fuse.js للبحث الضبابي
-- **PDF**: jsPDF + jspdf-autotable
-- **Grid View**: شبكة غرف × تواريخ بـ drag-and-drop
-- **اللغة**: i18n خفيف (عربي/إنجليزي) — RTL/LTR تلقائي
-- **Layout**: استخدام `SidebarProvider` الموجود في `src/components/ui/sidebar.tsx`
+**ملف جديد:** `src/store/activity-store.ts`
+
+كل عملية حسّاسة تُسجَّل تلقائياً مع:
+```ts
+{
+  id, userId, userName, timestamp,
+  action: "login" | "logout" | "reservation.create" | "reservation.extend" 
+        | "checkin" | "checkout" | "payment.record" | "payment.refund"
+        | "night-audit" | "room.status-change" | "user.create" | ...,
+  entityType: "reservation" | "payment" | "room" | "guest" | "user",
+  entityId: string,
+  amount?: number,           // للعمليات المالية
+  details: {                 // معلومات إضافية حسب نوع العملية
+    roomNumber?, guestName?, oldValue?, newValue?, nightsAdded?, ...
+  }
+}
+```
+
+**نقاط الربط (يُسجَّل تلقائياً عند):**
+- تسجيل دخول/خروج المستخدم.
+- إنشاء/تعديل/إلغاء حجز.
+- Check-in / Check-out.
+- **تمديد ليلة (Extend stay)** — مع عدد الليالي والمبلغ الإضافي.
+- استلام دفعة نقدية — مع المبلغ والحجز المرتبط.
+- استرجاع/تعديل دفعة.
+- تشغيل Night Audit.
+- تغيير حالة غرفة (Out of order / Maintenance).
+- إدارة المستخدمين (إنشاء، تعطيل، تعديل صلاحيات).
 
 ---
 
-## 5. ترتيب البدء
+## 4. 🆕 صفحة تقرير نشاط المستخدم `/reports/user-activity`
 
-أبدأ فوراً بـ **المرحلة A** (الواجهة + Dashboard كامل + Quick Actions + توسيع البيانات) لأنها الأساس البصري للنظام كله. باقي المراحل صفحات منفصلة تُبنى تباعاً.
+**القسم 1: ملخص لكل مستخدم (جدول)**
+| المستخدم | عدد العمليات | حجوزات أنشأها | Check-ins | Check-outs | تمديدات | إجمالي المقبوض (Cash) | عدد المناوبات |
+|---|---|---|---|---|---|---|---|
 
-هل أبدأ بالمرحلة A الآن؟ أم تفضّل ترتيباً مختلفاً (مثلاً: A + B معاً)؟
+**القسم 2: تفاصيل العمليات** — جدول قابل للفلترة:
+- فلتر بالمستخدم.
+- فلتر بنطاق التاريخ (من/إلى).
+- فلتر بنوع العملية.
+- فلتر بالغرفة/الضيف.
+
+**القسم 3: ملخص مالي لكل مستخدم**
+- إجمالي المقبوضات النقدية لكل موظف خلال الفترة.
+- متوسط قيمة الحجز.
+- عدد الإلغاءات.
+
+**التصدير:**
+- زر **Export Excel** (XLSX) — جدول كامل لجميع العمليات + ورقة منفصلة للملخص لكل مستخدم.
+- زر **Export PDF** — تقرير مطبوع بشعار الفندق + الفترة + اسم المُصدِر.
+- زر **Print**.
+
+**صلاحية الوصول:**
+- `reports.user-activity` للموظفين (يرى نشاطه فقط افتراضياً).
+- Admin يرى الكل ويستطيع التصدير.
+
+---
+
+## 5. تعديلات على الواجهة الحالية
+
+- **TopBar:** اسم المستخدم الحقيقي + زر **Logout** + اسم الدور (Admin/Staff).
+- **Sidebar:** فلترة العناصر تلقائياً حسب صلاحيات المستخدم. رابط "Users" و"User Activity Report" يظهران للمدير فقط (أو حسب الصلاحية).
+- **CheckoutDialog / PaymentForm:** Cash فقط، إزالة Card/Bank/Online من `paymentSchema`.
+- **NewReservationDialog / Extend Stay:** عند الحفظ، يُسجَّل العامل الذي قام بالعملية.
+
+---
+
+## 6. Night Audit يدوي + الإشعارات
+
+- زر بارز في `/night-audit` (موجود) يتحقق من صلاحية `night-audit.run`.
+- عند التنفيذ: يقفل اليوم، يحسب إيرادات اليوم، يأخذ snapshot، يُسجَّل في activity log باسم الموظف.
+- تذكير في `NotificationsBell` بعد 11 مساءً إذا لم يُشغَّل اليوم.
+
+---
+
+## 7. الملفات المتأثرة
+
+**ملفات جديدة:**
+- `src/lib/crypto.ts` — SHA-256 helper
+- `src/lib/permissions.ts` — قائمة الصلاحيات + helpers (`hasPermission`)
+- `src/store/auth-store.ts`
+- `src/store/activity-store.ts`
+- `src/routes/login.tsx`
+- `src/routes/_authenticated.tsx` — layout حماية
+- `src/routes/_authenticated/users.tsx`
+- `src/routes/_authenticated/profile.tsx`
+- `src/routes/_authenticated/reports.user-activity.tsx`
+- `src/components/auth/LoginForm.tsx`
+- `src/components/auth/PermissionGate.tsx`
+- `src/components/users/UserFormDialog.tsx`
+- `src/components/users/PermissionsEditor.tsx`
+- `src/components/reports/UserActivityTable.tsx`
+- `src/components/reports/UserActivitySummary.tsx`
+- `src/lib/activity-export.ts` — تصدير Excel/PDF
+
+**ملفات معدّلة:**
+- نقل كل المسارات الحالية تحت `_authenticated/`.
+- `src/components/layout/TopBar.tsx`
+- `src/components/layout/AppSidebar.tsx`
+- `src/components/reservations/CheckoutDialog.tsx` + `NewReservationDialog.tsx`
+- `src/lib/validation.ts` (paymentSchema → cash فقط)
+- `src/routes/payments.tsx`
+- `src/routes/night-audit.tsx`
+- `src/components/system/NotificationsBell.tsx`
+- `src/store/hotel-store.ts` — إضافة `createdByUserId` لكل عملية، ربط actions بـ activity logger.
+
+---
+
+## ⚠️ ملاحظات أمنية مهمة
+
+- بما أن النظام أوفلاين، **أي شخص لديه وصول للجهاز يستطيع نظرياً فتح Developer Tools وقراءة localStorage**. هذا النظام يحمي من المستخدمين العاديين عبر الواجهة، لكنه ليس حماية ضد مهاجم تقني له وصول فيزيائي.
+- لا يوجد "نسيت كلمة السر" — المدير وحده يعيد التعيين. إذا فقد المدير كلمته، الحل الوحيد مسح localStorage (وفقدان البيانات).
+- للحماية الحقيقية مستقبلاً → Lovable Cloud مع RLS.
+
+---
+
+## ترتيب التنفيذ
+
+1. `crypto.ts` + `permissions.ts` + `auth-store` + مستخدم admin افتراضي.
+2. صفحة `/login` و layout `_authenticated`، نقل المسارات.
+3. صفحة `/users` (إدارة الحسابات والصلاحيات).
+4. تعديل TopBar + Sidebar.
+5. `activity-store` + ربطها بكل actions في `hotel-store` (حجوزات، دفعات، تمديد، check-in/out).
+6. صفحة `/reports/user-activity` + التصدير Excel/PDF.
+7. تنظيف بوابات الدفع → Cash فقط.
+8. Night Audit اليدوي + تذكير الإشعار.
+9. اختبار شامل: admin → ينشئ موظف بصلاحيات محدودة → يسجّل دخوله → يجري عمليات → admin يفتح التقرير ويرى نشاطه بالأرقام.
+
+---
+
+هل توافق على الخطة؟ أو تريد تعديل (مثلاً: حقول إضافية في التقرير، دور ثالث كـ "محاسب"، أو تغيير اسم المدير الافتراضي)؟
