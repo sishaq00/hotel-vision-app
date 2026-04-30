@@ -1238,6 +1238,25 @@ export const useHotelStore = create<HotelState>()(
           }));
         },
 
+        // -------------------- Reports --------------------
+        recordReportRun: (r) => {
+          const id = uid();
+          set((s) => ({
+            reportRuns: [
+              { ...r, id, ranAt: new Date().toISOString() },
+              ...s.reportRuns,
+            ].slice(0, 200),
+          }));
+          log({
+            entity: "report",
+            entityId: id,
+            action: "create",
+            description: `Report run: ${r.reportName} (${r.format}${r.rowCount != null ? ` · ${r.rowCount} rows` : ""})`,
+          });
+          return id;
+        },
+        clearReportRuns: () => set({ reportRuns: [] }),
+
         // -------------------- Settings --------------------
         updateSettings: (patch) => {
           set((state) => ({ settings: { ...state.settings, ...patch } }));
