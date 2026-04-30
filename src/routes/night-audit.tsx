@@ -52,7 +52,10 @@ function NightAuditWizard() {
   const guests = useHotelStore((s) => s.guests);
   const markNoShow = useHotelStore((s) => s.markNoShow);
 
-  const [auditDate] = useState(todayIso());
+  const setLastNightAuditDate = useHotelStore((s) => s.setLastNightAuditDate);
+  const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
+
+  const [auditDate, setAuditDate] = useState(todayIso());
   const [step, setStep] = useState(0);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
 
