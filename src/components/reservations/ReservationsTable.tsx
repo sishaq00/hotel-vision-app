@@ -1,7 +1,8 @@
 // Shared reservations table used by In-House, Arrivals, Departures,
 // Recently Viewed, Search and Archived pages.
-import { Download, LogIn, LogOut, Printer, X } from "lucide-react";
+import { Download, LogIn, LogOut, Printer, X, CalendarPlus } from "lucide-react";
 import { useState } from "react";
+import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -50,6 +51,7 @@ export function ReservationsTable({
   const confirm = useConfirm();
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
+  const [extendId, setExtendId] = useState<string | null>(null);
 
   // Build flat rows for export (resolves guest/room names).
   const exportRows = reservations.map((r) => {
@@ -127,14 +129,25 @@ export function ReservationsTable({
                         </Button>
                       )}
                       {actions.checkOut && r.status === "checked-in" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 gap-1.5"
-                          onClick={() => setCheckoutId(r.id)}
-                        >
-                          <LogOut className="h-3.5 w-3.5" /> Check out
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5"
+                            onClick={() => setExtendId(r.id)}
+                            title="Extend or shorten stay"
+                          >
+                            <CalendarPlus className="h-3.5 w-3.5" /> Extend
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5"
+                            onClick={() => setCheckoutId(r.id)}
+                          >
+                            <LogOut className="h-3.5 w-3.5" /> Check out
+                          </Button>
+                        </>
                       )}
                       {actions.invoice && r.status === "checked-out" && r.invoice && (
                         <>
@@ -211,6 +224,10 @@ export function ReservationsTable({
           />
         );
       })()}
+      <ExtendStayDialog
+        reservation={extendId ? reservations.find((x) => x.id === extendId) ?? null : null}
+        onClose={() => setExtendId(null)}
+      />
     </>
   );
 }

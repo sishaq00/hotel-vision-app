@@ -20,8 +20,11 @@ export function NotificationsBell() {
   const navigate = useNavigate();
   const { t } = useT();
 
+  const lastNightAuditDate = useHotelStore((s) => s.lastNightAuditDate);
+
   const alerts = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const arrivals = reservations.filter(
       (r) => r.status === "confirmed" && (r.checkIn ?? "").slice(0, 10) === today
     );
@@ -32,14 +35,18 @@ export function NotificationsBell() {
       (r) => r.status === "checked-in" && (r.checkOut ?? "").slice(0, 10) < today
     );
     const ooo = rooms.filter((r) => r.status === "maintenance");
-    return { arrivals, departures, overdue, ooo };
-  }, [reservations, rooms]);
+    // Night audit reminder: after 3am if yesterday wasn't audited yet
+    const hour = new Date().getHours();
+    const auditDue = hour >= 3 && (!lastNightAuditDate || lastNightAuditDate < yesterday);
+    return { arrivals, departures, overdue, ooo, auditDue };
+  }, [reservations, rooms, lastNightAuditDate]);
 
   const total =
     alerts.arrivals.length +
     alerts.departures.length +
     alerts.overdue.length +
-    alerts.ooo.length;
+    alerts.ooo.length +
+    (alerts.auditDue ? 1 : 0);
 
   return (
     <DropdownMenu>
@@ -95,6 +102,13 @@ export function NotificationsBell() {
                 <BedDouble className="h-3.5 w-3.5 text-amber-500" />
                 <span className="flex-1">{t("notifications.ooo") || "Rooms out of service"}</span>
                 <span className="font-semibold">{alerts.ooo.length}</span>
+              </DropdownMenuItem>
+            )}
+            {alerts.auditDue && (
+              <DropdownMenuItem onClick={() => navigate({ to: "/night-audit" })} className="gap-2 text-xs text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span className="flex-1">Night Audit pending</span>
+                <span className="font-semibold">!</span>
               </DropdownMenuItem>
             )}
           </>

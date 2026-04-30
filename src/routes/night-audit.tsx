@@ -52,7 +52,10 @@ function NightAuditWizard() {
   const guests = useHotelStore((s) => s.guests);
   const markNoShow = useHotelStore((s) => s.markNoShow);
 
-  const [auditDate] = useState(todayIso());
+  const setLastNightAuditDate = useHotelStore((s) => s.setLastNightAuditDate);
+  const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
+
+  const [auditDate, setAuditDate] = useState(todayIso());
   const [step, setStep] = useState(0);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
 
@@ -171,6 +174,7 @@ function NightAuditWizard() {
       settings,
     });
     markStepDone("report");
+    setLastNightAuditDate(auditDate);
     toast.success("Night audit completed", {
       description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy`,
     });
@@ -181,8 +185,17 @@ function NightAuditWizard() {
   return (
     <AppLayout
       title="Night Audit"
-      subtitle={`Daily closing for ${new Date(auditDate).toLocaleDateString()}`}
+      subtitle={`Closing for ${new Date(auditDate).toLocaleDateString()}${lastAuditDate ? ` · last run: ${lastAuditDate}` : ""}`}
     >
+      <div className="mb-3 flex items-center gap-2">
+        <label className="text-xs text-muted-foreground">Audit date:</label>
+        <input
+          type="date"
+          value={auditDate}
+          onChange={(e) => setAuditDate(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+        />
+      </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         {/* Wizard */}
         <Card className="border-border/60 p-5 shadow-card">
