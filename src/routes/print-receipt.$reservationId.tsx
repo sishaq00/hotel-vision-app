@@ -25,9 +25,11 @@ function PrintReceipt() {
   const settings = useHotelStore((s) => s.settings);
 
   useEffect(() => {
+    if (reservation?.invoice) recordPrint(reservationId, "receipt-80mm");
     const t = setTimeout(() => window.print(), 400);
     return () => clearTimeout(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
 
   if (!reservation || !reservation.invoice) {
     return <div style={{ padding: 24, fontSize: 12 }}>Not found.</div>;
