@@ -174,6 +174,7 @@ function NightAuditWizard() {
       settings,
     });
     markStepDone("report");
+    setLastNightAuditDate(auditDate);
     toast.success("Night audit completed", {
       description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy`,
     });
