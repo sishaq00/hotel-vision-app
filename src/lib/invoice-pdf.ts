@@ -26,18 +26,32 @@ export function generateInvoicePDF(args: InvoiceArgs): jsPDF {
   const margin = 48;
   let y = margin;
 
+  // Optional logo (top-left)
+  let textX = margin;
+  if (settings.logoDataUrl) {
+    try {
+      const fmt = settings.logoDataUrl.includes("image/png") ? "PNG" : "JPEG";
+      doc.addImage(settings.logoDataUrl, fmt, margin, y - 4, 56, 56);
+      textX = margin + 68;
+    } catch {
+      /* invalid image — skip */
+    }
+  }
+
   // Header — hotel
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.text(settings.hotelName || "Hotel", margin, y);
+  doc.text(settings.hotelName || "Hotel", textX, y + 4);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(100);
-  y += 18;
-  if (settings.address) { doc.text(settings.address, margin, y); y += 12; }
+  y += 22;
+  if (settings.address) { doc.text(settings.address, textX, y); y += 12; }
   const contactLine = [settings.contactPhone, settings.contactEmail]
     .filter(Boolean).join("  ·  ");
-  if (contactLine) { doc.text(contactLine, margin, y); y += 12; }
+  if (contactLine) { doc.text(contactLine, textX, y); y += 12; }
+  if (settings.taxId) { doc.text(`Tax ID: ${settings.taxId}`, textX, y); y += 12; }
+  if (settings.logoDataUrl) y = Math.max(y, margin + 60);
 
   // Invoice title block (right side)
   doc.setTextColor(20);
@@ -147,12 +161,20 @@ export function generateInvoicePDF(args: InvoiceArgs): jsPDF {
   doc.text("TOTAL", labelX, y, { align: "right" });
   doc.text(fmt(invoice.total, invoice.currency), valueX, y, { align: "right" });
 
-  // Footer
+  // Footer — invoice notes + custom footer text
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
+  doc.setTextColor(110);
+  let footerY = doc.internal.pageSize.getHeight() - margin - 24;
+  if (settings.invoiceNotes) {
+    doc.text(settings.invoiceNotes, margin, footerY, {
+      maxWidth: pageW - margin * 2,
+    });
+    footerY += 14;
+  }
   doc.setTextColor(140);
   doc.text(
-    "Thank you for staying with us.",
+    settings.invoiceFooter || "Thank you for staying with us.",
     pageW / 2,
     doc.internal.pageSize.getHeight() - margin,
     { align: "center" },
