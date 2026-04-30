@@ -1,6 +1,6 @@
 // Check-out dialog: shows itemized invoice + persists & downloads PDF.
 import { useMemo, useState } from "react";
-import { Download, LogOut } from "lucide-react";
+import { Download, LogOut, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -166,6 +166,16 @@ export function CheckoutDialog({
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              window.open(`/print-invoice/${reservation.id}`, "_blank");
+            }}
+            title="Open printable invoice"
+          >
+            <Printer className="h-4 w-4" /> Print
           </Button>
           <Button type="button" variant="secondary" onClick={() => handleConfirm(false)}>
             <LogOut className="h-4 w-4" /> {t("co.checkout-only")}
