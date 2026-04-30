@@ -1,4 +1,4 @@
-// New reservation dialog with overlap validation
+// New reservation dialog with Zod validation + overlap detection + i18n.
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useHotelStore } from "@/store/hotel-store";
@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
+import { guestSchema, reservationSchema, parseOrToast } from "@/lib/validation";
 
 interface NewReservationDialogProps {
   trigger?: React.ReactNode | null;
@@ -41,6 +43,7 @@ export function NewReservationDialog({
     if (isControlled) onOpenChangeProp?.(v);
     else setOpenInner(v);
   };
+  const { t } = useT();
 
   // form fields
   const [name, setName] = useState("");
@@ -56,12 +59,10 @@ export function NewReservationDialog({
 
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
-  const reservations = useHotelStore((s) => s.reservations);
   const addGuest = useHotelStore((s) => s.addGuest);
   const addReservation = useHotelStore((s) => s.addReservation);
   const hasRoomConflict = useHotelStore((s) => s.hasRoomConflict);
 
-  // Rooms not in maintenance can be booked for future dates even if currently occupied
   const bookableRooms = rooms.filter((r) => r.status !== "maintenance");
 
   const datesValid =
@@ -70,53 +71,45 @@ export function NewReservationDialog({
     new Date(checkOut).getTime() > new Date(checkIn).getTime();
 
   const conflict =
-    roomId && datesValid
-      ? hasRoomConflict(roomId, checkIn, checkOut)
-      : null;
+    roomId && datesValid ? hasRoomConflict(roomId, checkIn, checkOut) : null;
 
   const conflictGuestName = conflict
     ? guests.find((g) => g.id === conflict.guestId)?.name ?? "another guest"
     : null;
 
   const reset = () => {
-    setName("");
-    setEmail("");
-    setPhone("");
-    setCountry("");
-    setExistingGuestId("__new__");
-    setRoomId("");
+    setName(""); setEmail(""); setPhone(""); setCountry("");
+    setExistingGuestId("__new__"); setRoomId("");
     setCheckIn(new Date().toISOString().slice(0, 10));
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomId) {
-      toast.error("Please select a room");
-      return;
-    }
-    if (!datesValid) {
-      toast.error("Check-out must be after check-in");
-      return;
-    }
-
-    const nights = Math.max(
-      1,
-      Math.ceil(
-        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000,
-      ),
-    );
-    const room = rooms.find((r) => r.id === roomId);
-    if (!room) return;
 
     let guestId = existingGuestId;
     if (existingGuestId === "__new__") {
-      if (!name.trim()) {
-        toast.error("Guest name is required");
-        return;
-      }
-      guestId = addGuest({ name, email, phone, country });
+      const parsed = parseOrToast(guestSchema, { name, email, phone, country });
+      if (!parsed) return;
+      guestId = addGuest({
+        name: parsed.name,
+        email: parsed.email ?? "",
+        phone: parsed.phone ?? "",
+        country: parsed.country ?? "",
+      });
     }
+
+    const resValid = parseOrToast(reservationSchema, {
+      guestId, roomId, checkIn, checkOut,
+    });
+    if (!resValid) return;
+
+    const room = rooms.find((r) => r.id === roomId);
+    if (!room) return;
+    const nights = Math.max(
+      1,
+      Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000),
+    );
 
     const result = addReservation({
       guestId,
@@ -128,12 +121,12 @@ export function NewReservationDialog({
     });
 
     if (!result.ok) {
-      toast.error("Cannot create reservation", { description: result.error });
+      toast.error(t("res.cannot-create"), { description: result.error });
       return;
     }
 
-    toast.success("Reservation created", {
-      description: `${nights} night${nights > 1 ? "s" : ""} · Room ${room.number}`,
+    toast.success(t("res.created"), {
+      description: `${nights} ${nights > 1 ? t("co.nights-plural") : t("co.nights")} · ${t("co.room")} ${room.number}`,
     });
     reset();
     setOpen(false);
@@ -146,32 +139,26 @@ export function NewReservationDialog({
           {trigger ?? (
             <Button className="gap-2 shadow-md">
               <Plus className="h-4 w-4" />
-              New Reservation
+              {t("res.new")}
             </Button>
           )}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>New Reservation</DialogTitle>
-          <DialogDescription>
-            Create a new booking. Select an existing guest or add a new one.
-          </DialogDescription>
+          <DialogTitle>{t("res.new")}</DialogTitle>
+          <DialogDescription>{t("res.new-desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Guest</Label>
+            <Label>{t("res.guest")}</Label>
             <Select value={existingGuestId} onValueChange={setExistingGuestId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__new__">+ Add new guest</SelectItem>
+                <SelectItem value="__new__">{t("res.add-new-guest")}</SelectItem>
                 {guests.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.name}
-                  </SelectItem>
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -180,71 +167,37 @@ export function NewReservationDialog({
           {existingGuestId === "__new__" && (
             <div className="grid grid-cols-1 gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="name" className="text-xs">
-                  Full name *
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                />
+                <Label htmlFor="name" className="text-xs">{t("res.full-name")} *</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" maxLength={120} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@example.com"
-                />
+                <Label htmlFor="email" className="text-xs">{t("res.email")}</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" maxLength={255} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-xs">
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 555 ..."
-                />
+                <Label htmlFor="phone" className="text-xs">{t("res.phone")}</Label>
+                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 ..." maxLength={40} />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="country" className="text-xs">
-                  Country
-                </Label>
-                <Input
-                  id="country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="United States"
-                />
+                <Label htmlFor="country" className="text-xs">{t("res.country")}</Label>
+                <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" maxLength={80} />
               </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label>Room</Label>
+            <Label>{t("res.room")}</Label>
             <Select value={roomId} onValueChange={setRoomId}>
               <SelectTrigger>
-                <SelectValue placeholder={
-                  bookableRooms.length === 0
-                    ? "No rooms available — add one first"
-                    : "Select a room"
-                } />
+                <SelectValue placeholder={bookableRooms.length === 0 ? t("res.no-rooms") : t("res.select-room")} />
               </SelectTrigger>
               <SelectContent>
                 {bookableRooms.map((r) => {
-                  const conflictForRoom =
-                    datesValid && hasRoomConflict(r.id, checkIn, checkOut);
+                  const conflictForRoom = datesValid && hasRoomConflict(r.id, checkIn, checkOut);
                   return (
                     <SelectItem key={r.id} value={r.id}>
-                      Room {r.number} · {r.type} · ${r.price}/night
-                      {conflictForRoom ? " · ⚠ booked" : ""}
+                      {t("co.room")} {r.number} · {r.type} · ${r.price}/{t("co.nights")}
+                      {conflictForRoom ? " · ⚠" : ""}
                     </SelectItem>
                   );
                 })}
@@ -254,46 +207,36 @@ export function NewReservationDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="checkin">Check-in</Label>
-              <Input
-                id="checkin"
-                type="date"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-              />
+              <Label htmlFor="checkin">{t("res.checkin")}</Label>
+              <Input id="checkin" type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="checkout">Check-out</Label>
-              <Input
-                id="checkout"
-                type="date"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-              />
+              <Label htmlFor="checkout">{t("res.checkout")}</Label>
+              <Input id="checkout" type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
             </div>
           </div>
 
           {!datesValid && checkIn && checkOut && (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              Check-out date must be after check-in date.
+              {t("res.dates-invalid")}
             </div>
           )}
 
           {conflict && (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              <p className="font-medium">Room not available for these dates</p>
+              <p className="font-medium">{t("res.room-unavailable")}</p>
               <p className="mt-1 text-xs opacity-90">
-                Already booked by {conflictGuestName} from {conflict.checkIn} to {conflict.checkOut}. Pick different dates or another room.
+                {conflictGuestName} · {conflict.checkIn} → {conflict.checkOut}
               </p>
             </div>
           )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={!datesValid || !roomId || !!conflict}>
-              Create reservation
+              {t("res.create")}
             </Button>
           </DialogFooter>
         </form>
