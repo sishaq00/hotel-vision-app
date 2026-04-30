@@ -1061,21 +1061,49 @@ export const useHotelStore = create<HotelState>()(
 
         // -------------------- Shifts --------------------
         startShift: (userName, openingCash = 0) => {
+          // Try to bind to current authenticated user; fall back to provided name.
+          let userId = userName;
+          let resolvedName = userName;
+          try {
+            // dynamic require to avoid circular import at module load
+            const { useAuthStore } = require("@/store/auth-store") as typeof import("@/store/auth-store");
+            const me = useAuthStore.getState().current();
+            if (me) {
+              userId = me.id;
+              resolvedName = me.fullName || me.username;
+            }
+          } catch { /* ignore */ }
+
+          // prevent duplicate open shift for same user
+          const existing = get().shifts.find(
+            (s) => s.status === "open" && s.userId === userId,
+          );
+          if (existing) {
+            return existing.id;
+          }
+
           const id = uid();
           set((s) => ({
             shifts: [
               ...s.shifts,
               {
                 id,
-                userId: userName,
-                userName,
+                userId,
+                userName: resolvedName,
                 startedAt: new Date().toISOString(),
                 openingCash,
                 status: "open",
               },
             ],
           }));
-          log({ entity: "shift", entityId: id, action: "create", description: `Shift started by ${userName}` });
+          log({ entity: "shift", entityId: id, action: "create", description: `Shift started by ${resolvedName}` });
+          logActivity({
+            action: "shift.open",
+            entityType: "shift",
+            entityId: id,
+            description: `Opened shift · opening cash ${openingCash.toFixed(2)}`,
+            details: { openingCash },
+          });
           return id;
         },
         endShift: (id, closingCash, notes) => {
