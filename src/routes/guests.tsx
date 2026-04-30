@@ -71,9 +71,23 @@ function GuestsPage() {
               className="pl-9"
             />
           </div>
-          <p className="text-sm text-muted-foreground">
-            {guests.length} total guest{guests.length === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {guests.length} total guest{guests.length === 1 ? "" : "s"}
+            </p>
+            <ExportButtons
+              rows={filtered.map((g) => ({
+                Name: g.name,
+                Email: g.email,
+                Phone: g.phone,
+                Country: g.country,
+                VIP: g.vip ? "Yes" : "",
+                "Do Not Rent": g.doNotRent ? "Yes" : "",
+                Created: g.createdAt,
+              }))}
+              filename="guests"
+            />
+          </div>
         </div>
 
         {filtered.length === 0 ? (
