@@ -1327,6 +1327,7 @@ export const useHotelStore = create<HotelState>()(
           state.inventoryItems ??= [];
           state.productItems ??= [];
           state.routingRules ??= [];
+          state.reportRuns ??= [];
         }
         return state as HotelState;
       },
