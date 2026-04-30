@@ -279,7 +279,8 @@ export type AuditEntity =
   | "house-account"
   | "inventory"
   | "product"
-  | "routing";
+  | "routing"
+  | "report";
 
 export type AuditAction =
   | "create"
