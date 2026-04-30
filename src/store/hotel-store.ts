@@ -67,6 +67,18 @@ export interface InvoiceSnapshot {
   currency: string;
 }
 
+export interface CreditNote {
+  id: string;
+  number: string;                 // CN-YYYY-000001
+  reservationId: string;
+  invoiceNumber: string;          // original invoice
+  amount: number;                 // positive number subtracted from invoice
+  reason: string;
+  issuedAt: string;
+  issuedBy?: string;
+  cancelInvoice?: boolean;        // if true → invoice fully cancelled
+}
+
 export type ReservationSource = "walk-in" | "phone" | "group" | "direct";
 
 export interface Reservation {
