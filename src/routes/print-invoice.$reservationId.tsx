@@ -223,6 +223,13 @@ function PrintInvoice() {
           </div>
         )}
 
+        {reservation.notes && (
+          <div style={{ marginTop: 18, padding: 10, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 4, position: "relative", zIndex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Notes</div>
+            <div style={{ fontSize: 11, whiteSpace: "pre-wrap", color: "#78350f" }}>{reservation.notes}</div>
+          </div>
+        )}
+
         <div className="footer">
           {settings.invoiceFooter ? (
             <p className="muted" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{settings.invoiceFooter}</p>
