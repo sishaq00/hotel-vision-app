@@ -344,6 +344,12 @@ const ar: Dict = {
   "co.checkout-pdf": "خروج وتنزيل PDF",
   "co.success": "تم الخروج",
   "co.failed": "تعذّر إتمام الخروج",
+  "notifications.title": "الإشعارات",
+  "notifications.empty": "لا توجد تنبيهات",
+  "notifications.arrivals": "وصول اليوم",
+  "notifications.departures": "مغادرات اليوم",
+  "notifications.overdue": "خروج متأخر",
+  "notifications.ooo": "غرف خارج الخدمة",
 };
 
 const dicts: Record<Lang, Dict> = { en, ar };
