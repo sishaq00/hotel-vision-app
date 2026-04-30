@@ -1,7 +1,7 @@
 // Seasonal rate plans — pure-frontend, persisted in localStorage.
 // Each plan: name, room type code, price/night, valid from/to.
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Tag } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
@@ -65,7 +65,11 @@ function isActive(plan: RatePlan): boolean {
 }
 
 function RatePlansPage() {
-  const roomTypes = useHotelStore((s) => s.roomTypes ?? []);
+  const rooms = useHotelStore((s) => s.rooms);
+  const roomTypes = useMemo(
+    () => Array.from(new Set(rooms.filter((r) => !r.archived).map((r) => r.type))),
+    [rooms],
+  );
   const settings = useHotelStore((s) => s.settings);
   const confirm = useConfirm();
 
@@ -169,9 +173,9 @@ function RatePlansPage() {
                       {roomTypes.length === 0 ? (
                         <SelectItem value="ALL">All types</SelectItem>
                       ) : (
-                        roomTypes.map((t) => (
-                          <SelectItem key={t.code} value={t.code}>
-                            {t.code} — {t.name}
+                        roomTypes.map((rt) => (
+                          <SelectItem key={rt} value={rt}>
+                            {rt}
                           </SelectItem>
                         ))
                       )}
