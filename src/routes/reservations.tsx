@@ -166,7 +166,15 @@ function ReservationsPage() {
                               variant="ghost"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
                               title="Cancel reservation"
-                              onClick={() => {
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Cancel reservation?",
+                                  description: "This will release the room. The action cannot be undone.",
+                                  confirmLabel: "Cancel reservation",
+                                  cancelLabel: "Keep",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
                                 cancel(r.id);
                                 toast("Reservation cancelled");
                               }}
