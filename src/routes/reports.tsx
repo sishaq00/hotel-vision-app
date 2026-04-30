@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { BarChart3, Download, FileText, Search, Play, FileSpreadsheet } from "lucide-react";
+import { BarChart3, Download, FileText, Search, Play, FileSpreadsheet, FileDown } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   rowsToCSV, downloadFile, type ReportDefinition,
 } from "@/lib/reports";
 import { downloadExcel } from "@/lib/excel";
+import { downloadReportPDF } from "@/lib/report-pdf";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -61,26 +62,28 @@ function ReportsHub() {
     return [...map.entries()];
   }, [filtered]);
 
-  const runReport = (def: ReportDefinition, format: "csv" | "xlsx" | "preview") => {
+  const runReport = (def: ReportDefinition, format: "csv" | "xlsx" | "pdf" | "preview") => {
     try {
       const rows = def.run(ctx);
-      if (format === "csv" || format === "xlsx") {
-        if (rows.length === 0) {
-          toast("No data to export");
-          recordReportRun({ reportKey: def.key, reportName: def.name, format: format === "xlsx" ? "csv" : "csv", status: "completed", rowCount: 0 });
-          return;
-        }
-        const stamp = new Date().toISOString().slice(0, 10);
-        if (format === "csv") {
-          downloadFile(`${def.key}-${stamp}.csv`, rowsToCSV(rows));
-        } else {
-          downloadExcel(rows as Record<string, unknown>[], `${def.key}-${stamp}.xlsx`, def.name);
-        }
-        toast.success(`Exported ${rows.length} rows`);
-        recordReportRun({ reportKey: def.key, reportName: def.name, format: "csv", status: "completed", rowCount: rows.length });
-      } else {
+      if (format === "preview") {
         setPreviewReport({ def, rows });
+        return;
       }
+      if (rows.length === 0) {
+        toast("No data to export");
+        recordReportRun({ reportKey: def.key, reportName: def.name, format: "csv", status: "completed", rowCount: 0 });
+        return;
+      }
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (format === "csv") {
+        downloadFile(`${def.key}-${stamp}.csv`, rowsToCSV(rows));
+      } else if (format === "xlsx") {
+        downloadExcel(rows as Record<string, unknown>[], `${def.key}-${stamp}.xlsx`, def.name);
+      } else if (format === "pdf") {
+        downloadReportPDF({ title: def.name, rows, settings: ctx.settings });
+      }
+      toast.success(`Exported ${rows.length} rows`);
+      recordReportRun({ reportKey: def.key, reportName: def.name, format: format === "pdf" ? "pdf" : "csv", status: "completed", rowCount: rows.length });
     } catch (e) {
       toast.error("Report failed");
       recordReportRun({ reportKey: def.key, reportName: def.name, format: "json", status: "failed", notes: String(e) });
@@ -147,8 +150,11 @@ function ReportsHub() {
                       <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => runReport(def, "csv")} title="CSV">
                         <Download className="h-3 w-3" />
                       </Button>
-                      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => runReport(def, "xlsx")} title="Excel">
+                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => runReport(def, "xlsx")} title="Excel">
                         <FileSpreadsheet className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => runReport(def, "pdf")} title="PDF">
+                        <FileDown className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
