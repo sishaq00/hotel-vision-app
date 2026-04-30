@@ -110,13 +110,14 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const path = location.pathname;
+  const { t } = useT();
 
   const isActive = (url: string) =>
     url === "/" ? path === "/" : path === url || path.startsWith(url + "/");
 
   // Auto-open groups if any child matches current route
   const bulkOpen = bulkRoutingItems.some((i) => isActive(i.url));
-  const moreOpen = moreItems.some((i) => isActive(i.url));
+  const _moreOpen = moreItems.some((i) => isActive(i.url));
 
   const [bulkExpanded, setBulkExpanded] = useState<boolean>(bulkOpen);
   const [moreExpanded, setMoreExpanded] = useState<boolean>(true);
@@ -131,10 +132,10 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-xs font-semibold leading-tight text-sidebar-foreground">
-                NEXORA OS
+                {t("app.name")}
               </p>
               <p className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-sidebar-foreground/60">
-                Hotel Suite
+                {t("nav.hotel-suite")}
               </p>
             </div>
           )}
@@ -147,10 +148,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {topItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={t(item.key)}
                     className={cn(
                       "h-8 rounded text-[13px] text-sidebar-foreground/90",
                       "hover:bg-sidebar-accent hover:text-sidebar-foreground",
@@ -160,7 +161,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.title}</span>
+                      <span>{t(item.key)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -177,10 +178,10 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     className="h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    tooltip="Bulk Routing and Postings"
+                    tooltip={t("nav.bulk-routing")}
                   >
                     <Receipt className="h-4 w-4 shrink-0" />
-                    <span>Bulk Routing and Postings</span>
+                    <span>{t("nav.bulk-routing")}</span>
                     <ChevronDown
                       className={cn(
                         "ml-auto h-3.5 w-3.5 transition-transform",
@@ -193,7 +194,7 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
                   {bulkRoutingItems.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
+                    <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
                         isActive={isActive(item.url)}
@@ -201,7 +202,7 @@ export function AppSidebar() {
                       >
                         <Link to={item.url}>
                           <item.icon className="h-3.5 w-3.5" />
-                          <span>{item.title}</span>
+                          <span>{t(item.key)}</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -220,10 +221,10 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     className="h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    tooltip="More"
+                    tooltip={t("nav.more")}
                   >
                     <MoreHorizontal className="h-4 w-4 shrink-0" />
-                    <span>More</span>
+                    <span>{t("nav.more")}</span>
                     <ChevronDown
                       className={cn(
                         "ml-auto h-3.5 w-3.5 transition-transform",
@@ -236,7 +237,7 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
                   {moreItems.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
+                    <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
                         isActive={isActive(item.url)}
@@ -244,7 +245,7 @@ export function AppSidebar() {
                       >
                         <Link to={item.url}>
                           <item.icon className="h-3.5 w-3.5" />
-                          <span>{item.title}</span>
+                          <span>{t(item.key)}</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -260,10 +261,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {bottomItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={t(item.key)}
                     className={cn(
                       "h-8 rounded text-[13px] text-sidebar-foreground/90",
                       "hover:bg-sidebar-accent hover:text-sidebar-foreground",
@@ -273,7 +274,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{item.title}</span>
+                      <span className="flex-1">{t(item.key)}</span>
                       {item.external && (
                         <ExternalLink className="h-3 w-3 opacity-60" />
                       )}
@@ -292,7 +293,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Audit Log"
+                  tooltip={t("nav.audit")}
                   className={cn(
                     "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
@@ -300,14 +301,14 @@ export function AppSidebar() {
                 >
                   <Link to="/audit">
                     <History className="h-4 w-4" />
-                    <span>Audit Log</span>
+                    <span>{t("nav.audit")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Settings"
+                  tooltip={t("nav.settings")}
                   className={cn(
                     "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
@@ -315,7 +316,7 @@ export function AppSidebar() {
                 >
                   <Link to="/settings">
                     <SettingsIcon className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t("nav.settings")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
