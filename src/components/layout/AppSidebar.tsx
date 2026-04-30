@@ -177,7 +177,7 @@ export function AppSidebar() {
         <SidebarGroup className="px-1 py-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {topItems.map((item) => (
+              {visibleTop.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
@@ -223,7 +223,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
-                  {bulkRoutingItems.map((item) => (
+                  {visibleBulk.map((item) => (
                     <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
@@ -266,7 +266,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
-                  {moreItems.map((item) => (
+                  {visibleMore.map((item) => (
                     <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
@@ -290,7 +290,7 @@ export function AppSidebar() {
         <SidebarGroup className="px-1 py-0 mt-1">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {bottomItems.map((item) => (
+              {visibleBottom.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
