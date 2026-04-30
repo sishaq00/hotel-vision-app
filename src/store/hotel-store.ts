@@ -478,6 +478,7 @@ interface HotelState {
 
   // Guests
   addGuest: (guest: Omit<Guest, "id" | "createdAt">) => string;
+  updateGuest: (id: string, patch: Partial<Omit<Guest, "id" | "createdAt">>) => void;
   archiveGuest: (id: string) => { ok: boolean; error?: string };
   restoreGuest: (id: string) => void;
 
