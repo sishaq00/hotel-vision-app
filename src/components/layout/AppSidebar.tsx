@@ -316,6 +316,35 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Admin section — only visible to users with admin permissions */}
+        {visibleAdmin.length > 0 && (
+          <SidebarGroup className="px-1 py-0 mt-2 border-t border-sidebar-border pt-2">
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {visibleAdmin.map((item) => (
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.key}
+                      className={cn(
+                        "h-8 rounded text-[13px] text-sidebar-foreground/90",
+                        "hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                        isActive(item.url) &&
+                          "border-l-2 border-primary bg-sidebar-accent text-sidebar-foreground font-medium",
+                      )}
+                    >
+                      <Link to={item.url}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span>{item.key}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Audit + Settings (NEXORA additions) */}
         <SidebarGroup className="px-1 py-0 mt-2 border-t border-sidebar-border pt-2">
           <SidebarGroupContent>
