@@ -23,6 +23,10 @@ export const PERMISSIONS = [
   // Operations
   "housekeeping.view",
   "housekeeping.update",
+  "housekeeping.assign",
+  "housekeeping.manage-staff",
+  "housekeeping.print",
+  "housekeeping.review-reports",
   "maintenance.manage",
 
   // Money
@@ -85,7 +89,11 @@ export const PERMISSION_GROUPS: Array<{
     label: "Operations",
     items: [
       { key: "housekeeping.view", label: "View housekeeping" },
-      { key: "housekeeping.update", label: "Update housekeeping" },
+      { key: "housekeeping.update", label: "Update housekeeping (clean my rooms)" },
+      { key: "housekeeping.assign", label: "Assign rooms to housekeepers" },
+      { key: "housekeeping.manage-staff", label: "Manage housekeepers & teams" },
+      { key: "housekeeping.print", label: "Print housekeeping reports" },
+      { key: "housekeeping.review-reports", label: "Review housekeeper submitted reports" },
       { key: "maintenance.manage", label: "Manage maintenance" },
     ],
   },
