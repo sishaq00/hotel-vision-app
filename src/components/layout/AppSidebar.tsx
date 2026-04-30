@@ -349,51 +349,57 @@ export function AppSidebar() {
         <SidebarGroup className="px-1 py-0 mt-2 border-t border-sidebar-border pt-2">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={t("nav.audit")}
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/audit">
-                    <History className="h-4 w-4" />
-                    <span>{t("nav.audit")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip="Print Log"
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/print-log") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/print-log">
-                    <Printer className="h-4 w-4" />
-                    <span>Print Log</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={t("nav.settings")}
-                  className={cn(
-                    "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
-                  )}
-                >
-                  <Link to="/settings">
-                    <SettingsIcon className="h-4 w-4" />
-                    <span>{t("nav.settings")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {can("audit.view") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={t("nav.audit")}
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/audit">
+                      <History className="h-4 w-4" />
+                      <span>{t("nav.audit")}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {can("audit.view") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="Print Log"
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/print-log") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/print-log">
+                      <Printer className="h-4 w-4" />
+                      <span>Print Log</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {can("settings.manage") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={t("nav.settings")}
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/settings">
+                      <SettingsIcon className="h-4 w-4" />
+                      <span>{t("nav.settings")}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
