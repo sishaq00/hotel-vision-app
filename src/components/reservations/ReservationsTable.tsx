@@ -224,6 +224,10 @@ export function ReservationsTable({
           />
         );
       })()}
+      <ExtendStayDialog
+        reservation={extendId ? reservations.find((x) => x.id === extendId) ?? null : null}
+        onClose={() => setExtendId(null)}
+      />
     </>
   );
 }
