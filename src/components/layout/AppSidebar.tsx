@@ -35,6 +35,8 @@ import {
   ExternalLink,
   Tag,
   MessageSquareText,
+  ShieldCheck,
+  UserCog,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
