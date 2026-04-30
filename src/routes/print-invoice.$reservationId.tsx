@@ -25,9 +25,11 @@ function PrintInvoice() {
   const settings = useHotelStore((s) => s.settings);
 
   useEffect(() => {
+    if (reservation?.invoice) recordPrint(reservationId, "invoice-a4");
     const t = setTimeout(() => window.print(), 400);
     return () => clearTimeout(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
 
   if (!reservation || !reservation.invoice) {
     return (
