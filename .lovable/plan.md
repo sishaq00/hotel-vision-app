@@ -1,123 +1,208 @@
-## ملخص
 
-تحويل **Shift Management** ليكون قلب يوم الموظف: زر "إنهاء الشفت" يفتح **تقرير شفت تفصيلي** بكل عملياته (حجوزات، تمديد/تقليص، بيع منتجات/Minibar، مدفوعات نقدية، تغييرات غرف…)، مع **حقل توقيع** و**زر طباعة** ليرفقه مع المال المستلم.
-بالإضافة: جعل **Night Audit** قابلاً للتشغيل في أي وقت + **تذكير تلقائي الساعة 3 صباحاً** عبر `NotificationsBell`.
+# خطة Housekeeping الشاملة
 
----
+## 1) نموذج البيانات (`src/store/hotel-store.ts`)
 
-## 1. ربط الشفت بالمستخدم الفعلي
+### تحديث `Room`
+```ts
+{
+  housekeepingStatus: 'clean' | 'dirty' | 'inspected' | 'out-of-order' | 'departure' | 'stayover',
+  taskType?: 'departure' | 'stayover' | 'touch-up' | 'deep-clean' | 'inspection',
+  assignedHousekeeperId?: string,
+  assignedAt?: string,
+  cleaningStartedAt?: string,
+  cleaningFinishedAt?: string,
+  cleaningValue?: number,        // قيمة التنظيف (للأجور)
+  dndFlag?: boolean,             // Do Not Disturb
+  refusedService?: boolean,
+  housekeepingNotes?: string,
+  housekeepingPhotos?: string[], // base64 / URLs
+}
+```
 
-**`src/store/hotel-store.ts`** — تعديل `startShift`:
-- بدل أخذ `userName` يدوياً، يقرأ من `useAuthStore.getState().current()` ويأخذ `userId` و`userName` تلقائياً.
-- إضافة `manualOpening` لإدخال الـ float النقدي الافتتاحي فقط.
-- يمنع فتح أكثر من شفت مفتوح لنفس المستخدم.
+### كيانات جديدة
+```ts
+Housekeeper {
+  id, name, phone?, source: 'system-user' | 'external',
+  systemUserId?: string,   // إذا من نظام المستخدمين
+  active: boolean,
+  capacity: number,        // أقصى عدد غرف/يوم
+  hourlyRate?: number,
+}
 
-**`src/routes/shift-management.tsx`**:
-- زر "Start new shift" يستخدم المستخدم الحالي مباشرة (يختفي حقل الاسم).
-- في "Currently open" يظهر زر **"إنهاء الشفت وعرض التقرير"** بدل الـ dialog البسيط الحالي.
+HousekeepingTeam {
+  id, name, leaderId, memberIds: string[]
+}
 
----
+HousekeeperReport {  // تقرير الموظف بعد التنظيف
+  id, housekeeperId, date,
+  rooms: Array<{ roomNumber, taskType, finishedAt, notes?, photos?[] }>,
+  status: 'submitted' | 'reviewed',
+  submittedAt, reviewedAt?, reviewedBy?
+}
+```
 
-## 2. تقرير الشفت (الحدث الرئيسي)
+### Actions جديدة
+- `assignRoomsToHousekeeper(roomIds[], housekeeperId, taskType)`
+- `assignRoomsToTeam(roomIds[], teamId, taskType)` — توزيع round-robin
+- `autoDistribute(taskType?)` — يوزع كل Dirty على المتاحين حسب `capacity`
+- `unassignRooms(roomIds[])`
+- `markDND(roomId, flag)` / `markRefused(roomId, flag)`
+- `startCleaning(roomId)` / `finishCleaning(roomId, notes?, photos?)` — للموظف
+- `submitHousekeeperReport(housekeeperId)` — يحوّل غرفه المنتهية إلى تقرير
+- `reviewReport(reportId)` — يفتح للمدير
+- `runNightAuditHousekeeping()` — يُحوّل Clean→Departure/Stayover حسب الحجوزات
 
-**ملف جديد:** `src/lib/shift-report.ts`
-دالة `buildShiftReport(shiftId)` تجمع من `useActivityStore` + `useHotelStore` كل ما حدث **بين `startedAt` و الآن** ومن المستخدم نفسه:
+## 2) الصلاحيات (`src/lib/permissions.ts`)
 
-| القسم | المحتوى |
-|---|---|
-| رأس | اسم الفندق + شعار + اسم الموظف + تاريخ ووقت بداية/نهاية الشفت + المدة |
-| الحجوزات الجديدة | لكل حجز: ضيف، غرفة، تواريخ، السعر، الوقت |
-| Check-in / Check-out | غرفة + ضيف + الوقت + المبلغ المحصل عند الخروج |
-| **تمديد / تقليص الإقامة** | الغرفة، الليالي القديمة → الجديدة، فرق المبلغ، الوقت |
-| **مبيعات منتجات (Minibar/Spa/…)** | اسم الصنف، الكمية، الغرفة المُحتسب عليها، السعر، الوقت |
-| المدفوعات النقدية المستلمة | لكل دفعة: الحجز/الضيف، المبلغ، الوقت |
-| استرجاع/تعديل دفعة | تفاصيل + سبب |
-| تغييرات حالة الغرف | (Out of order, صيانة، تنظيف…) |
-| **الملخص المالي** | مجموع المقبوض النقدي، عدد العمليات، رصيد الكاش الافتتاحي، الرصيد المتوقع للتسليم |
-| التوقيعات | خانتان: توقيع الموظف + توقيع المستلم (المدير/المناوبة التالية) |
+- `housekeeping.update` — موجودة (للموظف يحدّث غرفه)
+- `housekeeping.assign` — جديد (للمدير يعيّن)
+- `housekeeping.manage-staff` — جديد (Housekeepers + Teams)
+- `housekeeping.print` — جديد
+- `housekeeping.review-reports` — جديد
 
-**ملف جديد:** `src/components/shifts/EndShiftReportDialog.tsx`
-- Dialog كبير يعرض التقرير بشكل قابل للقراءة.
-- حقل **"Closing cash count"** + ملاحظات.
-- زر **🖨️ Print Shift Report** → يفتح نافذة طباعة بصفحة منسّقة A4.
-- زر **📄 Download PDF** عبر `report-pdf.ts` (نفس النمط الموجود).
-- زر **Confirm & Close Shift** يستدعي `endShift` مع المبلغ والملاحظات + يسجّل في `activity-store` (action: `shift.close`).
+## 3) الواجهة الرئيسية (`src/routes/housekeeping.tsx` — إعادة بناء)
 
-**ملف جديد:** `src/routes/print-shift.$shiftId.tsx`
-- صفحة طباعة مستقلة (مثل `print-invoice`) بحجم A4، أبيض، خانة توقيع في الأسفل + سطر "المبلغ المسلَّم: ____ ____" يدوي.
+### شريط علوي
+```text
+[Cancel] [Select Mode ✓]  Filters: Zone▾ Building▾ Floor▾ Status▾ Task▾
+                          [Auto Distribute] [Manage Staff] [Reports 🔔3]
+```
 
----
-
-## 3. ربط مبيعات المنتجات بالموظف
-
-حالياً `productItems` لا تُسجَّل عمليات البيع. سنضيف:
-
-**`hotel-store.ts`:**
-- `interface ProductSale { id; productId; productName; quantity; unitPrice; total; roomId?; reservationId?; soldAt; userId; userName; shiftId? }`
-- مصفوفة `productSales: ProductSale[]` + action `recordProductSale(...)` يقلّص المخزون ويضيف للـ activity log (`payment.record` + تفاصيل المنتج).
-
-**`src/routes/product-inventory.tsx`** — إضافة زر "Sell" بجانب كل منتج يفتح dialog (الكمية + اختيار غرفة/حجز اختياري) → يستدعي `recordProductSale`.
-
-تظهر هذه المبيعات تلقائياً في تقرير الشفت.
-
----
-
-## 4. تمديد / تقليص الإقامة — تسجيل صريح
-
-البحث الحالي عن action `reservation.extend` موجود في `activity-store`، لكن يجب التأكد من ربطه. إن لم يكن، إضافة:
-- في `hotel-store.ts` → action `changeReservationDates(id, newCheckOut)` يحسب الفرق ويُسجّل في activity log:
+### في وضع Select Mode
+- كل بطاقة غرفة فيها checkbox
+- شريط سفلي ثابت يظهر:
+  ```text
+  3 rooms selected  [Express Assign ▾] [Mark DND] [Clear]
   ```
-  action: "reservation.extend"
-  details: { oldCheckOut, newCheckOut, nightsDelta: +/-N, amountDelta }
-  ```
-- زر "Extend / Shorten stay" في `ReservationsTable` (موجود مسبقاً يحتاج فقط الربط بهذا الـ action إن لم يكن مربوطاً).
+
+### بطاقة الغرفة (`RoomCard.tsx`)
+- رقم الغرفة كبير + نوع السرير (K1KN, etc.)
+- شارة لون حسب الحالة (Departure أحمر، Stayover أصفر، Clean أخضر، Inspected رمادي)
+- Avatar الموظف المعيَّن (أو حرف أول من اسمه)
+- علامات: 🚫 DND، ⚠ Refused، 🔧 Issue
+- نقر → Detail dialog (history, notes, photos, report issue)
+
+### Sidebar يمين: Assigned Panel
+يعرض كل موظف نشط اليوم:
+```text
+👤 Fanar        12/15 ▓▓▓▓▓░  
+👤 Lara          8/10 ▓▓▓▓░░  [Print]
+👤 Mila M        3/8  ▓▓░░░░  
+─────────────
+[Print All] [Print By Floor] [Summary]
+```
+
+## 4) Dialogs جديدة
+
+### `ExpressAssignDialog.tsx`
+- Tab 1: **Individual** — قائمة Housekeepers + اختيار `taskType` + عدد الغرف المحدد
+- Tab 2: **Team** — قائمة فرق + معاينة التوزيع (round-robin) قبل التأكيد
+- زر Confirm → يستدعي action ويعرض toast
+
+### `ManageHousekeepersDialog.tsx`
+- جدول: الاسم، المصدر (System/External)، السعة، نشط
+- زر Add: form (الاسم، الهاتف، السعة، اختياري ربط بـ system user)
+- Edit / Deactivate
+
+### `HousekeepingTeamsDialog.tsx`
+- قائمة فرق + Add Team
+- لكل فريق: اختيار Leader + Members من Housekeepers
+
+### `RoomDetailDialog.tsx`
+- History (من-إلى-من-متى)
+- Notes timeline + Photos thumbnails
+- زر **Report Maintenance Issue** → يفتح `MaintenanceTicketDialog` المعبّأ مسبقاً
+
+### `HousekeeperReportsDialog.tsx` (للمدير)
+- قائمة تقارير اليوم
+- نقر → معاينة الغرف المنتهية + أزرار جماعية: Mark all Clean / Mark all Inspected
+- بعد المراجعة: تحديث حالات الغرف
+
+## 5) شاشة الموظف (`src/routes/my-housekeeping.tsx`)
+
+موبايل-فريندلي. يرى فقط غرفه المُعيَّنة:
+
+```text
+My Rooms — 8 assigned, 3 done
+─────────────────────────────
+[101] Departure   [Start]
+[102] Stayover    🕐 in progress 12m  [Finish]
+[103] Departure   ✓ Done 8m
+...
+[Submit Today's Report] (يظهر عند انتهاء الكل)
+```
+
+- زر Start → يحفظ `cleaningStartedAt`
+- زر Finish → dialog (notes اختيارية + رفع صور إن وُجد تلف) → يحفظ `cleaningFinishedAt`
+- زر Submit Report → ينشئ `HousekeeperReport` ويُرسل للمدير (إشعار في Bell)
+
+## 6) Night Audit Integration
+
+في `src/routes/night-audit.tsx`:
+- إضافة بند جديد: **"Reclassify Housekeeping Rooms"**
+- منطق `runNightAuditHousekeeping`:
+  - لكل غرفة `housekeepingStatus === 'clean' || 'inspected'`:
+    - ابحث عن حجز نشط فيها
+    - إذا `checkOutDate <= today` → status = `departure`, taskType = `departure`
+    - إذا الحجز مستمر → status = `stayover`, taskType = `stayover`
+    - إذا لا حجز → تبقى `clean`
+  - مسح `assignedHousekeeperId` لكل غرف اليوم السابق
+
+## 7) Print Routes
+
+- `src/routes/print.housekeeping.all.tsx` — كل التعيينات بطابع زمني + توقيع
+- `src/routes/print.housekeeping.by-floor.tsx` — مجمّعة حسب الطابق
+- `src/routes/print.housekeeping.summary.tsx` — إحصائيات: عدد الغرف/موظف، متوسط الوقت، Issues
+- `src/routes/print.housekeeper-report.$reportId.tsx` — تقرير موظف للأرشفة
+
+كلها A4، أبيض، Print-only CSS، حقول توقيع في الأسفل.
+
+## 8) ربط Reservations
+
+في `hotel-store`:
+- `checkOut(reservationId)` → الغرفة `housekeepingStatus = 'dirty'`, `taskType = 'departure'`
+- `checkIn(reservationId)` → التحقق من `housekeepingStatus === 'inspected' || 'clean'`، تحذير إن لم تكن جاهزة
+
+## 9) إشعارات (`NotificationsBell`)
+
+- "Housekeeper Fanar submitted today's report (12 rooms)"
+- "Room 305 marked as Maintenance Issue"
+- "DND on Room 210 — assignment skipped"
 
 ---
 
-## 5. Night Audit — اختياري + تذكير 3 صباحاً
+## الملفات
 
-**`src/routes/night-audit.tsx`:**
-- إزالة الإلزام بأن يكون `auditDate = اليوم`. السماح للمدير باختيار أي تاريخ من date picker.
-- حفظ آخر تشغيل في `localStorage` key `nexora-last-night-audit`.
+**جديدة:**
+- `src/components/housekeeping/RoomCard.tsx`
+- `src/components/housekeeping/HousekeepingFilters.tsx`
+- `src/components/housekeeping/AssignedPanel.tsx`
+- `src/components/housekeeping/ExpressAssignDialog.tsx`
+- `src/components/housekeeping/ManageHousekeepersDialog.tsx`
+- `src/components/housekeeping/HousekeepingTeamsDialog.tsx`
+- `src/components/housekeeping/RoomDetailDialog.tsx`
+- `src/components/housekeeping/HousekeeperReportsDialog.tsx`
+- `src/lib/housekeeping-distribution.ts` (round-robin + auto-distribute)
+- `src/routes/my-housekeeping.tsx`
+- `src/routes/print.housekeeping.all.tsx`
+- `src/routes/print.housekeeping.by-floor.tsx`
+- `src/routes/print.housekeeping.summary.tsx`
+- `src/routes/print.housekeeper-report.$reportId.tsx`
 
-**`src/components/system/NotificationsBell.tsx`:**
-- إضافة فحص: لو الساعة الحالية ≥ 3:00 صباحاً ولم يُشغَّل audit لتاريخ اليوم السابق → إضافة تنبيه `"Night Audit pending — last run: YYYY-MM-DD"` بلون warning يقود إلى `/night-audit`.
-
----
-
-## 6. الصلاحيات
-
-في `permissions.ts` (موجود):
-- `shifts.manage` → فتح/إغلاق شفت خاص.
-- `shifts.view-all` → المدير يرى تقارير كل الشفتات (جديد).
-- `products.sell` → تنفيذ بيع منتج.
-- المدير يحصل على الكل تلقائياً.
-
----
-
-## 7. الملفات المتأثرة (ملخّص)
-
-**جديد:**
-- `src/lib/shift-report.ts`
-- `src/components/shifts/EndShiftReportDialog.tsx`
-- `src/components/shifts/SellProductDialog.tsx`
-- `src/routes/print-shift.$shiftId.tsx`
-
-**معدّل:**
-- `src/store/hotel-store.ts` — `startShift`, `endShift`, جديد: `productSales` + `recordProductSale`, تأكيد `extend` يسجّل في activity.
-- `src/routes/shift-management.tsx` — استبدال EndShiftDialog بـ EndShiftReportDialog، استخدام المستخدم الحالي.
-- `src/routes/product-inventory.tsx` — زر Sell.
-- `src/routes/night-audit.tsx` — date picker + حفظ آخر تشغيل.
-- `src/components/system/NotificationsBell.tsx` — تنبيه 3 صباحاً.
-- `src/lib/permissions.ts` — صلاحيات جديدة.
+**معدّلة:**
+- `src/store/hotel-store.ts` (نموذج + actions + night audit logic)
+- `src/routes/housekeeping.tsx` (إعادة بناء كاملة)
+- `src/routes/night-audit.tsx` (إضافة Reclassify)
+- `src/lib/permissions.ts` (صلاحيات جديدة)
+- `src/components/system/NotificationsBell.tsx`
+- `src/components/layout/Sidebar.tsx` (إضافة رابط My Rooms للموظفين)
 
 ---
 
-## ملاحظات إضافية أقترح إضافتها
+## ما لم يُدرج في هذه الجولة (تم تأجيله)
+- Lost & Found — يمكن إضافته لاحقاً كموديول مستقل
+- Minibar consumption — يربط لاحقاً مع POS
+- Virtualization — يُضاف عند تجاوز 200 غرفة فعلياً
 
-1. **تنبيه قبل إنهاء الشفت** إذا الكاش المعدود ≠ (الافتتاحي + المقبوض النقدي) → يطلب تأكيد + سبب الفرق.
-2. **قفل الشفت بعد الإغلاق** — لا يمكن تعديل أي عملية مسجَّلة فيه (read-only) لمنع التلاعب اللاحق.
-3. **رابط مباشر من تقرير المدير** (`/reports/user-activity`) لفتح/طباعة أي شفت سابق.
-4. **مجموع التوقيعات الإلكترونية** — لاحقاً يمكن إضافة canvas للتوقيع بالماوس/اللمس وحفظه كصورة في الـ shift record.
-
-هل تريد إضافة هذه الأربع نقاط أيضاً؟ أم أبدأ بالخطة كما هي؟
+هل أبدأ التنفيذ؟
