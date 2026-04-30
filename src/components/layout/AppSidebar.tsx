@@ -125,13 +125,29 @@ export function AppSidebar() {
   const location = useLocation();
   const path = location.pathname;
   const { t } = useT();
+  const me = useAuthStore((s) =>
+    s.currentUserId ? s.users.find((u) => u.id === s.currentUserId) ?? null : null,
+  );
+
+  const can = (perm?: Permission) => {
+    if (!perm) return true;
+    if (!me || !me.active) return false;
+    if (me.role === "admin") return true;
+    return me.permissions.includes(perm);
+  };
+
+  const filterNav = (items: ReadonlyArray<NavItem>) => items.filter((i) => can(i.permission));
+
+  const visibleTop = filterNav(topItems);
+  const visibleBulk = filterNav(bulkRoutingItems);
+  const visibleMore = filterNav(moreItems);
+  const visibleBottom = filterNav(bottomItems);
+  const visibleAdmin = filterNav(adminItems);
 
   const isActive = (url: string) =>
     url === "/" ? path === "/" : path === url || path.startsWith(url + "/");
 
-  // Auto-open groups if any child matches current route
-  const bulkOpen = bulkRoutingItems.some((i) => isActive(i.url));
-  const _moreOpen = moreItems.some((i) => isActive(i.url));
+  const bulkOpen = visibleBulk.some((i) => isActive(i.url));
 
   const [bulkExpanded, setBulkExpanded] = useState<boolean>(bulkOpen);
   const [moreExpanded, setMoreExpanded] = useState<boolean>(true);
