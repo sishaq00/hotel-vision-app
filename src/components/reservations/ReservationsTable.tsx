@@ -1,6 +1,6 @@
 // Shared reservations table used by In-House, Arrivals, Departures,
 // Recently Viewed, Search and Archived pages.
-import { Download, LogIn, LogOut, X } from "lucide-react";
+import { Download, LogIn, LogOut, Printer, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +14,10 @@ import {
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { ExportButtons } from "@/components/system/ExportButtons";
+import { useConfirm } from "@/components/system/ConfirmDialog";
 import { useHotelStore, type Reservation } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export interface ReservationsTableProps {
@@ -45,6 +47,7 @@ export function ReservationsTable({
   const checkIn = useHotelStore((s) => s.checkIn);
   const cancel = useHotelStore((s) => s.cancelReservation);
   const markRecentlyViewed = useHotelStore((s) => s.markRecentlyViewed);
+  const confirm = useConfirm();
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
 
@@ -134,24 +137,31 @@ export function ReservationsTable({
                         </Button>
                       )}
                       {actions.invoice && r.status === "checked-out" && r.invoice && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 gap-1.5"
-                          title="Download invoice PDF"
-                          onClick={() => {
-                            if (!rm) return;
-                            downloadInvoicePDF({
-                              invoice: r.invoice!,
-                              reservation: r,
-                              guest: g,
-                              room: rm,
-                              settings,
-                            });
-                          }}
-                        >
-                          <Download className="h-3.5 w-3.5" /> Invoice
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 gap-1.5"
+                            title="Download invoice PDF"
+                            onClick={() => {
+                              if (!rm) return;
+                              downloadInvoicePDF({
+                                invoice: r.invoice!,
+                                reservation: r,
+                                guest: g,
+                                room: rm,
+                                settings,
+                              });
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5" /> Invoice
+                          </Button>
+                          <Button asChild size="icon" variant="ghost" className="h-8 w-8" title="Print invoice">
+                            <Link to="/print-invoice/$reservationId" params={{ reservationId: r.id }} target="_blank">
+                              <Printer className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                        </>
                       )}
                       {actions.cancel &&
                         (r.status === "confirmed" || r.status === "checked-in") && (
@@ -160,7 +170,15 @@ export function ReservationsTable({
                             variant="ghost"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             title="Cancel reservation"
-                            onClick={() => {
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: "Cancel reservation?",
+                                description: `Cancel ${g?.name ?? "guest"}'s booking for room ${rm?.number ?? "—"}? This cannot be undone.`,
+                                confirmLabel: "Cancel reservation",
+                                cancelLabel: "Keep",
+                                destructive: true,
+                              });
+                              if (!ok) return;
                               cancel(r.id);
                               toast("Reservation cancelled");
                             }}
