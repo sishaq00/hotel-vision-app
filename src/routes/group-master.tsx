@@ -16,6 +16,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/group-master")({
   head: () => ({
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/group-master")({
 });
 
 function GroupMasterPage() {
+  const { t } = useT();
   const groups = useHotelStore((s) => s.groupMasters);
   const reservations = useHotelStore((s) => s.reservations);
   const settings = useHotelStore((s) => s.settings);
@@ -37,7 +39,7 @@ function GroupMasterPage() {
   const list = useMemo(() => [...groups].sort((a, b) => (a.arrivalDate < b.arrivalDate ? 1 : -1)), [groups]);
 
   return (
-    <AppLayout title="Group Master" subtitle={`${groups.length} group${groups.length === 1 ? "" : "s"}`}>
+    <AppLayout title={t("nav.group-master")} subtitle={`${groups.length} group${groups.length === 1 ? "" : "s"}`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Group bookings</h2>

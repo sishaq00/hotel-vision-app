@@ -11,6 +11,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/search-invoice")({
   head: () => ({
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/search-invoice")({
 });
 
 function SearchInvoicePage() {
+  const { t } = useT();
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
@@ -58,7 +60,7 @@ function SearchInvoicePage() {
   }, [reservations, guests, rooms, query, from, to]);
 
   return (
-    <AppLayout title="Search Invoice" subtitle={`${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`}>
+    <AppLayout title={t("nav.search-invoice")} subtitle={`${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`}>
       <Card className="border-border/60 shadow-card">
         <div className="grid gap-3 border-b border-border p-5 md:grid-cols-[1fr_auto_auto]">
           <Input placeholder="Search by number or guest…" value={query} onChange={(e) => setQuery(e.target.value)} />

@@ -11,6 +11,7 @@ import { useHotelStore, type ReportRunStatus } from "@/store/hotel-store";
 import { REPORT_DEFINITIONS, rowsToCSV, downloadFile } from "@/lib/reports";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/report-queue")({
   head: () => ({
@@ -29,6 +30,7 @@ const STATUS_STYLE: Record<ReportRunStatus, string> = {
 };
 
 function ReportQueuePage() {
+  const { t } = useT();
   const runs = useHotelStore((s) => s.reportRuns);
   const clear = useHotelStore((s) => s.clearReportRuns);
   const recordReportRun = useHotelStore((s) => s.recordReportRun);
@@ -52,7 +54,7 @@ function ReportQueuePage() {
   };
 
   return (
-    <AppLayout title="Report Queue" subtitle={`${runs.length} run${runs.length === 1 ? "" : "s"} in history`}>
+    <AppLayout title={t("nav.report-queue")} subtitle={`${runs.length} run${runs.length === 1 ? "" : "s"} in history`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Recent runs</h2>

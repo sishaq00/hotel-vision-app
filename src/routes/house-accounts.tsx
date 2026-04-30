@@ -16,6 +16,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/house-accounts")({
   head: () => ({
@@ -28,13 +29,14 @@ export const Route = createFileRoute("/house-accounts")({
 });
 
 function HouseAccountsPage() {
+  const { t } = useT();
   const accounts = useHotelStore((s) => s.houseAccounts);
   const settings = useHotelStore((s) => s.settings);
   const add = useHotelStore((s) => s.addHouseAccount);
   const [open, setOpen] = useState(false);
 
   return (
-    <AppLayout title="House Accounts" subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}>
+    <AppLayout title={t("nav.house-accounts")} subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Internal accounts</h2>
