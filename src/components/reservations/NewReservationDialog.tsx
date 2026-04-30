@@ -24,6 +24,8 @@ import {
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { guestSchema, reservationSchema, parseOrToast } from "@/lib/validation";
+import { computeStayPrice } from "@/lib/rate-plans";
+import { Tag } from "lucide-react";
 
 interface NewReservationDialogProps {
   trigger?: React.ReactNode | null;
@@ -106,10 +108,7 @@ export function NewReservationDialog({
 
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
-    const nights = Math.max(
-      1,
-      Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000),
-    );
+    const { total, nights } = computeStayPrice(room.price, room.type, checkIn, checkOut);
 
     const result = addReservation({
       guestId,
@@ -117,7 +116,7 @@ export function NewReservationDialog({
       checkIn,
       checkOut,
       status: "confirmed",
-      totalAmount: room.price * nights,
+      totalAmount: total,
     });
 
     if (!result.ok) {
@@ -230,6 +229,37 @@ export function NewReservationDialog({
               </p>
             </div>
           )}
+
+          {(() => {
+            if (!roomId || !datesValid) return null;
+            const room = rooms.find((r) => r.id === roomId);
+            if (!room) return null;
+            const { total, nights, appliedPlan } = computeStayPrice(
+              room.price, room.type, checkIn, checkOut,
+            );
+            const baseTotal = room.price * nights;
+            return (
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {nights} × {t("co.room")} {room.number}
+                  </span>
+                  <span className="font-semibold">${total.toLocaleString()}</span>
+                </div>
+                {appliedPlan && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-primary">
+                    <Tag className="h-3 w-3" />
+                    <span>{appliedPlan.name}</span>
+                    {total !== baseTotal && (
+                      <span className="text-muted-foreground">
+                        (base ${baseTotal.toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
