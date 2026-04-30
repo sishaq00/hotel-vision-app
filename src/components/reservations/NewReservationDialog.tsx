@@ -82,7 +82,7 @@ export function NewReservationDialog({
 
   const reset = () => {
     setName(""); setEmail(""); setPhone(""); setCountry("");
-    setExistingGuestId("__new__"); setRoomId("");
+    setExistingGuestId("__new__"); setRoomId(""); setNotes("");
     setCheckIn(new Date().toISOString().slice(0, 10));
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
   };
@@ -118,6 +118,7 @@ export function NewReservationDialog({
       checkOut,
       status: "confirmed",
       totalAmount: total,
+      notes: notes.trim() || undefined,
     });
 
     if (!result.ok) {
