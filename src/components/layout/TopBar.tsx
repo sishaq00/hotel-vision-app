@@ -43,11 +43,19 @@ export function TopBar(_props: TopBarProps) {
 
       {/* Hotel identity (left) */}
       <div className="flex min-w-0 items-center gap-2">
-        <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 sm:flex">
-          <span className="text-[10px] font-bold text-primary">
-            {settings.hotelCode?.slice(0, 4) || "NXR"}
-          </span>
-        </div>
+        {settings.logoDataUrl ? (
+          <img
+            src={settings.logoDataUrl}
+            alt={settings.hotelName}
+            className="hidden h-8 w-8 shrink-0 rounded object-contain sm:block"
+          />
+        ) : (
+          <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 sm:flex">
+            <span className="text-[10px] font-bold text-primary">
+              {settings.hotelCode?.slice(0, 4) || "NXR"}
+            </span>
+          </div>
+        )}
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-tight text-foreground">
             {settings.hotelName}
@@ -83,6 +91,8 @@ export function TopBar(_props: TopBarProps) {
           variant="ghost"
           size="sm"
           className="h-8 gap-1.5 rounded text-xs text-muted-foreground"
+          onClick={() => window.dispatchEvent(new CustomEvent("nexora:shortcuts"))}
+          title="Keyboard shortcuts (Ctrl+/)"
         >
           <HelpCircle className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Help</span>

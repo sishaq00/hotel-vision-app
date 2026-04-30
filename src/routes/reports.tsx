@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { BarChart3, Download, FileText, Search, Play } from "lucide-react";
+import { BarChart3, Download, FileText, Search, Play, FileSpreadsheet } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   REPORT_DEFINITIONS, REPORT_CATEGORIES,
   rowsToCSV, downloadFile, type ReportDefinition,
 } from "@/lib/reports";
+import { downloadExcel } from "@/lib/excel";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -60,16 +61,21 @@ function ReportsHub() {
     return [...map.entries()];
   }, [filtered]);
 
-  const runReport = (def: ReportDefinition, format: "csv" | "preview") => {
+  const runReport = (def: ReportDefinition, format: "csv" | "xlsx" | "preview") => {
     try {
       const rows = def.run(ctx);
-      if (format === "csv") {
+      if (format === "csv" || format === "xlsx") {
         if (rows.length === 0) {
           toast("No data to export");
-          recordReportRun({ reportKey: def.key, reportName: def.name, format: "csv", status: "completed", rowCount: 0 });
+          recordReportRun({ reportKey: def.key, reportName: def.name, format: format === "xlsx" ? "csv" : "csv", status: "completed", rowCount: 0 });
           return;
         }
-        downloadFile(`${def.key}-${new Date().toISOString().slice(0, 10)}.csv`, rowsToCSV(rows));
+        const stamp = new Date().toISOString().slice(0, 10);
+        if (format === "csv") {
+          downloadFile(`${def.key}-${stamp}.csv`, rowsToCSV(rows));
+        } else {
+          downloadExcel(rows as Record<string, unknown>[], `${def.key}-${stamp}.xlsx`, def.name);
+        }
         toast.success(`Exported ${rows.length} rows`);
         recordReportRun({ reportKey: def.key, reportName: def.name, format: "csv", status: "completed", rowCount: rows.length });
       } else {
@@ -138,8 +144,11 @@ function ReportsHub() {
                       <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => runReport(def, "preview")}>
                         <Play className="h-3 w-3" /> Preview
                       </Button>
-                      <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => runReport(def, "csv")}>
-                        <Download className="h-3 w-3" /> CSV
+                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => runReport(def, "csv")} title="CSV">
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => runReport(def, "xlsx")} title="Excel">
+                        <FileSpreadsheet className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -201,6 +210,26 @@ function ReportsHub() {
                 }}
               >
                 <Download className="h-4 w-4" /> Export CSV
+              </Button>
+              <Button
+                onClick={() => {
+                  if (previewReport.rows.length === 0) { toast("No data"); return; }
+                  downloadExcel(
+                    previewReport.rows as Record<string, unknown>[],
+                    `${previewReport.def.key}-${new Date().toISOString().slice(0, 10)}.xlsx`,
+                    previewReport.def.name,
+                  );
+                  recordReportRun({
+                    reportKey: previewReport.def.key,
+                    reportName: previewReport.def.name,
+                    format: "csv",
+                    status: "completed",
+                    rowCount: previewReport.rows.length,
+                  });
+                  toast.success("Exported");
+                }}
+              >
+                <FileSpreadsheet className="h-4 w-4" /> Export Excel
               </Button>
             </div>
           </DialogContent>

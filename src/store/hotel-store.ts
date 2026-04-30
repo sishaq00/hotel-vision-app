@@ -103,6 +103,11 @@ export interface HotelSettings {
   invoicePrefix: string;  // e.g. "INV"
   invoiceCounter: number; // monotonically increasing
   language: "en" | "ar";
+  // Branding & invoice template (offline)
+  logoDataUrl?: string;        // base64 logo for header / invoices
+  taxId?: string;              // tax / VAT registration number
+  invoiceFooter?: string;      // free text printed at the bottom of invoices
+  invoiceNotes?: string;       // optional notes / payment terms
 }
 
 // ---- v3 entities -----------------------------------------------------------
