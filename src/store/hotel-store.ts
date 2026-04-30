@@ -1648,6 +1648,433 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
+        // -------------------- Housekeepers (staff) --------------------
+        addHousekeeper: (h) => {
+          const id = uid();
+          const initials =
+            h.initials ||
+            h.name
+              .trim()
+              .split(/\s+/)
+              .map((p) => p[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
+          set((s) => ({
+            housekeepers: [
+              ...s.housekeepers,
+              { ...h, id, initials, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "create", description: `Housekeeper added: ${h.name}` });
+          return id;
+        },
+        updateHousekeeper: (id, patch) => {
+          set((s) => ({
+            housekeepers: s.housekeepers.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "update", description: `Housekeeper updated` });
+        },
+        deleteHousekeeper: (id) => {
+          // unassign rooms first
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              r.assignedHousekeeperId === id
+                ? { ...r, assignedHousekeeperId: undefined, assignedAt: undefined }
+                : r,
+            ),
+            housekeepers: s.housekeepers.filter((h) => h.id !== id),
+            housekeepingTeams: s.housekeepingTeams.map((t) => ({
+              ...t,
+              memberIds: t.memberIds.filter((m) => m !== id),
+              leaderId: t.leaderId === id ? undefined : t.leaderId,
+            })),
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "archive", description: `Housekeeper removed` });
+        },
+
+        // -------------------- Housekeeping teams --------------------
+        addHousekeepingTeam: (t) => {
+          const id = uid();
+          set((s) => ({
+            housekeepingTeams: [
+              ...s.housekeepingTeams,
+              { ...t, id, createdAt: new Date().toISOString() },
+            ],
+          }));
+          log({ entity: "housekeeping", entityId: id, action: "create", description: `Team added: ${t.name}` });
+          return id;
+        },
+        updateHousekeepingTeam: (id, patch) => {
+          set((s) => ({
+            housekeepingTeams: s.housekeepingTeams.map((t) =>
+              t.id === id ? { ...t, ...patch } : t,
+            ),
+          }));
+        },
+        deleteHousekeepingTeam: (id) => {
+          set((s) => ({
+            housekeepingTeams: s.housekeepingTeams.filter((t) => t.id !== id),
+          }));
+        },
+
+        // -------------------- Assignment --------------------
+        assignRoomsToHousekeeper: (roomIds, housekeeperId, taskType) => {
+          const hk = get().housekeepers.find((h) => h.id === housekeeperId);
+          if (!hk || !hk.active) return 0;
+          const now = new Date().toISOString();
+          const me = useAuthStore.getState().current();
+          const skip: string[] = [];
+          let count = 0;
+          set((s) => ({
+            rooms: s.rooms.map((r) => {
+              if (!roomIds.includes(r.id)) return r;
+              if (r.dndFlag || r.refusedService) {
+                skip.push(r.number);
+                return r;
+              }
+              count++;
+              return {
+                ...r,
+                assignedHousekeeperId: housekeeperId,
+                assignedAt: now,
+                assignedBy: me?.fullName || me?.username,
+                taskType: taskType ?? r.taskType ?? inferTaskType(r),
+              };
+            }),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: housekeeperId,
+            action: "update",
+            description: `Assigned ${count} room(s) to ${hk.name}${skip.length ? ` · skipped DND: ${skip.join(",")}` : ""}`,
+            metadata: { count, skipped: skip },
+          });
+          return count;
+        },
+
+        assignRoomsToTeam: (roomIds, teamId, taskType) => {
+          const team = get().housekeepingTeams.find((t) => t.id === teamId);
+          if (!team) return 0;
+          const members = team.memberIds
+            .map((id) => get().housekeepers.find((h) => h.id === id))
+            .filter((h): h is Housekeeper => !!h && h.active);
+          if (members.length === 0) return 0;
+          const now = new Date().toISOString();
+          const me = useAuthStore.getState().current();
+          let count = 0;
+          let memberIdx = 0;
+          set((s) => ({
+            rooms: s.rooms.map((r) => {
+              if (!roomIds.includes(r.id)) return r;
+              if (r.dndFlag || r.refusedService) return r;
+              const assignee = members[memberIdx % members.length];
+              memberIdx++;
+              count++;
+              return {
+                ...r,
+                assignedHousekeeperId: assignee.id,
+                assignedAt: now,
+                assignedBy: me?.fullName || me?.username,
+                taskType: taskType ?? r.taskType ?? inferTaskType(r),
+              };
+            }),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: teamId,
+            action: "update",
+            description: `Round-robin assigned ${count} room(s) to team "${team.name}" (${members.length} members)`,
+          });
+          return count;
+        },
+
+        autoDistributeDirtyRooms: (taskType) => {
+          const dirty = get().rooms.filter(
+            (r) =>
+              !r.archived &&
+              !r.assignedHousekeeperId &&
+              !r.dndFlag &&
+              !r.refusedService &&
+              (r.housekeepingStatus === "dirty" ||
+                r.housekeepingStatus === "departure" ||
+                r.housekeepingStatus === "stayover"),
+          );
+          const active = get().housekeepers.filter((h) => h.active);
+          if (active.length === 0 || dirty.length === 0) return 0;
+          // weighted by remaining capacity
+          const remaining = new Map<string, number>(
+            active.map((h) => {
+              const already = get().rooms.filter(
+                (r) => r.assignedHousekeeperId === h.id,
+              ).length;
+              return [h.id, Math.max(0, h.capacity - already)];
+            }),
+          );
+          const now = new Date().toISOString();
+          const me = useAuthStore.getState().current();
+          let assigned = 0;
+          const assignments = new Map<string, string>(); // roomId -> hkId
+          for (const room of dirty) {
+            // pick housekeeper with most remaining capacity
+            let best: Housekeeper | undefined;
+            let bestRem = -1;
+            for (const h of active) {
+              const r = remaining.get(h.id) ?? 0;
+              if (r > bestRem) {
+                bestRem = r;
+                best = h;
+              }
+            }
+            if (!best || bestRem <= 0) break;
+            assignments.set(room.id, best.id);
+            remaining.set(best.id, (remaining.get(best.id) ?? 0) - 1);
+            assigned++;
+          }
+          set((s) => ({
+            rooms: s.rooms.map((r) => {
+              const hkId = assignments.get(r.id);
+              if (!hkId) return r;
+              return {
+                ...r,
+                assignedHousekeeperId: hkId,
+                assignedAt: now,
+                assignedBy: me?.fullName || me?.username,
+                taskType: taskType ?? r.taskType ?? inferTaskType(r),
+              };
+            }),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: "auto",
+            action: "update",
+            description: `Auto-distributed ${assigned} room(s) across ${active.length} housekeeper(s)`,
+          });
+          return assigned;
+        },
+
+        unassignRooms: (roomIds) => {
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              roomIds.includes(r.id)
+                ? {
+                    ...r,
+                    assignedHousekeeperId: undefined,
+                    assignedAt: undefined,
+                    assignedBy: undefined,
+                  }
+                : r,
+            ),
+          }));
+        },
+
+        setRoomDND: (roomId, flag) => {
+          set((s) => ({
+            rooms: s.rooms.map((r) => (r.id === roomId ? { ...r, dndFlag: flag } : r)),
+          }));
+          const room = get().rooms.find((r) => r.id === roomId);
+          log({
+            entity: "housekeeping",
+            entityId: roomId,
+            action: "update",
+            description: `Room ${room?.number ?? "?"} DND ${flag ? "ON" : "OFF"}`,
+          });
+        },
+
+        setRoomRefused: (roomId, flag) => {
+          set((s) => ({
+            rooms: s.rooms.map((r) => (r.id === roomId ? { ...r, refusedService: flag } : r)),
+          }));
+        },
+
+        startCleaning: (roomId) => {
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              r.id === roomId
+                ? { ...r, cleaningStartedAt: new Date().toISOString(), cleaningFinishedAt: undefined }
+                : r,
+            ),
+          }));
+        },
+
+        finishCleaning: (roomId, notes, photos) => {
+          set((s) => ({
+            rooms: s.rooms.map((r) =>
+              r.id === roomId
+                ? {
+                    ...r,
+                    cleaningFinishedAt: new Date().toISOString(),
+                    housekeepingNotes: notes ?? r.housekeepingNotes,
+                    housekeepingPhotos:
+                      photos && photos.length ? [...(r.housekeepingPhotos ?? []), ...photos] : r.housekeepingPhotos,
+                  }
+                : r,
+            ),
+          }));
+        },
+
+        // -------------------- Housekeeper reports --------------------
+        submitHousekeeperReport: (housekeeperId) => {
+          const hk = get().housekeepers.find((h) => h.id === housekeeperId);
+          if (!hk) return null;
+          const finished = get().rooms.filter(
+            (r) => r.assignedHousekeeperId === housekeeperId && r.cleaningFinishedAt,
+          );
+          if (finished.length === 0) return null;
+          const id = uid();
+          const today = new Date().toISOString().slice(0, 10);
+          const totalValue = finished.reduce((sum, r) => sum + (r.cleaningValue ?? 0), 0);
+          const report: HousekeeperReport = {
+            id,
+            housekeeperId,
+            housekeeperName: hk.name,
+            date: today,
+            rooms: finished.map((r) => ({
+              roomId: r.id,
+              roomNumber: r.number,
+              taskType: r.taskType,
+              startedAt: r.cleaningStartedAt,
+              finishedAt: r.cleaningFinishedAt!,
+              notes: r.housekeepingNotes,
+              photos: r.housekeepingPhotos,
+            })),
+            status: "submitted",
+            submittedAt: new Date().toISOString(),
+            totalValue,
+          };
+          set((s) => ({
+            housekeeperReports: [report, ...s.housekeeperReports],
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: id,
+            action: "create",
+            description: `${hk.name} submitted report (${finished.length} rooms, value $${totalValue.toFixed(2)})`,
+            metadata: { count: finished.length, totalValue },
+          });
+          logActivity({
+            action: "housekeeping.report",
+            entityType: "housekeeping",
+            entityId: id,
+            description: `${hk.name} submitted report — ${finished.length} room(s)`,
+            details: { housekeeperName: hk.name, count: finished.length, totalValue },
+          });
+          return id;
+        },
+
+        reviewHousekeeperReport: (reportId, decisions) => {
+          const me = useAuthStore.getState().current();
+          const now = new Date().toISOString();
+          const decisionMap = new Map(decisions.map((d) => [d.roomId, d.newStatus]));
+          set((s) => ({
+            housekeeperReports: s.housekeeperReports.map((r) =>
+              r.id === reportId
+                ? { ...r, status: "reviewed", reviewedAt: now, reviewedBy: me?.fullName || me?.username }
+                : r,
+            ),
+            rooms: s.rooms.map((r) => {
+              const newStatus = decisionMap.get(r.id);
+              if (!newStatus) return r;
+              return {
+                ...r,
+                housekeepingStatus: newStatus,
+                // clear assignment after review
+                assignedHousekeeperId: undefined,
+                assignedAt: undefined,
+                cleaningStartedAt: undefined,
+                cleaningFinishedAt: undefined,
+                housekeepingNotes: undefined,
+                housekeepingPhotos: undefined,
+                taskType: undefined,
+                status:
+                  newStatus === "out-of-order"
+                    ? ("maintenance" as RoomStatus)
+                    : newStatus === "clean" || newStatus === "inspected"
+                      ? r.status === "cleaning"
+                        ? ("available" as RoomStatus)
+                        : r.status
+                      : r.status,
+              };
+            }),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: reportId,
+            action: "update",
+            description: `Report reviewed (${decisions.length} room decisions)`,
+          });
+        },
+
+        // -------------------- Night audit reclassify --------------------
+        runNightAuditHousekeeping: () => {
+          const today = new Date().toISOString().slice(0, 10);
+          const reservations = get().reservations;
+          let stayover = 0;
+          let departure = 0;
+          let cleared = 0;
+          set((s) => ({
+            rooms: s.rooms.map((r) => {
+              if (r.archived) return r;
+              // clear yesterday's assignments
+              const wasAssigned = !!r.assignedHousekeeperId;
+              if (wasAssigned) cleared++;
+              const cleaned: Partial<Room> = {
+                assignedHousekeeperId: undefined,
+                assignedAt: undefined,
+                assignedBy: undefined,
+                cleaningStartedAt: undefined,
+                cleaningFinishedAt: undefined,
+                housekeepingNotes: undefined,
+                housekeepingPhotos: undefined,
+                taskType: undefined,
+              };
+              const status = r.housekeepingStatus ?? "clean";
+              // Only reclassify rooms that are currently clean/inspected/stayover/departure
+              if (
+                status === "clean" ||
+                status === "inspected" ||
+                status === "stayover" ||
+                status === "departure"
+              ) {
+                const activeRes = reservations.find(
+                  (res) =>
+                    res.roomId === r.id &&
+                    res.status === "checked-in" &&
+                    res.checkIn <= today,
+                );
+                if (activeRes) {
+                  if (activeRes.checkOut <= today) {
+                    departure++;
+                    return {
+                      ...r,
+                      ...cleaned,
+                      housekeepingStatus: "departure" as HousekeepingStatus,
+                      taskType: "departure" as HousekeepingTaskType,
+                    };
+                  } else {
+                    stayover++;
+                    return {
+                      ...r,
+                      ...cleaned,
+                      housekeepingStatus: "stayover" as HousekeepingStatus,
+                      taskType: "stayover" as HousekeepingTaskType,
+                    };
+                  }
+                }
+              }
+              return { ...r, ...cleaned };
+            }),
+          }));
+          log({
+            entity: "housekeeping",
+            entityId: "night-audit",
+            action: "update",
+            description: `Night audit reclassify: ${stayover} stayover, ${departure} departure, ${cleared} prior assignments cleared`,
+            metadata: { stayover, departure, cleared },
+          });
+          return { stayover, departure, cleared };
+        },
+
         // -------------------- Audit --------------------
         clearAuditLog: () => set({ auditLog: [] }),
       };
