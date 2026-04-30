@@ -97,13 +97,17 @@ export function RoomDetailDialog({
             onClick={() => {
               const desc = prompt("Describe the issue:");
               if (!desc) return;
+              const takeOOO = confirm("Take this room Out of Order until fixed?");
               addMaintenance({
                 roomId: room.id,
                 area: `Room ${room.number}`,
                 description: desc,
                 priority: "medium",
               });
-              toast.success("Maintenance ticket created");
+              if (takeOOO) {
+                updateHk(room.id, "out-of-order");
+              }
+              toast.success(takeOOO ? "Maintenance ticket created — room OOO" : "Maintenance ticket created");
             }}
           >
             <Wrench className="h-3 w-3" /> Report Issue
