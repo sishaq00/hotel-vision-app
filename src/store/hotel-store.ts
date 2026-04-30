@@ -475,6 +475,16 @@ interface HotelState {
   housekeepers: Housekeeper[];
   housekeepingTeams: HousekeepingTeam[];
   housekeeperReports: HousekeeperReport[];
+  // v5: financial
+  creditNotes: CreditNote[];
+
+  // Credit Notes
+  issueCreditNote: (input: {
+    reservationId: string;
+    amount: number;
+    reason: string;
+    cancelInvoice?: boolean;
+  }) => { ok: true; id: string; number: string } | { ok: false; error: string };
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
