@@ -597,6 +597,21 @@ const uid = () =>
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+function inferTaskType(room: Room): HousekeepingTaskType {
+  switch (room.housekeepingStatus) {
+    case "departure":
+      return "departure";
+    case "stayover":
+      return "stayover";
+    case "out-of-order":
+      return "deep-clean";
+    case "inspected":
+      return "inspection";
+    default:
+      return "departure";
+  }
+}
+
 export const computeNights = (checkIn: string, checkOut: string) =>
   Math.max(
     1,
