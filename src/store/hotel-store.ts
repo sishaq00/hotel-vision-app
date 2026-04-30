@@ -93,6 +93,18 @@ export interface Reservation {
   notes?: string; // free-text guest requests / special instructions
 }
 
+export type GuestIdType = "passport" | "national-id" | "driver-license" | "other";
+
+export interface GuestPreferences {
+  roomType?: string;        // preferred room type code
+  floor?: number;           // preferred floor
+  smoking?: boolean;
+  pillow?: string;          // e.g. "Soft", "Firm"
+  bedType?: string;         // e.g. "King", "Twin"
+  language?: string;
+  other?: string;           // free-form
+}
+
 export interface Guest {
   id: string;
   name: string;
@@ -106,6 +118,23 @@ export interface Guest {
   doNotRent?: boolean;
   vip?: boolean;
   notes?: string;
+  // v5: full personal profile
+  nationality?: string;
+  dateOfBirth?: string;          // YYYY-MM-DD
+  gender?: "male" | "female" | "other";
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  idType?: GuestIdType;
+  idNumber?: string;
+  idIssuedBy?: string;
+  idExpiry?: string;             // YYYY-MM-DD
+  idPhotoDataUrl?: string;       // base64 photo of ID document
+  profilePhotoDataUrl?: string;  // optional avatar
+  preferences?: GuestPreferences;
+  tags?: string[];               // e.g. ["VIP","Returning","Corporate"]
+  company?: string;
+  loyaltyNumber?: string;
 }
 
 export type PaymentStatus = "paid" | "pending" | "refunded";
