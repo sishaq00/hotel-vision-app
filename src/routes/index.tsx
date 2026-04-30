@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { NewReservationDialog } from "@/components/reservations/NewReservationDialog";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -444,6 +445,10 @@ function Dashboard() {
             />
           </div>
         </section>
+
+        {/* Trend charts */}
+        <DashboardCharts />
+
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <QuickAction
             label={t("qa.walk-in")}

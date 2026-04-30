@@ -44,8 +44,8 @@ export function TopBar(_props: TopBarProps) {
   useEffect(() => setToday(formatToday()), []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-3 md:px-4">
-      <SidebarTrigger className="text-foreground" />
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card px-2 sm:gap-3 sm:px-3 md:px-4">
+      <SidebarTrigger className="shrink-0 text-foreground" />
 
       {/* Hotel identity (left) */}
       <div className="flex min-w-0 items-center gap-2">
@@ -80,7 +80,7 @@ export function TopBar(_props: TopBarProps) {
       </div>
 
       {/* Right cluster */}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
         <Select
           value={settings.language ?? "en"}
           onValueChange={(v) => updateSettings({ language: v as "en" | "ar" })}
