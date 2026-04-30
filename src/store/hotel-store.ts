@@ -2166,6 +2166,41 @@ export const useHotelStore = create<HotelState>()(
 
         // -------------------- Audit --------------------
         clearAuditLog: () => set({ auditLog: [] }),
+
+        // -------------------- Credit Notes --------------------
+        issueCreditNote: ({ reservationId, amount, reason, cancelInvoice }) => {
+          const state = get();
+          const reservation = state.reservations.find((r) => r.id === reservationId);
+          if (!reservation) return { ok: false, error: "Reservation not found" };
+          if (!reservation.invoice) return { ok: false, error: "No invoice on this reservation" };
+          if (amount <= 0) return { ok: false, error: "Amount must be greater than zero" };
+          if (amount > reservation.invoice.total + 0.01)
+            return { ok: false, error: "Amount cannot exceed invoice total" };
+
+          const year = new Date().getFullYear();
+          const seq = state.creditNotes.filter((n) => n.number.includes(`-${year}-`)).length + 1;
+          const number = `CN-${year}-${String(seq).padStart(6, "0")}`;
+          const id = uid();
+          const note: CreditNote = {
+            id,
+            number,
+            reservationId,
+            invoiceNumber: reservation.invoice.invoiceNumber,
+            amount: round2(amount),
+            reason: reason.trim() || "—",
+            issuedAt: new Date().toISOString(),
+            cancelInvoice: !!cancelInvoice,
+          };
+          set((s) => ({ creditNotes: [...s.creditNotes, note] }));
+          log({
+            entity: "invoice",
+            entityId: reservationId,
+            action: "credit-note",
+            description: `Credit note ${number} issued (${amount.toFixed(2)}) — ${reason}`,
+            metadata: { number, amount, cancelInvoice },
+          });
+          return { ok: true, id, number };
+        },
       };
     },
     {
