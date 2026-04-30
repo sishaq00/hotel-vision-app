@@ -246,6 +246,19 @@ export interface RoutingRule {
   active: boolean;
 }
 
+export type ReportRunStatus = "queued" | "completed" | "failed";
+
+export interface ReportRun {
+  id: string;
+  reportKey: string;     // e.g. "arrivals", "revenue-summary"
+  reportName: string;
+  format: "csv" | "pdf" | "json";
+  ranAt: string;
+  status: ReportRunStatus;
+  rowCount?: number;
+  notes?: string;
+}
+
 // ---- Audit log -------------------------------------------------------------
 
 export type AuditEntity =
@@ -266,7 +279,8 @@ export type AuditEntity =
   | "house-account"
   | "inventory"
   | "product"
-  | "routing";
+  | "routing"
+  | "report";
 
 export type AuditAction =
   | "create"
@@ -311,6 +325,7 @@ interface HotelState {
   inventoryItems: InventoryItem[];
   productItems: ProductItem[];
   routingRules: RoutingRule[];
+  reportRuns: ReportRun[];
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
@@ -399,6 +414,10 @@ interface HotelState {
   // Routing
   addRoutingRule: (r: Omit<RoutingRule, "id">) => string;
   toggleRoutingRule: (id: string) => void;
+
+  // Reports
+  recordReportRun: (r: Omit<ReportRun, "id" | "ranAt">) => string;
+  clearReportRuns: () => void;
 
   // Settings
   updateSettings: (s: Partial<HotelSettings>) => void;
@@ -508,6 +527,7 @@ export const useHotelStore = create<HotelState>()(
         inventoryItems: [],
         productItems: [],
         routingRules: [],
+        reportRuns: [],
         settings: {
           hotelName: "NEXORA OS",
           hotelCode: "NXR",
@@ -1218,6 +1238,25 @@ export const useHotelStore = create<HotelState>()(
           }));
         },
 
+        // -------------------- Reports --------------------
+        recordReportRun: (r) => {
+          const id = uid();
+          set((s) => ({
+            reportRuns: [
+              { ...r, id, ranAt: new Date().toISOString() },
+              ...s.reportRuns,
+            ].slice(0, 200),
+          }));
+          log({
+            entity: "report",
+            entityId: id,
+            action: "create",
+            description: `Report run: ${r.reportName} (${r.format}${r.rowCount != null ? ` · ${r.rowCount} rows` : ""})`,
+          });
+          return id;
+        },
+        clearReportRuns: () => set({ reportRuns: [] }),
+
         // -------------------- Settings --------------------
         updateSettings: (patch) => {
           set((state) => ({ settings: { ...state.settings, ...patch } }));
@@ -1288,6 +1327,7 @@ export const useHotelStore = create<HotelState>()(
           state.inventoryItems ??= [];
           state.productItems ??= [];
           state.routingRules ??= [];
+          state.reportRuns ??= [];
         }
         return state as HotelState;
       },
