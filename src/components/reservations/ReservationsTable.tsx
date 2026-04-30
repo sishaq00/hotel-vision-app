@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
+import { ExportButtons } from "@/components/system/ExportButtons";
 import { useHotelStore, type Reservation } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
@@ -47,8 +48,33 @@ export function ReservationsTable({
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
 
+  // Build flat rows for export (resolves guest/room names).
+  const exportRows = reservations.map((r) => {
+    const g = guests.find((x) => x.id === r.guestId);
+    const rm = rooms.find((x) => x.id === r.roomId);
+    return {
+      Guest: g?.name ?? "—",
+      Email: g?.email ?? "",
+      Phone: g?.phone ?? "",
+      Room: rm ? `Room ${rm.number}` : "—",
+      Type: rm?.type ?? "",
+      "Check-in": r.checkIn,
+      "Check-out": r.checkOut,
+      Status: r.status,
+      Total: r.totalAmount,
+      Currency: settings.currency,
+      Confirmation: r.confirmationNumber ?? "",
+    };
+  });
+
   return (
     <>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {reservations.length} reservation{reservations.length === 1 ? "" : "s"}
+        </p>
+        <ExportButtons rows={exportRows} filename="reservations" />
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
