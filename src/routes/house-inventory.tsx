@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type InventoryItem } from "@/store/hotel-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/house-inventory")({
   head: () => ({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/house-inventory")({
 const CATEGORIES: InventoryItem["category"][] = ["linen", "amenity", "cleaning", "other"];
 
 function HouseInventoryPage() {
+  const { t } = useT();
   const items = useHotelStore((s) => s.inventoryItems);
   const add = useHotelStore((s) => s.addInventoryItem);
   const updateQty = useHotelStore((s) => s.updateInventoryQuantity);
@@ -41,7 +43,7 @@ function HouseInventoryPage() {
   const lowStock = useMemo(() => items.filter((i) => i.quantity <= i.reorderLevel).length, [items]);
 
   return (
-    <AppLayout title="House Inventory" subtitle={`${items.length} item${items.length === 1 ? "" : "s"} · ${lowStock} low stock`}>
+    <AppLayout title={t("nav.house-inventory")} subtitle={`${items.length} item${items.length === 1 ? "" : "s"} · ${lowStock} low stock`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Stock levels</h2>

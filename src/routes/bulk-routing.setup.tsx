@@ -19,6 +19,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type FolioCharge } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/bulk-routing/setup")({
   head: () => ({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/bulk-routing/setup")({
 const CATEGORIES: FolioCharge["category"][] = ["room", "minibar", "spa", "restaurant", "laundry", "other"];
 
 function BulkRoutingSetupPage() {
+  const { t } = useT();
   const rules = useHotelStore((s) => s.routingRules);
   const folios = useHotelStore((s) => s.folios);
   const guests = useHotelStore((s) => s.guests);
@@ -41,7 +43,7 @@ function BulkRoutingSetupPage() {
   const [open, setOpen] = useState(false);
 
   return (
-    <AppLayout title="Bulk Routing Setup" subtitle={`${rules.length} rule${rules.length === 1 ? "" : "s"}`}>
+    <AppLayout title={t("nav.bulk-setup")} subtitle={`${rules.length} rule${rules.length === 1 ? "" : "s"}`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Routing rules</h2>

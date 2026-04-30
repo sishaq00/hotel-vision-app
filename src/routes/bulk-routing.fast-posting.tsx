@@ -13,6 +13,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type FolioCharge } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/bulk-routing/fast-posting")({
   head: () => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/bulk-routing/fast-posting")({
 const CATEGORIES: FolioCharge["category"][] = ["room", "minibar", "spa", "restaurant", "laundry", "other"];
 
 function FastPostingPage() {
+  const { t } = useT();
   const folios = useHotelStore((s) => s.folios);
   const guests = useHotelStore((s) => s.guests);
   const products = useHotelStore((s) => s.productItems);
@@ -73,7 +75,7 @@ function FastPostingPage() {
   };
 
   return (
-    <AppLayout title="Fast Posting" subtitle="Post a single charge to multiple folios">
+    <AppLayout title={t("nav.fast-posting")} subtitle={t("sub.fast-posting")}>
       {open.length === 0 ? (
         <Card className="border-border/60 shadow-card">
           <EmptyState icon={Zap} title="No open folios" description="Open a folio first to post charges to it." />

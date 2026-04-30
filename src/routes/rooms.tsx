@@ -19,6 +19,7 @@ import { useHotelStore, type RoomStatus } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/rooms")({
   head: () => ({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/rooms")({
 const STATUSES: RoomStatus[] = ["available", "occupied", "cleaning", "maintenance"];
 
 function RoomsPage() {
+  const { t } = useT();
   const allRooms = useHotelStore((s) => s.rooms);
   const updateStatus = useHotelStore((s) => s.updateRoomStatus);
   const archiveRoom = useHotelStore((s) => s.archiveRoom);
@@ -63,7 +65,7 @@ function RoomsPage() {
   }, [rooms]);
 
   return (
-    <AppLayout title="Rooms" subtitle="Inventory and live status">
+    <AppLayout title={t("nav.rooms")} subtitle={t("sub.rooms")}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {STATUSES.map((s) => (

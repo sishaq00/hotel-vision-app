@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type PaymentMethod } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({
@@ -46,6 +47,7 @@ export const Route = createFileRoute("/payments")({
 });
 
 function PaymentsPage() {
+  const { t } = useT();
   const payments = useHotelStore((s) => s.payments);
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
@@ -100,7 +102,7 @@ function PaymentsPage() {
   };
 
   return (
-    <AppLayout title="Payments" subtitle="Invoices and transactions">
+    <AppLayout title={t("nav.payments")} subtitle={t("sub.payments")}>
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card className="border-border/60 p-5 shadow-card">

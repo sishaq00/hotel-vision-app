@@ -18,6 +18,7 @@ import {
 import { useHotelStore } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/guests")({
   head: () => ({
@@ -40,6 +41,7 @@ function initials(name: string) {
 }
 
 function GuestsPage() {
+  const { t } = useT();
   const allGuests = useHotelStore((s) => s.guests);
   const reservations = useHotelStore((s) => s.reservations);
   const archive = useHotelStore((s) => s.archiveGuest);
@@ -59,7 +61,7 @@ function GuestsPage() {
   }, [guests, query]);
 
   return (
-    <AppLayout title="Guests" subtitle="Directory of all guests">
+    <AppLayout title={t("nav.guests")} subtitle={t("sub.guests")}>
       <Card className="border-border/60 shadow-card">
         <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative max-w-sm flex-1">

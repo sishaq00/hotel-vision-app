@@ -20,6 +20,7 @@ import {
 import { useHotelStore } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reservations")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/reservations")({
 });
 
 function ReservationsPage() {
+  const { t } = useT();
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
@@ -59,7 +61,7 @@ function ReservationsPage() {
   }, [reservations, guests, rooms, query]);
 
   return (
-    <AppLayout title="Reservations" subtitle="All bookings in one place">
+    <AppLayout title={t("nav.reservations")} subtitle={t("sub.reservations")}>
       <Card className="border-border/60 shadow-card">
         <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative max-w-sm flex-1">

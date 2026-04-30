@@ -78,7 +78,7 @@ function SettingsPage() {
   };
 
   return (
-    <AppLayout title={t("settings.title")} subtitle="Hotel preferences and configuration">
+    <AppLayout title={t("settings.title")} subtitle={t("sub.settings")}>
       <form onSubmit={handleSave} className="max-w-3xl space-y-6">
         {/* Hotel info */}
         <Card className="border-border/60 p-6 shadow-card">

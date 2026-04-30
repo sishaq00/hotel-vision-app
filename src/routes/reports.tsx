@@ -20,6 +20,7 @@ import { downloadExcel } from "@/lib/excel";
 import { downloadReportPDF } from "@/lib/report-pdf";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -91,7 +92,7 @@ function ReportsHub() {
   };
 
   return (
-    <AppLayout title="Reports" subtitle={`${REPORT_DEFINITIONS.length} reports across ${REPORT_CATEGORIES.length} categories`}>
+    <AppLayout title={t("nav.reports")} subtitle={`${REPORT_DEFINITIONS.length} reports across ${REPORT_CATEGORIES.length} categories`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-5">
           <div className="relative flex-1 min-w-[200px]">

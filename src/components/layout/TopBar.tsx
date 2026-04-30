@@ -1,4 +1,4 @@
-import { HelpCircle, ChevronDown, Globe } from "lucide-react";
+import { HelpCircle, ChevronDown, Globe, Search } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -86,6 +86,21 @@ export function TopBar(_props: TopBarProps) {
             <SelectItem value="ar">العربية</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden h-8 gap-2 rounded border-border text-xs text-muted-foreground sm:flex"
+          onClick={() => {
+            const ev = new KeyboardEvent("keydown", { key: "k", ctrlKey: true });
+            window.dispatchEvent(ev);
+          }}
+          title="Global search (Ctrl+K)"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>Search…</span>
+          <kbd className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px]">Ctrl K</kbd>
+        </Button>
 
         <Button
           variant="ghost"

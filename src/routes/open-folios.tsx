@@ -18,6 +18,7 @@ import {
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type FolioCharge } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/open-folios")({
   head: () => ({
@@ -34,6 +35,7 @@ const CATEGORIES: FolioCharge["category"][] = [
 ];
 
 function OpenFoliosPage() {
+  const { t } = useT();
   const folios = useHotelStore((s) => s.folios);
   const guests = useHotelStore((s) => s.guests);
   const reservations = useHotelStore((s) => s.reservations);
@@ -55,7 +57,7 @@ function OpenFoliosPage() {
     `${settings.currency} ${n.toFixed(2)}`;
 
   return (
-    <AppLayout title="Open Folios" subtitle={`${open.length} active folio${open.length === 1 ? "" : "s"}`}>
+    <AppLayout title={t("nav.open-folios")} subtitle={`${open.length} active folio${open.length === 1 ? "" : "s"}`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-sm font-semibold">Active folios</h2>

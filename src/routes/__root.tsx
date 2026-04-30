@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { Toaster } from "@/components/ui/sonner";
 import { AppBoot } from "@/components/system/AppBoot";
 import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
+import { GlobalSearch } from "@/components/system/GlobalSearch";
 
 import appCss from "../styles.css?url";
 
@@ -75,6 +76,7 @@ function RootComponent() {
       <AppBoot />
       <Outlet />
       <ShortcutsDialog />
+      <GlobalSearch />
       <Toaster />
     </>
   );

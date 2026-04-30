@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore } from "@/store/hotel-store";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/room-types")({
   head: () => ({
@@ -39,6 +40,7 @@ interface TypeGroup {
 }
 
 function RoomTypesPage() {
+  const { t } = useT();
   const rooms = useHotelStore((s) => s.rooms);
   const renameRoomType = useHotelStore((s) => s.renameRoomType);
   const setRoomTypePrice = useHotelStore((s) => s.setRoomTypePrice);
@@ -113,7 +115,7 @@ function RoomTypesPage() {
   };
 
   return (
-    <AppLayout title="Room Types" subtitle="Rename, recode and bulk-price your room categories">
+    <AppLayout title={t("nav.room-types")} subtitle={t("sub.room-types")}>
       <div className="space-y-6">
         {groups.length === 0 ? (
           <Card className="border-border/60 shadow-card">

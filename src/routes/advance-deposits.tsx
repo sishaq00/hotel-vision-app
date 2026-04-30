@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type PaymentMethod, type AdvanceDepositStatus } from "@/store/hotel-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/advance-deposits")({
   head: () => ({
@@ -38,6 +39,7 @@ const STATUS_STYLE: Record<AdvanceDepositStatus, string> = {
 };
 
 function AdvanceDepositsPage() {
+  const { t } = useT();
   const deposits = useHotelStore((s) => s.advanceDeposits);
   const guests = useHotelStore((s) => s.guests);
   const settings = useHotelStore((s) => s.settings);
@@ -61,7 +63,7 @@ function AdvanceDepositsPage() {
   }, [deposits]);
 
   return (
-    <AppLayout title="Advance Deposits" subtitle={`${settings.currency} ${totals.held.toFixed(2)} held · ${settings.currency} ${totals.applied.toFixed(2)} applied`}>
+    <AppLayout title={t("nav.advance-deposits")} subtitle={`${settings.currency} ${totals.held.toFixed(2)} held · ${settings.currency} ${totals.applied.toFixed(2)} applied`}>
       <Card className="border-border/60 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-5">
           <div className="flex gap-2">
