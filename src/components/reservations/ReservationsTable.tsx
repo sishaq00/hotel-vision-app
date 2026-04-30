@@ -156,9 +156,14 @@ export function ReservationsTable({
                           >
                             <Download className="h-3.5 w-3.5" /> Invoice
                           </Button>
-                          <Button asChild size="icon" variant="ghost" className="h-8 w-8" title="Print invoice">
+                          <Button asChild size="icon" variant="ghost" className="h-8 w-8" title="Print invoice (A4)">
                             <Link to="/print-invoice/$reservationId" params={{ reservationId: r.id }} target="_blank">
                               <Printer className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                          <Button asChild size="icon" variant="ghost" className="h-8 w-8 text-xs font-mono" title="Print 80mm receipt">
+                            <Link to="/print-receipt/$reservationId" params={{ reservationId: r.id }} target="_blank">
+                              80
                             </Link>
                           </Button>
                         </>
