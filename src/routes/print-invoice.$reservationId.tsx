@@ -1,8 +1,9 @@
 // Browser-printable A4 invoice — professional layout with QR-like ref, watermark for paid status.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHotelStore } from "@/store/hotel-store";
 import { recordPrint } from "@/lib/print-log";
+import { generateInvoiceQR } from "@/lib/invoice-qr";
 
 export const Route = createFileRoute("/print-invoice/$reservationId")({
   component: PrintInvoice,
