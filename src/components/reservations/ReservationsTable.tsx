@@ -51,6 +51,7 @@ export function ReservationsTable({
   const confirm = useConfirm();
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
+  const [extendId, setExtendId] = useState<string | null>(null);
 
   // Build flat rows for export (resolves guest/room names).
   const exportRows = reservations.map((r) => {
