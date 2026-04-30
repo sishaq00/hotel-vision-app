@@ -217,6 +217,19 @@ export function NewReservationDialog({
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="res-notes">Notes / Special requests</Label>
+            <textarea
+              id="res-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Extra bed, late check-in, allergy info…"
+              rows={2}
+              maxLength={500}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+
           {!datesValid && checkIn && checkOut && (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
               {t("res.dates-invalid")}
