@@ -1,5 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { AppBoot } from "@/components/system/AppBoot";
+import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
 
 import appCss from "../styles.css?url";
 
@@ -68,7 +70,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <>
+      <AppBoot />
       <Outlet />
+      <ShortcutsDialog />
       <Toaster />
     </>
   );
