@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ShoppingBag, Plus } from "lucide-react";
+import { ShoppingBag, Plus, ShoppingCart } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type ProductItem } from "@/store/hotel-store";
+import { SellProductDialog } from "@/components/shifts/SellProductDialog";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
@@ -39,6 +40,7 @@ function ProductInventoryPage() {
   const add = useHotelStore((s) => s.addProductItem);
   const updateStock = useHotelStore((s) => s.updateProductStock);
   const [open, setOpen] = useState(false);
+  const [sellTarget, setSellTarget] = useState<ProductItem | null>(null);
 
   return (
     <AppLayout title={t("nav.product-inventory")} subtitle={`${items.length} product${items.length === 1 ? "" : "s"}`}>
@@ -60,7 +62,7 @@ function ProductInventoryPage() {
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
-                <TableHead className="text-right">Adjust</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,6 +74,14 @@ function ProductInventoryPage() {
                   <TableCell className="font-mono">{p.stock}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={p.stock <= 0}
+                        onClick={() => setSellTarget(p)}
+                      >
+                        <ShoppingCart className="h-3.5 w-3.5" /> Sell
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => updateStock(p.id, Math.max(0, p.stock - 1))}>−</Button>
                       <Button size="sm" variant="outline" onClick={() => updateStock(p.id, p.stock + 1)}>+</Button>
                     </div>
@@ -82,6 +92,7 @@ function ProductInventoryPage() {
           </Table>
         )}
       </Card>
+      <SellProductDialog product={sellTarget} onClose={() => setSellTarget(null)} />
     </AppLayout>
   );
 }
