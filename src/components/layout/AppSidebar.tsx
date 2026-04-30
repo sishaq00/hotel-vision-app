@@ -56,52 +56,53 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useT } from "@/lib/i18n";
 
 // Top-level items (always visible) — matches HOTEL KEY layout
 const topItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "In House", url: "/in-house", icon: BedDouble },
-  { title: "Departures", url: "/departures", icon: LogOut },
-  { title: "Arrivals", url: "/arrivals", icon: CalendarCheck },
-  { title: "Recently Viewed", url: "/recently-viewed", icon: Eye },
-  { title: "Availability", url: "/availability", icon: Grid3x3 },
-  { title: "Search Reservations", url: "/search-reservations", icon: Search },
+  { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
+  { key: "nav.in-house", url: "/in-house", icon: BedDouble },
+  { key: "nav.departures", url: "/departures", icon: LogOut },
+  { key: "nav.arrivals", url: "/arrivals", icon: CalendarCheck },
+  { key: "nav.recently-viewed", url: "/recently-viewed", icon: Eye },
+  { key: "nav.availability", url: "/availability", icon: Grid3x3 },
+  { key: "nav.search-reservations", url: "/search-reservations", icon: Search },
 ] as const;
 
 // Bulk Routing & Postings group
 const bulkRoutingItems = [
-  { title: "Bulk Routing Setup", url: "/bulk-routing/setup", icon: Receipt },
-  { title: "Fast Posting", url: "/bulk-routing/fast-posting", icon: Zap },
+  { key: "nav.bulk-setup", url: "/bulk-routing/setup", icon: Receipt },
+  { key: "nav.fast-posting", url: "/bulk-routing/fast-posting", icon: Zap },
 ] as const;
 
 // "More" expandable group
 const moreItems = [
-  { title: "Archived Reservations", url: "/archived-reservations", icon: Archive },
-  { title: "Batch Process", url: "/batch-process", icon: Layers },
-  { title: "Group Master", url: "/group-master", icon: Users },
-  { title: "Guest Profiles", url: "/guests", icon: Users },
-  { title: "Search Invoice", url: "/search-invoice", icon: FileSearch },
-  { title: "Open Folios", url: "/open-folios", icon: FolderOpen },
-  { title: "Maintenance", url: "/maintenance", icon: Wrench },
-  { title: "Housekeeping", url: "/housekeeping", icon: Sparkles },
-  { title: "Reminders", url: "/reminders", icon: Bell },
-  { title: "Night Audit", url: "/night-audit", icon: Moon },
-  { title: "House Inventory", url: "/house-inventory", icon: Package },
-  { title: "Product Inventory", url: "/product-inventory", icon: ShoppingBag },
-  { title: "House Accounts", url: "/house-accounts", icon: Wallet },
-  { title: "Lost and Found", url: "/lost-found", icon: PackageSearch },
-  { title: "Shift Management", url: "/shift-management", icon: Clock },
-  { title: "Advance Deposits", url: "/advance-deposits", icon: CreditCard },
+  { key: "nav.archived", url: "/archived-reservations", icon: Archive },
+  { key: "nav.batch-process", url: "/batch-process", icon: Layers },
+  { key: "nav.group-master", url: "/group-master", icon: Users },
+  { key: "nav.guest-profiles", url: "/guests", icon: Users },
+  { key: "nav.search-invoice", url: "/search-invoice", icon: FileSearch },
+  { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen },
+  { key: "nav.maintenance", url: "/maintenance", icon: Wrench },
+  { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles },
+  { key: "nav.reminders", url: "/reminders", icon: Bell },
+  { key: "nav.night-audit", url: "/night-audit", icon: Moon },
+  { key: "nav.house-inventory", url: "/house-inventory", icon: Package },
+  { key: "nav.product-inventory", url: "/product-inventory", icon: ShoppingBag },
+  { key: "nav.house-accounts", url: "/house-accounts", icon: Wallet },
+  { key: "nav.lost-found", url: "/lost-found", icon: PackageSearch },
+  { key: "nav.shift-management", url: "/shift-management", icon: Clock },
+  { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard },
 ] as const;
 
 const bottomItems: ReadonlyArray<{
-  title: string;
+  key: string;
   url: string;
   icon: typeof BarChart3;
   external?: boolean;
 }> = [
-  { title: "Report Queue", url: "/report-queue", icon: ListChecks },
-  { title: "Reports", url: "/reports", icon: BarChart3, external: true },
+  { key: "nav.report-queue", url: "/report-queue", icon: ListChecks },
+  { key: "nav.reports", url: "/reports", icon: BarChart3, external: true },
 ];
 
 export function AppSidebar() {
