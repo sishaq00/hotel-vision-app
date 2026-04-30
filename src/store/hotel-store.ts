@@ -217,6 +217,55 @@ export interface LostFoundItem {
   claimedAt?: string;
 }
 
+// ---- v4: Housekeeping staff & teams ---------------------------------------
+
+export type HousekeeperSource = "system-user" | "external";
+
+export interface Housekeeper {
+  id: string;
+  name: string;
+  phone?: string;
+  source: HousekeeperSource;
+  systemUserId?: string;     // when source === 'system-user'
+  active: boolean;
+  capacity: number;          // max rooms / day
+  hourlyRate?: number;
+  color?: string;            // tailwind color hint for chip
+  initials?: string;         // 2-letter chip override
+  createdAt: string;
+}
+
+export interface HousekeepingTeam {
+  id: string;
+  name: string;
+  leaderId?: string;
+  memberIds: string[];
+  createdAt: string;
+}
+
+export interface HousekeeperReportRoom {
+  roomId: string;
+  roomNumber: string;
+  taskType?: HousekeepingTaskType;
+  startedAt?: string;
+  finishedAt: string;
+  notes?: string;
+  photos?: string[];
+}
+
+export interface HousekeeperReport {
+  id: string;
+  housekeeperId: string;
+  housekeeperName: string;
+  date: string;              // YYYY-MM-DD
+  rooms: HousekeeperReportRoom[];
+  status: "submitted" | "reviewed";
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  totalValue?: number;       // sum of cleaningValue for payroll
+}
+
 export interface GroupMaster {
   id: string;
   name: string;            // e.g. "ACME Conference 2026"
