@@ -2,7 +2,7 @@
 const LOG_KEY = "nexora.print-log.v1";
 const MAX_ENTRIES = 500;
 
-export type PrintKind = "invoice-a4" | "receipt-80mm";
+export type PrintKind = "invoice-a4" | "receipt-80mm" | "credit-note";
 
 export interface PrintLogEntry {
   id: string;

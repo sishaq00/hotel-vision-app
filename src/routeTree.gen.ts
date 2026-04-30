@@ -39,6 +39,7 @@ import { Route as HouseAccountsRouteImport } from './routes/house-accounts'
 import { Route as GuestsRouteImport } from './routes/guests'
 import { Route as GroupMasterRouteImport } from './routes/group-master'
 import { Route as DeparturesRouteImport } from './routes/departures'
+import { Route as CreditNotesRouteImport } from './routes/credit-notes'
 import { Route as BatchProcessRouteImport } from './routes/batch-process'
 import { Route as AvailabilityRouteImport } from './routes/availability'
 import { Route as AuditRouteImport } from './routes/audit'
@@ -50,6 +51,7 @@ import { Route as ReportsUserActivityRouteImport } from './routes/reports.user-a
 import { Route as PrintShiftShiftIdRouteImport } from './routes/print-shift.$shiftId'
 import { Route as PrintReceiptReservationIdRouteImport } from './routes/print-receipt.$reservationId'
 import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-invoice.$reservationId'
+import { Route as PrintCreditNoteNoteIdRouteImport } from './routes/print-credit-note.$noteId'
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
 import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
@@ -208,6 +210,11 @@ const DeparturesRoute = DeparturesRouteImport.update({
   path: '/departures',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreditNotesRoute = CreditNotesRouteImport.update({
+  id: '/credit-notes',
+  path: '/credit-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BatchProcessRoute = BatchProcessRouteImport.update({
   id: '/batch-process',
   path: '/batch-process',
@@ -265,6 +272,11 @@ const PrintInvoiceReservationIdRoute =
     path: '/print-invoice/$reservationId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PrintCreditNoteNoteIdRoute = PrintCreditNoteNoteIdRouteImport.update({
+  id: '/print-credit-note/$noteId',
+  path: '/print-credit-note/$noteId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuestGuestIdRoute = GuestGuestIdRouteImport.update({
   id: '/guest/$guestId',
   path: '/guest/$guestId',
@@ -312,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/availability': typeof AvailabilityRoute
   '/batch-process': typeof BatchProcessRoute
+  '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
@@ -345,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
+  '/print-credit-note/$noteId': typeof PrintCreditNoteNoteIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
@@ -362,6 +376,7 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/availability': typeof AvailabilityRoute
   '/batch-process': typeof BatchProcessRoute
+  '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
@@ -395,6 +410,7 @@ export interface FileRoutesByTo {
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
+  '/print-credit-note/$noteId': typeof PrintCreditNoteNoteIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
@@ -413,6 +429,7 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/availability': typeof AvailabilityRoute
   '/batch-process': typeof BatchProcessRoute
+  '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
@@ -446,6 +463,7 @@ export interface FileRoutesById {
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
   '/guest/$guestId': typeof GuestGuestIdRoute
+  '/print-credit-note/$noteId': typeof PrintCreditNoteNoteIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
   '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
@@ -465,6 +483,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/availability'
     | '/batch-process'
+    | '/credit-notes'
     | '/departures'
     | '/group-master'
     | '/guests'
@@ -498,6 +517,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
+    | '/print-credit-note/$noteId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
@@ -515,6 +535,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/availability'
     | '/batch-process'
+    | '/credit-notes'
     | '/departures'
     | '/group-master'
     | '/guests'
@@ -548,6 +569,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
+    | '/print-credit-note/$noteId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
@@ -565,6 +587,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/availability'
     | '/batch-process'
+    | '/credit-notes'
     | '/departures'
     | '/group-master'
     | '/guests'
@@ -598,6 +621,7 @@ export interface FileRouteTypes {
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
     | '/guest/$guestId'
+    | '/print-credit-note/$noteId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
     | '/print-shift/$shiftId'
@@ -616,6 +640,7 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   AvailabilityRoute: typeof AvailabilityRoute
   BatchProcessRoute: typeof BatchProcessRoute
+  CreditNotesRoute: typeof CreditNotesRoute
   DeparturesRoute: typeof DeparturesRoute
   GroupMasterRoute: typeof GroupMasterRoute
   GuestsRoute: typeof GuestsRoute
@@ -649,6 +674,7 @@ export interface RootRouteChildren {
   BulkRoutingFastPostingRoute: typeof BulkRoutingFastPostingRoute
   BulkRoutingSetupRoute: typeof BulkRoutingSetupRoute
   GuestGuestIdRoute: typeof GuestGuestIdRoute
+  PrintCreditNoteNoteIdRoute: typeof PrintCreditNoteNoteIdRoute
   PrintInvoiceReservationIdRoute: typeof PrintInvoiceReservationIdRoute
   PrintReceiptReservationIdRoute: typeof PrintReceiptReservationIdRoute
   PrintShiftShiftIdRoute: typeof PrintShiftShiftIdRoute
@@ -870,6 +896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeparturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/credit-notes': {
+      id: '/credit-notes'
+      path: '/credit-notes'
+      fullPath: '/credit-notes'
+      preLoaderRoute: typeof CreditNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/batch-process': {
       id: '/batch-process'
       path: '/batch-process'
@@ -947,6 +980,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrintInvoiceReservationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print-credit-note/$noteId': {
+      id: '/print-credit-note/$noteId'
+      path: '/print-credit-note/$noteId'
+      fullPath: '/print-credit-note/$noteId'
+      preLoaderRoute: typeof PrintCreditNoteNoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guest/$guestId': {
       id: '/guest/$guestId'
       path: '/guest/$guestId'
@@ -1018,6 +1058,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   AvailabilityRoute: AvailabilityRoute,
   BatchProcessRoute: BatchProcessRoute,
+  CreditNotesRoute: CreditNotesRoute,
   DeparturesRoute: DeparturesRoute,
   GroupMasterRoute: GroupMasterRoute,
   GuestsRoute: GuestsRoute,
@@ -1051,6 +1092,7 @@ const rootRouteChildren: RootRouteChildren = {
   BulkRoutingFastPostingRoute: BulkRoutingFastPostingRoute,
   BulkRoutingSetupRoute: BulkRoutingSetupRoute,
   GuestGuestIdRoute: GuestGuestIdRoute,
+  PrintCreditNoteNoteIdRoute: PrintCreditNoteNoteIdRoute,
   PrintInvoiceReservationIdRoute: PrintInvoiceReservationIdRoute,
   PrintReceiptReservationIdRoute: PrintReceiptReservationIdRoute,
   PrintShiftShiftIdRoute: PrintShiftShiftIdRoute,
