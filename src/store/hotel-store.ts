@@ -1116,6 +1116,14 @@ export const useHotelStore = create<HotelState>()(
             ),
           }));
           log({ entity: "shift", entityId: id, action: "update", description: `Shift ended by ${shift.userName}` });
+          logActivity({
+            action: "shift.close",
+            entityType: "shift",
+            entityId: id,
+            amount: closingCash,
+            description: `Closed shift · closing cash ${(closingCash ?? 0).toFixed(2)}`,
+            details: { closingCash, openingCash: shift.openingCash, notes },
+          });
         },
         getOpenShift: (userName) => {
           return get().shifts.find(
