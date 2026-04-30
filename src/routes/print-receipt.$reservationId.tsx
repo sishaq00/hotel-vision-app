@@ -124,6 +124,13 @@ function PrintReceipt() {
           </>
         )}
         <hr />
+        {reservation.notes && (
+          <>
+            <div className="bold">Notes:</div>
+            <div>{reservation.notes}</div>
+            <hr />
+          </>
+        )}
         <div className="center">
           {settings.invoiceFooter || "Thank you for your stay!"}
         </div>
