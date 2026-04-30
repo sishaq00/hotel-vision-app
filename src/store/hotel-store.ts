@@ -1332,6 +1332,146 @@ export const useHotelStore = create<HotelState>()(
             ),
           }));
         },
+        recordProductSale: ({ productId, quantity, roomId, reservationId }) => {
+          if (quantity <= 0) return { ok: false as const, error: "Quantity must be positive" };
+          const product = get().productItems.find((p) => p.id === productId);
+          if (!product) return { ok: false as const, error: "Product not found" };
+          if (product.stock < quantity) return { ok: false as const, error: "Insufficient stock" };
+
+          const me = useAuthStore.getState().current();
+          if (!me) return { ok: false as const, error: "You must be signed in" };
+
+          const room = roomId ? get().rooms.find((r) => r.id === roomId) : undefined;
+          const reservation = reservationId
+            ? get().reservations.find((r) => r.id === reservationId)
+            : undefined;
+          const guest = reservation
+            ? get().guests.find((g) => g.id === reservation.guestId)
+            : undefined;
+
+          const openShift = get().shifts.find(
+            (s) => s.status === "open" && s.userId === me.id,
+          );
+
+          const total = round2(product.price * quantity);
+          const sale: ProductSale = {
+            id: uid(),
+            productId: product.id,
+            productName: product.name,
+            category: product.category,
+            quantity,
+            unitPrice: product.price,
+            total,
+            roomId,
+            roomNumber: room?.number,
+            reservationId,
+            guestName: guest?.name,
+            soldAt: new Date().toISOString(),
+            userId: me.id,
+            userName: me.fullName || me.username,
+            shiftId: openShift?.id,
+          };
+
+          set((s) => ({
+            productSales: [sale, ...s.productSales],
+            productItems: s.productItems.map((p) =>
+              p.id === productId ? { ...p, stock: p.stock - quantity } : p,
+            ),
+          }));
+
+          log({
+            entity: "product",
+            entityId: sale.id,
+            action: "create",
+            description: `Sold ${quantity}× ${product.name} (${product.price.toFixed(2)} ea)${room ? ` → Room ${room.number}` : ""}`,
+            metadata: { total, roomNumber: room?.number },
+          });
+          logActivity({
+            action: "payment.record",
+            entityType: "payment",
+            entityId: sale.id,
+            amount: total,
+            description: `Sold ${quantity}× ${product.name}${room ? ` → Room ${room.number}` : ""}`,
+            details: {
+              productName: product.name,
+              quantity,
+              unitPrice: product.price,
+              roomNumber: room?.number,
+              guestName: guest?.name,
+              kind: "product-sale",
+            },
+          });
+          return { ok: true as const, sale };
+        },
+
+        extendStay: (reservationId, newCheckOut, reason) => {
+          const res = get().reservations.find((r) => r.id === reservationId);
+          if (!res) return { ok: false as const, error: "Reservation not found" };
+          if (res.status === "checked-out" || res.status === "cancelled") {
+            return { ok: false as const, error: "Cannot modify a closed reservation" };
+          }
+          const room = get().rooms.find((r) => r.id === res.roomId);
+          if (!room) return { ok: false as const, error: "Room not found" };
+
+          const oldCheckOut = res.checkOut;
+          if (newCheckOut === oldCheckOut) {
+            return { ok: false as const, error: "New check-out is identical" };
+          }
+          if (new Date(newCheckOut).getTime() <= new Date(res.checkIn).getTime()) {
+            return { ok: false as const, error: "Check-out must be after check-in" };
+          }
+
+          // Conflict check (skip self)
+          const conflict = get().hasRoomConflict(res.roomId, res.checkIn, newCheckOut, reservationId);
+          if (conflict) {
+            return { ok: false as const, error: `Room is booked from ${conflict.checkIn} to ${conflict.checkOut}` };
+          }
+
+          const oldNights = computeNights(res.checkIn, oldCheckOut);
+          const newNights = computeNights(res.checkIn, newCheckOut);
+          const nightsDelta = newNights - oldNights;
+          const newTotal = round2(room.price * newNights);
+          const amountDelta = round2(newTotal - res.totalAmount);
+
+          set((s) => ({
+            reservations: s.reservations.map((r) =>
+              r.id === reservationId
+                ? { ...r, checkOut: newCheckOut, totalAmount: newTotal }
+                : r,
+            ),
+          }));
+
+          const guest = get().guests.find((g) => g.id === res.guestId);
+          log({
+            entity: "reservation",
+            entityId: reservationId,
+            action: "update",
+            description: `Stay ${nightsDelta > 0 ? "extended" : "shortened"} by ${Math.abs(nightsDelta)} night(s) · Room ${room.number}`,
+            metadata: { oldCheckOut, newCheckOut, nightsDelta, amountDelta, reason },
+          });
+          logActivity({
+            action: "reservation.extend",
+            entityType: "reservation",
+            entityId: reservationId,
+            amount: amountDelta,
+            description: `${nightsDelta > 0 ? "Extended" : "Shortened"} stay by ${Math.abs(nightsDelta)} night(s) · ${guest?.name ?? "guest"} · Room ${room.number}`,
+            details: {
+              roomNumber: room.number,
+              guestName: guest?.name,
+              oldCheckOut,
+              newCheckOut,
+              nightsDelta,
+              amountDelta,
+              newTotal,
+              reason,
+            },
+          });
+          return { ok: true as const, nightsDelta, amountDelta };
+        },
+
+        setLastNightAuditDate: (date) => {
+          set({ lastNightAuditDate: date });
+        },
 
         // -------------------- Routing rules --------------------
         addRoutingRule: (r) => {
