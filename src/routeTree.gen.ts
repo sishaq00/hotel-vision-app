@@ -46,6 +46,7 @@ import { Route as ArchivedReservationsRouteImport } from './routes/archived-rese
 import { Route as AdvanceDepositsRouteImport } from './routes/advance-deposits'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReportsUserActivityRouteImport } from './routes/reports.user-activity'
+import { Route as PrintShiftShiftIdRouteImport } from './routes/print-shift.$shiftId'
 import { Route as PrintReceiptReservationIdRouteImport } from './routes/print-receipt.$reservationId'
 import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-invoice.$reservationId'
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
@@ -237,6 +238,11 @@ const ReportsUserActivityRoute = ReportsUserActivityRouteImport.update({
   path: '/user-activity',
   getParentRoute: () => ReportsRoute,
 } as any)
+const PrintShiftShiftIdRoute = PrintShiftShiftIdRouteImport.update({
+  id: '/print-shift/$shiftId',
+  path: '/print-shift/$shiftId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrintReceiptReservationIdRoute =
   PrintReceiptReservationIdRouteImport.update({
     id: '/print-receipt/$reservationId',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRoutesByTo {
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRoutesById {
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/guest/$guestId': typeof GuestGuestIdRoute
   '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
   '/print-receipt/$reservationId': typeof PrintReceiptReservationIdRoute
+  '/print-shift/$shiftId': typeof PrintShiftShiftIdRoute
   '/reports/user-activity': typeof ReportsUserActivityRoute
 }
 export interface FileRouteTypes {
@@ -442,6 +451,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/print-shift/$shiftId'
     | '/reports/user-activity'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -486,6 +496,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/print-shift/$shiftId'
     | '/reports/user-activity'
   id:
     | '__root__'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/guest/$guestId'
     | '/print-invoice/$reservationId'
     | '/print-receipt/$reservationId'
+    | '/print-shift/$shiftId'
     | '/reports/user-activity'
   fileRoutesById: FileRoutesById
 }
@@ -575,6 +587,7 @@ export interface RootRouteChildren {
   GuestGuestIdRoute: typeof GuestGuestIdRoute
   PrintInvoiceReservationIdRoute: typeof PrintInvoiceReservationIdRoute
   PrintReceiptReservationIdRoute: typeof PrintReceiptReservationIdRoute
+  PrintShiftShiftIdRoute: typeof PrintShiftShiftIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -838,6 +851,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsUserActivityRouteImport
       parentRoute: typeof ReportsRoute
     }
+    '/print-shift/$shiftId': {
+      id: '/print-shift/$shiftId'
+      path: '/print-shift/$shiftId'
+      fullPath: '/print-shift/$shiftId'
+      preLoaderRoute: typeof PrintShiftShiftIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print-receipt/$reservationId': {
       id: '/print-receipt/$reservationId'
       path: '/print-receipt/$reservationId'
@@ -929,6 +949,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuestGuestIdRoute: GuestGuestIdRoute,
   PrintInvoiceReservationIdRoute: PrintInvoiceReservationIdRoute,
   PrintReceiptReservationIdRoute: PrintReceiptReservationIdRoute,
+  PrintShiftShiftIdRoute: PrintShiftShiftIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

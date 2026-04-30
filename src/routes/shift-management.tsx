@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Clock, Play, Square } from "lucide-react";
+import { Clock, Play, Square, FileText } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +23,8 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore } from "@/store/hotel-store";
+import { useCurrentUser, useAuthStore } from "@/store/auth-store";
+import { EndShiftReportDialog } from "@/components/shifts/EndShiftReportDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -41,77 +42,101 @@ function ShiftManagementPage() {
   const shifts = useHotelStore((s) => s.shifts);
   const startShift = useHotelStore((s) => s.startShift);
   const endShift = useHotelStore((s) => s.endShift);
+  const me = useCurrentUser();
+  const isAdmin = useAuthStore((s) => s.current()?.role === "admin");
 
-  const [openDialog, setOpenDialog] = useState<"start" | "end" | null>(null);
-  const [target, setTarget] = useState<string | null>(null);
+  const [openStart, setOpenStart] = useState(false);
+  const [endTarget, setEndTarget] = useState<string | null>(null);
 
   const sorted = useMemo(
     () => [...shifts].sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1)),
     [shifts],
   );
 
-  const openShifts = sorted.filter((s) => s.status === "open");
+  // Staff sees only their shifts; admin sees all.
+  const visible = useMemo(
+    () => (isAdmin || !me ? sorted : sorted.filter((s) => s.userId === me.id)),
+    [sorted, isAdmin, me],
+  );
+
+  const myOpenShift = me ? sorted.find((s) => s.status === "open" && s.userId === me.id) : undefined;
+  const allOpenShifts = sorted.filter((s) => s.status === "open");
 
   return (
     <AppLayout
       title="Shift Management"
-      subtitle={`${openShifts.length} open shift${openShifts.length === 1 ? "" : "s"}`}
+      subtitle={
+        myOpenShift
+          ? "You have an open shift"
+          : `${allOpenShifts.length} open shift${allOpenShifts.length === 1 ? "" : "s"}`
+      }
     >
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="border-border/60 p-5 shadow-card lg:col-span-1">
           <h3 className="text-sm font-semibold text-foreground">Quick actions</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Open or close a front desk shift.
+            Open or close your front desk shift.
           </p>
-          <Button className="mt-4 w-full" onClick={() => setOpenDialog("start")}>
-            <Play className="h-4 w-4" /> Start new shift
-          </Button>
-          <div className="mt-6 space-y-2">
-            <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-              Currently open
-            </h4>
-            {openShifts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active shifts.</p>
-            ) : (
-              openShifts.map((s) => (
-                <div
-                  key={s.id}
-                  className="rounded-md border border-border p-3 text-sm"
-                >
+
+          {!myOpenShift ? (
+            <Button className="mt-4 w-full" onClick={() => setOpenStart(true)}>
+              <Play className="h-4 w-4" /> Start my shift
+            </Button>
+          ) : (
+            <div className="mt-4 rounded-md border border-success/30 bg-success/10 p-3 text-sm">
+              <div className="font-medium text-foreground">Active shift</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Started {new Date(myOpenShift.startedAt).toLocaleTimeString()} ·
+                Opening cash ${myOpenShift.openingCash.toFixed(2)}
+              </div>
+              <Button
+                size="sm"
+                variant="default"
+                className="mt-3 w-full"
+                onClick={() => setEndTarget(myOpenShift.id)}
+              >
+                <FileText className="h-3.5 w-3.5" /> End shift & view report
+              </Button>
+            </div>
+          )}
+
+          {isAdmin && allOpenShifts.length > 0 && (
+            <div className="mt-6 space-y-2">
+              <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+                All open shifts
+              </h4>
+              {allOpenShifts.map((s) => (
+                <div key={s.id} className="rounded-md border border-border p-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">{s.userName}</span>
                     <span className="text-[10px] text-muted-foreground">
                       since {new Date(s.startedAt).toLocaleTimeString()}
                     </span>
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Opening cash: ${s.openingCash.toFixed(2)}
-                  </div>
                   <Button
                     size="sm"
                     variant="outline"
                     className="mt-2 w-full"
-                    onClick={() => {
-                      setTarget(s.id);
-                      setOpenDialog("end");
-                    }}
+                    onClick={() => setEndTarget(s.id)}
                   >
-                    <Square className="h-3.5 w-3.5" /> End shift
+                    <Square className="h-3.5 w-3.5" /> End & view report
                   </Button>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card className="border-border/60 shadow-card lg:col-span-2">
           <div className="border-b border-border p-5">
-            <h3 className="text-sm font-semibold text-foreground">Shift history</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {isAdmin ? "Shift history (all users)" : "My shift history"}
+            </h3>
             <p className="text-xs text-muted-foreground">
-              Last {Math.min(50, sorted.length)} shift{sorted.length === 1 ? "" : "s"}
+              Last {Math.min(50, visible.length)} shift{visible.length === 1 ? "" : "s"}
             </p>
           </div>
-          {sorted.length === 0 ? (
+          {visible.length === 0 ? (
             <EmptyState
               icon={Clock}
               title="No shifts yet"
@@ -129,14 +154,13 @@ function ShiftManagementPage() {
                     <TableHead className="text-right">Close cash</TableHead>
                     <TableHead className="text-right">Diff</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Report</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sorted.slice(0, 50).map((s) => {
+                  {visible.slice(0, 50).map((s) => {
                     const diff =
-                      s.closingCash !== undefined
-                        ? s.closingCash - s.openingCash
-                        : null;
+                      s.closingCash !== undefined ? s.closingCash - s.openingCash : null;
                     return (
                       <TableRow key={s.id}>
                         <TableCell className="font-medium">{s.userName}</TableCell>
@@ -150,9 +174,7 @@ function ShiftManagementPage() {
                           ${s.openingCash.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {s.closingCash !== undefined
-                            ? `$${s.closingCash.toFixed(2)}`
-                            : "—"}
+                          {s.closingCash !== undefined ? `$${s.closingCash.toFixed(2)}` : "—"}
                         </TableCell>
                         <TableCell
                           className={cn(
@@ -180,6 +202,15 @@ function ShiftManagementPage() {
                             {s.status}
                           </span>
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => window.open(`/print-shift/${s.id}`, "_blank")}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -191,27 +222,29 @@ function ShiftManagementPage() {
       </div>
 
       <StartShiftDialog
-        open={openDialog === "start"}
-        onClose={() => setOpenDialog(null)}
-        onSubmit={(name, cash) => {
-          startShift(name, cash);
-          toast.success(`Shift started for ${name}`);
-          setOpenDialog(null);
+        open={openStart}
+        userName={me?.fullName || me?.username || ""}
+        onClose={() => setOpenStart(false)}
+        onSubmit={(cash) => {
+          if (!me) {
+            toast.error("Please sign in first");
+            return;
+          }
+          startShift(me.fullName || me.username, cash);
+          toast.success(`Shift started`);
+          setOpenStart(false);
         }}
       />
-      <EndShiftDialog
-        open={openDialog === "end"}
-        onClose={() => {
-          setOpenDialog(null);
-          setTarget(null);
-        }}
-        onSubmit={(cash, notes) => {
-          if (target) {
-            endShift(target, cash, notes);
+      <EndShiftReportDialog
+        shiftId={endTarget}
+        open={endTarget !== null}
+        onClose={() => setEndTarget(null)}
+        onConfirm={(cash, notes) => {
+          if (endTarget) {
+            endShift(endTarget, cash, notes || undefined);
             toast.success("Shift closed");
           }
-          setOpenDialog(null);
-          setTarget(null);
+          setEndTarget(null);
         }}
       />
     </AppLayout>
@@ -220,16 +253,16 @@ function ShiftManagementPage() {
 
 function StartShiftDialog({
   open,
+  userName,
   onClose,
   onSubmit,
 }: {
   open: boolean;
+  userName: string;
   onClose: () => void;
-  onSubmit: (name: string, cash: number) => void;
+  onSubmit: (cash: number) => void;
 }) {
-  const [name, setName] = useState("");
   const [cash, setCash] = useState("0");
-
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-[400px]">
@@ -238,17 +271,13 @@ function StartShiftDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Front desk user</Label>
-            <Input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sarah"
-            />
+            <Label>User</Label>
+            <Input value={userName} disabled />
           </div>
           <div className="space-y-1.5">
-            <Label>Opening cash</Label>
+            <Label>Opening cash float</Label>
             <Input
+              autoFocus
               type="number"
               step="0.01"
               value={cash}
@@ -258,66 +287,7 @@ function StartShiftDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={() => {
-              if (!name.trim()) {
-                toast.error("Name is required");
-                return;
-              }
-              onSubmit(name.trim(), parseFloat(cash) || 0);
-            }}
-          >
-            Start
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EndShiftDialog({
-  open,
-  onClose,
-  onSubmit,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (cash: number, notes?: string) => void;
-}) {
-  const [cash, setCash] = useState("0");
-  const [notes, setNotes] = useState("");
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>End shift</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>Closing cash</Label>
-            <Input
-              autoFocus
-              type="number"
-              step="0.01"
-              value={cash}
-              onChange={(e) => setCash(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Notes (optional)</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any handover info..."
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSubmit(parseFloat(cash) || 0, notes.trim() || undefined)}>
-            Close shift
-          </Button>
+          <Button onClick={() => onSubmit(parseFloat(cash) || 0)}>Start</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
