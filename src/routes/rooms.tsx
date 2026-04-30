@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { NewRoomDialog } from "@/components/rooms/NewRoomDialog";
 import { Input } from "@/components/ui/input";
 import { useHotelStore, type RoomStatus } from "@/store/hotel-store";
+import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 
@@ -86,7 +87,23 @@ function RoomsPage() {
                 className="pl-9"
               />
             </div>
-            <NewRoomDialog />
+            <div className="flex items-center gap-2">
+              <ExportButtons
+                rows={filtered.map((r) => ({
+                  Number: r.number,
+                  Type: r.type,
+                  Code: r.typeCode,
+                  Floor: r.floor,
+                  Price: r.price,
+                  Status: r.status,
+                  Housekeeping: r.housekeepingStatus ?? "",
+                  Smoking: r.smokingAllowed ? "Yes" : "",
+                  Accessible: r.accessible ? "Yes" : "",
+                }))}
+                filename="rooms"
+              />
+              <NewRoomDialog />
+            </div>
           </div>
 
           {filtered.length === 0 ? (
