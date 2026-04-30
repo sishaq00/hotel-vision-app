@@ -129,14 +129,25 @@ export function ReservationsTable({
                         </Button>
                       )}
                       {actions.checkOut && r.status === "checked-in" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 gap-1.5"
-                          onClick={() => setCheckoutId(r.id)}
-                        >
-                          <LogOut className="h-3.5 w-3.5" /> Check out
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5"
+                            onClick={() => setExtendId(r.id)}
+                            title="Extend or shorten stay"
+                          >
+                            <CalendarPlus className="h-3.5 w-3.5" /> Extend
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5"
+                            onClick={() => setCheckoutId(r.id)}
+                          >
+                            <LogOut className="h-3.5 w-3.5" /> Check out
+                          </Button>
+                        </>
                       )}
                       {actions.invoice && r.status === "checked-out" && r.invoice && (
                         <>
