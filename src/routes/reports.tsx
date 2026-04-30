@@ -237,6 +237,27 @@ function ReportsHub() {
               >
                 <FileSpreadsheet className="h-4 w-4" /> Export Excel
               </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (previewReport.rows.length === 0) { toast("No data"); return; }
+                  downloadReportPDF({
+                    title: previewReport.def.name,
+                    rows: previewReport.rows,
+                    settings: ctx.settings,
+                  });
+                  recordReportRun({
+                    reportKey: previewReport.def.key,
+                    reportName: previewReport.def.name,
+                    format: "pdf",
+                    status: "completed",
+                    rowCount: previewReport.rows.length,
+                  });
+                  toast.success("Exported PDF");
+                }}
+              >
+                <FileDown className="h-4 w-4" /> Export PDF
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
