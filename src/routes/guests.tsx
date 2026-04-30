@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { useHotelStore } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
+import { useConfirm } from "@/components/system/ConfirmDialog";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 
@@ -45,6 +47,7 @@ function GuestsPage() {
   const allGuests = useHotelStore((s) => s.guests);
   const reservations = useHotelStore((s) => s.reservations);
   const archive = useHotelStore((s) => s.archiveGuest);
+  const confirm = useConfirm();
   const [query, setQuery] = useState("");
 
   const guests = useMemo(() => allGuests.filter((g) => !g.archived), [allGuests]);
@@ -128,7 +131,13 @@ function GuestsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-foreground">{g.name}</p>
+                            <Link
+                              to="/guest/$guestId"
+                              params={{ guestId: g.id }}
+                              className="font-medium text-foreground hover:underline"
+                            >
+                              {g.name}
+                            </Link>
                             <p className="text-xs text-muted-foreground">
                               Joined {new Date(g.createdAt).toLocaleDateString()}
                             </p>
@@ -145,7 +154,14 @@ function GuestsPage() {
                           variant="ghost"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           title="Archive guest"
-                          onClick={() => {
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Archive guest?",
+                              description: `Archive ${g.name}? They will be hidden but their reservations are preserved.`,
+                              confirmLabel: "Archive",
+                              destructive: true,
+                            });
+                            if (!ok) return;
                             const result = archive(g.id);
                             if (result.ok) {
                               toast.success("Guest archived");

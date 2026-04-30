@@ -172,7 +172,14 @@ function RoomsPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => {
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Archive room?",
+                              description: `Archive room ${r.number}? It will no longer be bookable.`,
+                              confirmLabel: "Archive",
+                              destructive: true,
+                            });
+                            if (!ok) return;
                             const result = archiveRoom(r.id);
                             if (result.ok) {
                               toast.success(`Room ${r.number} archived`);
