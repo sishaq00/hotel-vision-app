@@ -17,6 +17,7 @@ import { NewRoomDialog } from "@/components/rooms/NewRoomDialog";
 import { Input } from "@/components/ui/input";
 import { useHotelStore, type RoomStatus } from "@/store/hotel-store";
 import { ExportButtons } from "@/components/system/ExportButtons";
+import { useConfirm } from "@/components/system/ConfirmDialog";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -38,6 +39,7 @@ function RoomsPage() {
   const allRooms = useHotelStore((s) => s.rooms);
   const updateStatus = useHotelStore((s) => s.updateRoomStatus);
   const archiveRoom = useHotelStore((s) => s.archiveRoom);
+  const confirm = useConfirm();
   const [query, setQuery] = useState("");
 
   // Hide archived rooms from the active inventory view
@@ -172,7 +174,14 @@ function RoomsPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => {
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Archive room?",
+                              description: `Archive room ${r.number}? It will no longer be bookable.`,
+                              confirmLabel: "Archive",
+                              destructive: true,
+                            });
+                            if (!ok) return;
                             const result = archiveRoom(r.id);
                             if (result.ok) {
                               toast.success(`Room ${r.number} archived`);

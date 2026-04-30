@@ -1,0 +1,194 @@
+// Guest profile: shows full reservation history, payments, totals.
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { useHotelStore } from "@/store/hotel-store";
+
+export const Route = createFileRoute("/guest/$guestId")({
+  component: GuestProfile,
+});
+
+function GuestProfile() {
+  const { guestId } = Route.useParams();
+  const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
+  const reservations = useHotelStore((s) =>
+    s.reservations.filter((r) => r.guestId === guestId)
+  );
+  const rooms = useHotelStore((s) => s.rooms);
+  const payments = useHotelStore((s) => s.payments);
+  const settings = useHotelStore((s) => s.settings);
+
+  const guestPayments = useMemo(() => {
+    const resIds = new Set(reservations.map((r) => r.id));
+    return payments.filter((p) => resIds.has(p.reservationId));
+  }, [payments, reservations]);
+
+  const stats = useMemo(() => {
+    const totalSpent = guestPayments
+      .filter((p) => p.status === "paid")
+      .reduce((s, p) => s + p.amount, 0);
+    const nights = reservations
+      .filter((r) => r.status === "checked-out")
+      .reduce((s, r) => {
+        const d = (new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime()) / 86_400_000;
+        return s + Math.max(0, Math.round(d));
+      }, 0);
+    return {
+      totalStays: reservations.filter((r) => r.status === "checked-out").length,
+      activeStays: reservations.filter((r) => r.status === "checked-in" || r.status === "confirmed").length,
+      totalSpent,
+      totalNights: nights,
+    };
+  }, [reservations, guestPayments]);
+
+  if (!guest) {
+    return (
+      <AppLayout title="Guest not found">
+        <Card className="p-12 text-center">
+          <p className="text-sm text-muted-foreground">No guest with this ID.</p>
+          <Button asChild className="mt-4" variant="outline">
+            <Link to="/guests"><ArrowLeft className="h-4 w-4" /> Back to guests</Link>
+          </Button>
+        </Card>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout title={guest.name} subtitle="Guest profile & history">
+      <div className="space-y-4">
+        <Button asChild variant="ghost" size="sm" className="gap-1.5 -ml-2">
+          <Link to="/guests"><ArrowLeft className="h-4 w-4" /> Back</Link>
+        </Button>
+
+        {/* Header card */}
+        <Card className="border-border/60 p-5 shadow-card">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold">{guest.name}</h2>
+                {guest.vip && (
+                  <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
+                    <Crown className="h-3 w-3" /> VIP
+                  </Badge>
+                )}
+                {guest.doNotRent && (
+                  <Badge variant="outline" className="border-destructive/40 text-destructive gap-1">
+                    <Ban className="h-3 w-3" /> Do Not Rent
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
+                {guest.email && <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {guest.email}</div>}
+                {guest.phone && <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {guest.phone}</div>}
+                {guest.country && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {guest.country}</div>}
+              </div>
+              {guest.notes && (
+                <p className="mt-3 max-w-md rounded-md border border-border bg-muted/40 p-2 text-xs text-foreground">
+                  📝 {guest.notes}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+              <Stat label="Total stays" value={stats.totalStays} />
+              <Stat label="Active" value={stats.activeStays} />
+              <Stat label="Nights" value={stats.totalNights} />
+              <Stat label="Spent" value={`${settings.currency} ${stats.totalSpent.toFixed(0)}`} />
+            </div>
+          </div>
+        </Card>
+
+        {/* Reservations */}
+        <Card className="border-border/60 shadow-card">
+          <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
+            <BedDouble className="h-4 w-4 text-primary" /> Reservations · {reservations.length}
+          </div>
+          {reservations.length === 0 ? (
+            <p className="p-8 text-center text-sm text-muted-foreground">No reservations yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Room</TableHead>
+                  <TableHead>Check-in</TableHead>
+                  <TableHead>Check-out</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...reservations]
+                  .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
+                  .map((r) => {
+                    const rm = rooms.find((x) => x.id === r.roomId);
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.checkOut}</TableCell>
+                        <TableCell><StatusBadge status={r.status} /></TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {settings.currency} {r.totalAmount.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+
+        {/* Payments */}
+        <Card className="border-border/60 shadow-card">
+          <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
+            <Receipt className="h-4 w-4 text-primary" /> Payments · {guestPayments.length}
+          </div>
+          {guestPayments.length === 0 ? (
+            <p className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {guestPayments.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="text-muted-foreground">{p.date}</TableCell>
+                    <TableCell className="capitalize">{p.method}</TableCell>
+                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {settings.currency} {p.amount.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
+      </div>
+    </AppLayout>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 min-w-[80px]">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-bold text-foreground">{value}</p>
+    </div>
+  );
+}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useHotelStore } from "@/store/hotel-store";
 import { NotificationsBell } from "@/components/system/NotificationsBell";
+import { ThemeToggle } from "@/components/system/ThemeToggle";
 import {
   Select,
   SelectContent,
@@ -110,6 +111,7 @@ export function TopBar(_props: TopBarProps) {
         </Button>
 
         <NotificationsBell />
+        <ThemeToggle />
 
         <Button
           variant="ghost"

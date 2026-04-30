@@ -20,6 +20,7 @@ import {
 import { useHotelStore } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/system/ConfirmDialog";
 import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reservations")({
@@ -40,6 +41,7 @@ function ReservationsPage() {
   const settings = useHotelStore((s) => s.settings);
   const checkIn = useHotelStore((s) => s.checkIn);
   const cancel = useHotelStore((s) => s.cancelReservation);
+  const confirm = useConfirm();
 
   const [query, setQuery] = useState("");
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
@@ -164,7 +166,15 @@ function ReservationsPage() {
                               variant="ghost"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
                               title="Cancel reservation"
-                              onClick={() => {
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Cancel reservation?",
+                                  description: "This will release the room. The action cannot be undone.",
+                                  confirmLabel: "Cancel reservation",
+                                  cancelLabel: "Keep",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
                                 cancel(r.id);
                                 toast("Reservation cancelled");
                               }}
