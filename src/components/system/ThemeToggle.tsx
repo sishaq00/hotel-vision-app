@@ -13,7 +13,7 @@ function applyTheme(theme: "light" | "dark") {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   useEffect(() => {
     const saved = (localStorage.getItem(STORAGE_KEY) as "light" | "dark" | null);
@@ -30,6 +30,20 @@ export function ThemeToggle() {
     localStorage.setItem(STORAGE_KEY, next);
   };
 
+  // Render a stable placeholder during SSR to avoid hydration mismatch.
+  if (theme === null) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 rounded p-0 text-muted-foreground"
+        aria-label="Toggle theme"
+      >
+        <span className="block h-4 w-4" />
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant="ghost"
@@ -37,7 +51,6 @@ export function ThemeToggle() {
       className="h-8 w-8 rounded p-0 text-muted-foreground"
       onClick={toggle}
       title={theme === "dark" ? "Switch to light" : "Switch to dark"}
-      suppressHydrationWarning
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>

@@ -300,6 +300,36 @@ function Dashboard() {
     };
   }, [rooms, reservations, advanceDeposits, today]);
 
+  // Performance KPIs: Occupancy, ADR, RevPAR
+  const perf = useMemo(() => {
+    const sellable = rooms.filter(
+      (r) => !r.archived && r.status !== "maintenance",
+    ).length;
+    const occupied = reservations.filter((r) => r.status === "checked-in").length;
+    const occupancyPct = sellable > 0 ? (occupied / sellable) * 100 : 0;
+
+    // ADR = revenue from rooms sold today / occupied rooms
+    const checkedInToday = reservations.filter(
+      (r) => r.status === "checked-in" || r.checkedInAt?.slice(0, 10) === today,
+    );
+    const totalRevenue = checkedInToday.reduce((s, r) => {
+      const rm = rooms.find((x) => x.id === r.roomId);
+      return s + (rm?.price ?? 0);
+    }, 0);
+    const adr = checkedInToday.length > 0 ? totalRevenue / checkedInToday.length : 0;
+
+    // RevPAR = total room revenue / total available rooms
+    const revpar = sellable > 0 ? totalRevenue / sellable : 0;
+
+    return {
+      occupancyPct,
+      adr,
+      revpar,
+      sellable,
+      occupied,
+    };
+  }, [rooms, reservations, today]);
+
   return (
     <AppLayout title={t("nav.dashboard")}>
       <div className="space-y-4">
@@ -387,7 +417,33 @@ function Dashboard() {
           </section>
         </div>
 
-        {/* 6 Quick action buttons (3 cols × 2 rows) */}
+        {/* Performance KPIs */}
+        <section>
+          <SectionHeader title="Performance" />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <KpiTile
+              label="Occupancy"
+              value={`${perf.occupancyPct.toFixed(1)}%`}
+              footerLeft={`${perf.occupied}/${perf.sellable} rooms`}
+              footerRight="checked-in"
+              accent="blue"
+            />
+            <KpiTile
+              label="ADR"
+              value={perf.adr.toFixed(0)}
+              footerLeft="Avg Daily Rate"
+              footerRight="per occupied"
+              accent="green"
+            />
+            <KpiTile
+              label="RevPAR"
+              value={perf.revpar.toFixed(0)}
+              footerLeft="Revenue per available room"
+              footerRight="today"
+              accent="violet"
+            />
+          </div>
+        </section>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <QuickAction
             label={t("qa.walk-in")}
