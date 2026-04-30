@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CreditCard, Plus, Search } from "lucide-react";
+import { CreditCard, Plus, Search, FileMinus } from "lucide-react";
+import { IssueCreditNoteDialog } from "@/components/invoicing/IssueCreditNoteDialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ function PaymentsPage() {
   const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [query, setQuery] = useState("");
+  const [creditNoteResId, setCreditNoteResId] = useState<string | null>(null);
 
   const totals = useMemo(() => {
     const paid = payments.filter((p) => p.status === "paid").reduce((a, p) => a + p.amount, 0);
@@ -240,12 +242,14 @@ function PaymentsPage() {
                     <TableHead>Method</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => {
                     const r = reservations.find((x) => x.id === p.reservationId);
                     const g = r ? guests.find((x) => x.id === r.guestId) : undefined;
+                    const hasInvoice = !!r?.invoice;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="text-muted-foreground">{p.date}</TableCell>
@@ -254,6 +258,21 @@ function PaymentsPage() {
                         <TableCell><StatusBadge status={p.status} /></TableCell>
                         <TableCell className="text-right font-semibold">
                           ${p.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {hasInvoice && p.status === "paid" && r ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 gap-1.5 text-destructive hover:text-destructive"
+                              onClick={() => setCreditNoteResId(r.id)}
+                            >
+                              <FileMinus className="h-3.5 w-3.5" />
+                              Credit Note
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -264,6 +283,13 @@ function PaymentsPage() {
           )}
         </Card>
       </div>
+      {creditNoteResId && (
+        <IssueCreditNoteDialog
+          open={!!creditNoteResId}
+          onOpenChange={(v) => !v && setCreditNoteResId(null)}
+          reservationId={creditNoteResId}
+        />
+      )}
     </AppLayout>
   );
 }
