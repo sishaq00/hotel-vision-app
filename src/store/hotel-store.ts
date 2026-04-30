@@ -905,6 +905,20 @@ export const useHotelStore = create<HotelState>()(
           });
           return id;
         },
+        updateGuest: (id, patch) => {
+          const before = get().guests.find((g) => g.id === id);
+          if (!before) return;
+          set((s) => ({
+            guests: s.guests.map((g) => (g.id === id ? { ...g, ...patch } : g)),
+          }));
+          log({
+            entity: "guest",
+            entityId: id,
+            action: "update",
+            description: `Guest "${before.name}" updated`,
+            metadata: { fields: Object.keys(patch) },
+          });
+        },
         archiveGuest: (id) => {
           const guest = get().guests.find((g) => g.id === id);
           if (!guest) return { ok: false, error: "Guest not found" };
