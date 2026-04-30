@@ -151,7 +151,7 @@ export function TopBar(_props: TopBarProps) {
             >
               <Avatar className="h-7 w-7 border border-border">
                 <AvatarFallback className="bg-primary text-[10px] font-semibold text-primary-foreground">
-                  {(openShift?.userName ?? "Front Desk")
+                  {displayName
                     .split(" ")
                     .map((s) => s[0])
                     .join("")
@@ -160,21 +160,51 @@ export function TopBar(_props: TopBarProps) {
                 </AvatarFallback>
               </Avatar>
               <span className="hidden text-xs font-medium text-foreground sm:inline">
-                {openShift?.userName ?? "Front Desk"}
+                {displayName}
               </span>
               <ChevronDown className="hidden h-3 w-3 text-muted-foreground sm:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="text-xs">
-              {openShift ? `Shift open · ${openShift.userName}` : "No active shift"}
+              <div className="flex flex-col">
+                <span className="font-semibold">{displayName}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-[10px] font-normal text-muted-foreground">
+                  {isAdmin && <ShieldCheck className="h-3 w-3 text-primary" />}
+                  {isAdmin ? "Administrator" : "Staff"}
+                  {openShift && <> · Shift open</>}
+                </span>
+              </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <a href="/settings" className="text-xs">Settings</a>
+              <Link to="/profile" className="text-xs">
+                <KeyRound className="mr-2 h-3.5 w-3.5" />
+                Change password
+              </Link>
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/users" className="text-xs">
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />
+                  Manage users
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link to="/shift-management" className="text-xs">
+                Shift Management
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a href="/shift-management" className="text-xs">Shift Management</a>
+              <Link to="/settings" className="text-xs">
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-xs text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
