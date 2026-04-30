@@ -1576,6 +1576,7 @@ export const useHotelStore = create<HotelState>()(
           state.houseAccounts ??= [];
           state.inventoryItems ??= [];
           state.productItems ??= [];
+          state.productSales ??= [];
           state.routingRules ??= [];
           state.reportRuns ??= [];
         }
