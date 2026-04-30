@@ -79,7 +79,10 @@ function AvailabilityPage() {
   const todayIso = isoDate(new Date());
 
   const sortedRooms = useMemo(
-    () => [...rooms].sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true })),
+    () =>
+      [...rooms].sort((a, b) =>
+        String(a.number ?? "").localeCompare(String(b.number ?? ""), undefined, { numeric: true }),
+      ),
     [rooms],
   );
 
