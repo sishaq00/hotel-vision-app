@@ -64,6 +64,8 @@ const en: Dict = {
   "nav.lost-found": "Lost and Found",
   "nav.shift-management": "Shift Management",
   "nav.advance-deposits": "Advance Deposits",
+  "nav.rate-plans": "Rate Plans",
+  "nav.templates": "Message Templates",
   "nav.hotel-suite": "Hotel Suite",
   "nav.room-types": "Room Types",
   // Page subtitles
@@ -241,6 +243,8 @@ const ar: Dict = {
   "nav.lost-found": "المفقودات",
   "nav.shift-management": "إدارة الورديات",
   "nav.advance-deposits": "العربون والمقدمات",
+  "nav.rate-plans": "خطط الأسعار",
+  "nav.templates": "قوالب الرسائل",
   "nav.hotel-suite": "النظام الفندقي",
   "nav.room-types": "أنواع الغرف",
   "sub.guests": "دليل جميع النزلاء",
