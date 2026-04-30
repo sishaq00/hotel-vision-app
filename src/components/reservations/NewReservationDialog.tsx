@@ -54,6 +54,7 @@ export function NewReservationDialog({
   const [country, setCountry] = useState("");
   const [existingGuestId, setExistingGuestId] = useState<string>("__new__");
   const [roomId, setRoomId] = useState<string>("");
+  const [notes, setNotes] = useState("");
   const [checkIn, setCheckIn] = useState(new Date().toISOString().slice(0, 10));
   const [checkOut, setCheckOut] = useState(
     new Date(Date.now() + 86400000).toISOString().slice(0, 10),
