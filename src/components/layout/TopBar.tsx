@@ -111,6 +111,7 @@ export function TopBar(_props: TopBarProps) {
         </Button>
 
         <NotificationsBell />
+        <ThemeToggle />
 
         <Button
           variant="ghost"
