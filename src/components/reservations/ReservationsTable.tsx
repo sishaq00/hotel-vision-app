@@ -20,6 +20,7 @@ import { useHotelStore, type Reservation } from "@/store/hotel-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { GuestFlagBadges } from "@/components/guests/GuestFlagBadges";
 
 export interface ReservationsTableProps {
   reservations: Reservation[];
@@ -104,7 +105,12 @@ export function ReservationsTable({
                   className="cursor-pointer"
                   onClick={() => markRecentlyViewed(r.id)}
                 >
-                  <TableCell className="font-medium">{g?.name ?? "—"}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="inline-flex items-center gap-2">
+                      {g?.name ?? "—"}
+                      <GuestFlagBadges guest={g} />
+                    </span>
+                  </TableCell>
                   <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
                   <TableCell className="text-muted-foreground">{r.checkOut}</TableCell>
