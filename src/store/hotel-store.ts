@@ -246,6 +246,19 @@ export interface RoutingRule {
   active: boolean;
 }
 
+export type ReportRunStatus = "queued" | "completed" | "failed";
+
+export interface ReportRun {
+  id: string;
+  reportKey: string;     // e.g. "arrivals", "revenue-summary"
+  reportName: string;
+  format: "csv" | "pdf" | "json";
+  ranAt: string;
+  status: ReportRunStatus;
+  rowCount?: number;
+  notes?: string;
+}
+
 // ---- Audit log -------------------------------------------------------------
 
 export type AuditEntity =
