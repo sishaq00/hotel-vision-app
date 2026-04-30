@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { useHotelStore, todayISO } from "@/store/hotel-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -133,20 +134,21 @@ function ShiftDialog({
   const [name, setName] = useState("");
   const [openingCash, setOpeningCash] = useState(0);
   const [closingCash, setClosingCash] = useState(0);
+  const { t } = useT();
 
   const isEnd = !!openShift;
 
   const handleSubmit = () => {
     if (isEnd && openShift) {
       endShift(openShift.id, closingCash);
-      toast.success(`Shift ended for ${openShift.userName}`);
+      toast.success(`${t("shift.ended")} ${openShift.userName}`);
     } else {
       if (!name.trim()) {
-        toast.error("Enter your name to start the shift");
+        toast.error(t("shift.name-required"));
         return;
       }
       startShift(name.trim(), openingCash);
-      toast.success(`Shift started for ${name.trim()}`);
+      toast.success(`${t("shift.started")} ${name.trim()}`);
     }
     onOpenChange(false);
     setName("");
@@ -158,16 +160,16 @@ function ShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>{isEnd ? "End Shift" : "Start Shift"}</DialogTitle>
+          <DialogTitle>{isEnd ? t("shift.end") : t("shift.start")}</DialogTitle>
           <DialogDescription>
             {isEnd
-              ? `Close the shift for ${openShift?.userName}.`
-              : "Open a new front desk shift."}
+              ? `${t("shift.close-desc")} ${openShift?.userName}.`
+              : t("shift.open-desc")}
           </DialogDescription>
         </DialogHeader>
         {isEnd ? (
           <div className="space-y-2">
-            <Label htmlFor="closingCash">Closing cash drawer</Label>
+            <Label htmlFor="closingCash">{t("shift.closing-cash")}</Label>
             <Input
               id="closingCash"
               type="number"
@@ -178,7 +180,7 @@ function ShiftDialog({
         ) : (
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="name">Employee name</Label>
+              <Label htmlFor="name">{t("shift.employee")}</Label>
               <Input
                 id="name"
                 value={name}
@@ -187,7 +189,7 @@ function ShiftDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="openingCash">Opening cash drawer</Label>
+              <Label htmlFor="openingCash">{t("shift.opening-cash")}</Label>
               <Input
                 id="openingCash"
                 type="number"
@@ -199,9 +201,9 @@ function ShiftDialog({
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
-          <Button onClick={handleSubmit}>{isEnd ? "End Shift" : "Start Shift"}</Button>
+          <Button onClick={handleSubmit}>{isEnd ? t("shift.end") : t("shift.start")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -215,7 +217,7 @@ function Dashboard() {
   const reservations = useHotelStore((s) => s.reservations);
   const advanceDeposits = useHotelStore((s) => s.advanceDeposits);
   const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
-  
+  const { t } = useT();
 
   const [shiftOpen, setShiftOpen] = useState(false);
   const [reservationOpen, setReservationOpen] = useState(false);
@@ -299,40 +301,40 @@ function Dashboard() {
   }, [rooms, reservations, advanceDeposits, today]);
 
   return (
-    <AppLayout title="Dashboard">
+    <AppLayout title={t("nav.dashboard")}>
       <div className="space-y-4">
         {/* Three big sections — House / Bookings / Availability */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* House */}
           <section>
-            <SectionHeader title="House" />
+            <SectionHeader title={t("dash.house")} />
             <div className="grid grid-cols-2 gap-2">
               <KpiTile
-                label="In House"
+                label={t("dash.in-house")}
                 value={kpis.inHouse}
-                footerLeft={`Stay Overs: ${kpis.stayOvers}`}
-                footerRight={`Arrivals: ${kpis.arrivalsCheckedIn}`}
+                footerLeft={`${t("dash.stay-overs")}: ${kpis.stayOvers}`}
+                footerRight={`${t("dash.arrivals")}: ${kpis.arrivalsCheckedIn}`}
                 accent="violet"
               />
               <KpiTile
-                label="Departures"
+                label={t("dash.departures")}
                 value={kpis.departuresToday}
-                footerLeft={`Total: ${kpis.departuresToday}`}
-                footerRight={`Checked Out: ${kpis.checkedOutToday}`}
+                footerLeft={`${t("dash.total")}: ${kpis.departuresToday}`}
+                footerRight={`${t("dash.checked-out")}: ${kpis.checkedOutToday}`}
                 accent="violet"
               />
               <KpiTile
-                label="Dirty Rooms"
+                label={t("dash.dirty-rooms")}
                 value={kpis.dirty}
-                footerLeft={`Today: ${kpis.dirty}`}
-                footerRight={`Rollover: ${kpis.dirtyRollover}`}
+                footerLeft={`${t("dash.today")}: ${kpis.dirty}`}
+                footerRight={`${t("dash.rollover")}: ${kpis.dirtyRollover}`}
                 accent="amber"
               />
               <KpiTile
-                label="Ready Rooms"
+                label={t("dash.ready-rooms")}
                 value={kpis.ready}
-                footerLeft={`Total: ${kpis.ready}`}
-                footerRight={`Clean: ${kpis.ready}`}
+                footerLeft={`${t("dash.total")}: ${kpis.ready}`}
+                footerRight={`${t("dash.clean")}: ${kpis.ready}`}
                 accent="green"
               />
             </div>
@@ -340,34 +342,34 @@ function Dashboard() {
 
           {/* Bookings */}
           <section>
-            <SectionHeader title="Bookings" />
+            <SectionHeader title={t("dash.bookings")} />
             <div className="grid grid-cols-2 gap-2">
               <KpiTile
-                label="Arrivals"
+                label={t("dash.arrivals")}
                 value={kpis.arrivals}
-                footerLeft={`Total: ${kpis.arrivals}`}
-                footerRight={`Checked In: ${kpis.arrivalsCheckedInCount}`}
+                footerLeft={`${t("dash.total")}: ${kpis.arrivals}`}
+                footerRight={`${t("dash.checked-in")}: ${kpis.arrivalsCheckedInCount}`}
                 accent="violet"
               />
               <KpiTile
-                label="No Show / Late Cancel"
+                label={t("dash.no-show")}
                 value={kpis.noShows}
-                footerLeft={`Total: ${kpis.noShows}`}
-                footerRight={`Rollover: 0`}
+                footerLeft={`${t("dash.total")}: ${kpis.noShows}`}
+                footerRight={`${t("dash.rollover")}: 0`}
                 accent="rose"
               />
               <KpiTile
-                label="Advance Deposits"
+                label={t("dash.advance-deposits")}
                 value={kpis.depositCount}
-                footerLeft={`Paid: ${kpis.depositPaid.toFixed(0)}`}
-                footerRight={`Pending: 0`}
+                footerLeft={`${t("dash.paid")}: ${kpis.depositPaid.toFixed(0)}`}
+                footerRight={`${t("dash.pending")}: 0`}
                 accent="blue"
               />
               <KpiTile
-                label="Booked Today"
+                label={t("dash.booked-today")}
                 value={kpis.bookedToday}
-                footerLeft={`Today: ${kpis.bookedToday}`}
-                footerRight={`Future: ${kpis.futureBooked}`}
+                footerLeft={`${t("dash.today")}: ${kpis.bookedToday}`}
+                footerRight={`${t("dash.future")}: ${kpis.futureBooked}`}
                 accent="green"
               />
             </div>
@@ -375,12 +377,12 @@ function Dashboard() {
 
           {/* Availability */}
           <section>
-            <SectionHeader title="Availability" />
+            <SectionHeader title={t("dash.availability")} />
             <div className="grid grid-cols-2 gap-2">
-              <KpiTile label="Total Rooms" value={kpis.total} accent="slate" />
-              <KpiTile label="Out Of Order" value={kpis.outOfOrder} accent="rose" />
-              <KpiTile label="Sold" value={kpis.sold} accent="violet" />
-              <KpiTile label="Available" value={kpis.available} accent="green" />
+              <KpiTile label={t("dash.total-rooms")} value={kpis.total} accent="slate" />
+              <KpiTile label={t("dash.out-of-order")} value={kpis.outOfOrder} accent="rose" />
+              <KpiTile label={t("dash.sold")} value={kpis.sold} accent="violet" />
+              <KpiTile label={t("dash.available")} value={kpis.available} accent="green" />
             </div>
           </section>
         </div>
@@ -388,29 +390,29 @@ function Dashboard() {
         {/* 6 Quick action buttons (3 cols × 2 rows) */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <QuickAction
-            label="Walk In"
+            label={t("qa.walk-in")}
             icon={Footprints}
             onClick={() => setReservationOpen(true)}
           />
           <QuickAction
-            label="New Booking"
+            label={t("qa.new-booking")}
             icon={CalendarPlus}
             onClick={() => setReservationOpen(true)}
           />
-          <QuickAction label="New Group Master" icon={Users} to="/group-master" />
+          <QuickAction label={t("qa.new-group")} icon={Users} to="/group-master" />
 
           <QuickAction
-            label={openShift ? `End Shift (${openShift.userName})` : "Start Shift"}
+            label={openShift ? `${t("qa.end-shift")} (${openShift.userName})` : t("qa.start-shift")}
             icon={Clock}
             onClick={() => setShiftOpen(true)}
           />
           <QuickAction
-            label="Search Reservations"
+            label={t("qa.search-res")}
             icon={Search}
             to="/search-reservations"
           />
           <QuickAction
-            label="Grid View and Floor Plan"
+            label={t("qa.grid-view")}
             icon={Grid3x3}
             to="/availability"
           />
