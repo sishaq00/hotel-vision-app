@@ -32,6 +32,8 @@ import {
   History,
   Settings as SettingsIcon,
   ExternalLink,
+  Tag,
+  MessageSquareText,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -93,6 +95,8 @@ const moreItems = [
   { key: "nav.lost-found", url: "/lost-found", icon: PackageSearch },
   { key: "nav.shift-management", url: "/shift-management", icon: Clock },
   { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard },
+  { key: "nav.rate-plans", url: "/rate-plans", icon: Tag },
+  { key: "nav.templates", url: "/templates", icon: MessageSquareText },
 ] as const;
 
 const bottomItems: ReadonlyArray<{
