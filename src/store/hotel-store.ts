@@ -244,6 +244,24 @@ export interface ProductItem {
   stock: number;
 }
 
+export interface ProductSale {
+  id: string;
+  productId: string;
+  productName: string;
+  category: ProductItem["category"];
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  roomId?: string;
+  roomNumber?: string;
+  reservationId?: string;
+  guestName?: string;
+  soldAt: string;
+  userId: string;
+  userName: string;
+  shiftId?: string;
+}
+
 export interface RoutingRule {
   id: string;
   name: string;
