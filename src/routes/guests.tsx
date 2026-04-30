@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useHotelStore } from "@/store/hotel-store";
+import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/guests")({
