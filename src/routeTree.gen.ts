@@ -40,6 +40,7 @@ import { Route as ArrivalsRouteImport } from './routes/arrivals'
 import { Route as ArchivedReservationsRouteImport } from './routes/archived-reservations'
 import { Route as AdvanceDepositsRouteImport } from './routes/advance-deposits'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrintInvoiceReservationIdRouteImport } from './routes/print-invoice.$reservationId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
 import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
 
@@ -198,6 +199,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintInvoiceReservationIdRoute =
+  PrintInvoiceReservationIdRouteImport.update({
+    id: '/print-invoice/$reservationId',
+    path: '/print-invoice/$reservationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BulkRoutingSetupRoute = BulkRoutingSetupRouteImport.update({
   id: '/bulk-routing/setup',
   path: '/bulk-routing/setup',
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/shift-management': typeof ShiftManagementRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
+  '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -278,6 +286,7 @@ export interface FileRoutesByTo {
   '/shift-management': typeof ShiftManagementRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
+  '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -314,6 +323,7 @@ export interface FileRoutesById {
   '/shift-management': typeof ShiftManagementRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
   '/bulk-routing/setup': typeof BulkRoutingSetupRoute
+  '/print-invoice/$reservationId': typeof PrintInvoiceReservationIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/shift-management'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
+    | '/print-invoice/$reservationId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/shift-management'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
+    | '/print-invoice/$reservationId'
   id:
     | '__root__'
     | '/'
@@ -421,6 +433,7 @@ export interface FileRouteTypes {
     | '/shift-management'
     | '/bulk-routing/fast-posting'
     | '/bulk-routing/setup'
+    | '/print-invoice/$reservationId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -457,6 +470,7 @@ export interface RootRouteChildren {
   ShiftManagementRoute: typeof ShiftManagementRoute
   BulkRoutingFastPostingRoute: typeof BulkRoutingFastPostingRoute
   BulkRoutingSetupRoute: typeof BulkRoutingSetupRoute
+  PrintInvoiceReservationIdRoute: typeof PrintInvoiceReservationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -678,6 +692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print-invoice/$reservationId': {
+      id: '/print-invoice/$reservationId'
+      path: '/print-invoice/$reservationId'
+      fullPath: '/print-invoice/$reservationId'
+      preLoaderRoute: typeof PrintInvoiceReservationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bulk-routing/setup': {
       id: '/bulk-routing/setup'
       path: '/bulk-routing/setup'
@@ -729,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShiftManagementRoute: ShiftManagementRoute,
   BulkRoutingFastPostingRoute: BulkRoutingFastPostingRoute,
   BulkRoutingSetupRoute: BulkRoutingSetupRoute,
+  PrintInvoiceReservationIdRoute: PrintInvoiceReservationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

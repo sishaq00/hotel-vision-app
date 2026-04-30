@@ -39,9 +39,33 @@ function ReportsHub() {
   }));
   const recordReportRun = useHotelStore((s) => s.recordReportRun);
 
+  const { t } = useT();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [previewReport, setPreviewReport] = useState<{ def: ReportDefinition; rows: Record<string, unknown>[] } | null>(null);
+
+  // Try to filter rows by any date-like column within [from, to].
+  const applyDateFilter = (rows: Record<string, unknown>[]) => {
+    if (!dateFrom && !dateTo) return rows;
+    const from = dateFrom ? new Date(dateFrom).getTime() : -Infinity;
+    const to = dateTo ? new Date(dateTo).getTime() + 86_400_000 - 1 : Infinity;
+    return rows.filter((row) => {
+      for (const v of Object.values(row)) {
+        if (typeof v !== "string") continue;
+        // ISO date or datetime
+        if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
+          const t2 = new Date(v).getTime();
+          if (!Number.isNaN(t2) && t2 >= from && t2 <= to) return true;
+        }
+      }
+      // No date columns → keep row (filter doesn't apply)
+      return !Object.values(row).some(
+        (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)
+      );
+    });
+  };
 
   const filtered = useMemo(() => {
     return REPORT_DEFINITIONS.filter((r) => {
@@ -65,7 +89,7 @@ function ReportsHub() {
 
   const runReport = (def: ReportDefinition, format: "csv" | "xlsx" | "pdf" | "preview") => {
     try {
-      const rows = def.run(ctx);
+      const rows = applyDateFilter(def.run(ctx));
       if (format === "preview") {
         setPreviewReport({ def, rows });
         return;
@@ -117,6 +141,31 @@ function ReportsHub() {
                 )}
               >{c}</button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-9 w-[140px] text-xs"
+              title="From date"
+            />
+            <span className="text-xs text-muted-foreground">→</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-9 w-[140px] text-xs"
+              title="To date"
+            />
+            {(dateFrom || dateTo) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs"
+                onClick={() => { setDateFrom(""); setDateTo(""); }}
+              >Clear</Button>
+            )}
           </div>
         </div>
 
