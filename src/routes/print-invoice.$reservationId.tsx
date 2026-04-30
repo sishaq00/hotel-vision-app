@@ -1,8 +1,9 @@
 // Browser-printable A4 invoice — professional layout with QR-like ref, watermark for paid status.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHotelStore } from "@/store/hotel-store";
 import { recordPrint } from "@/lib/print-log";
+import { generateInvoiceQR } from "@/lib/invoice-qr";
 
 export const Route = createFileRoute("/print-invoice/$reservationId")({
   component: PrintInvoice,
@@ -23,13 +24,28 @@ function PrintInvoice() {
     s.payments.filter((p) => p.reservationId === reservationId),
   );
   const settings = useHotelStore((s) => s.settings);
+  const creditNotes = useHotelStore((s) =>
+    s.creditNotes.filter((n) => n.reservationId === reservationId),
+  );
+  const [qrUrl, setQrUrl] = useState<string>("");
 
   useEffect(() => {
     if (reservation?.invoice) recordPrint(reservationId, "invoice-a4");
-    const t = setTimeout(() => window.print(), 400);
+    const t = setTimeout(() => window.print(), 600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId]);
+
+  useEffect(() => {
+    if (!reservation?.invoice) return;
+    generateInvoiceQR({
+      sellerName: settings.hotelName,
+      vatNumber: settings.taxId ?? "",
+      timestamp: reservation.invoice.issuedAt,
+      invoiceTotal: reservation.invoice.total,
+      vatTotal: reservation.invoice.taxAmount,
+    }).then(setQrUrl).catch(() => setQrUrl(""));
+  }, [reservation, settings.hotelName, settings.taxId]);
 
   if (!reservation || !reservation.invoice) {
     return (
@@ -233,13 +249,42 @@ function PrintInvoice() {
           </div>
         )}
 
-        <div className="footer">
-          {settings.invoiceFooter ? (
-            <p className="muted" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{settings.invoiceFooter}</p>
-          ) : (
-            <p className="muted" style={{ margin: 0 }}>Thank you for your stay. We hope to welcome you back soon.</p>
+        {creditNotes.length > 0 && (
+          <div style={{ marginTop: 18, position: "relative", zIndex: 1 }}>
+            <h4 style={{ margin: "0 0 6px 0", fontSize: 10, color: "#b91c1c", textTransform: "uppercase", letterSpacing: 0.5 }}>Credit Notes Issued</h4>
+            <table className="lines">
+              <thead>
+                <tr><th>Number</th><th>Date</th><th>Reason</th><th style={{ textAlign: "right" }}>Amount</th></tr>
+              </thead>
+              <tbody>
+                {creditNotes.map((n) => (
+                  <tr key={n.id}>
+                    <td style={{ fontFamily: "ui-monospace, monospace" }}>{n.number}</td>
+                    <td>{new Date(n.issuedAt).toLocaleDateString()}</td>
+                    <td>{n.reason}{n.cancelInvoice ? " (invoice cancelled)" : ""}</td>
+                    <td style={{ textAlign: "right", color: "#b91c1c" }}>− {fmt(n.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, position: "relative", zIndex: 1 }}>
+          <div style={{ flex: 1, textAlign: "left" }}>
+            {settings.invoiceFooter ? (
+              <p className="muted" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{settings.invoiceFooter}</p>
+            ) : (
+              <p className="muted" style={{ margin: 0 }}>Thank you for your stay. We hope to welcome you back soon.</p>
+            )}
+            <div className="ref">REF: {inv.invoiceNumber} · {reservation.id.slice(0, 8).toUpperCase()}</div>
+          </div>
+          {qrUrl && (
+            <div style={{ textAlign: "center" }}>
+              <img src={qrUrl} alt="Invoice QR" style={{ width: 96, height: 96 }} />
+              <div style={{ fontSize: 8, color: "#9ca3af", marginTop: 2 }}>E-Invoice QR</div>
+            </div>
           )}
-          <div className="ref">REF: {inv.invoiceNumber} · {reservation.id.slice(0, 8).toUpperCase()}</div>
         </div>
       </div>
     </>

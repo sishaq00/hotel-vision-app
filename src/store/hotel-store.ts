@@ -67,6 +67,18 @@ export interface InvoiceSnapshot {
   currency: string;
 }
 
+export interface CreditNote {
+  id: string;
+  number: string;                 // CN-YYYY-000001
+  reservationId: string;
+  invoiceNumber: string;          // original invoice
+  amount: number;                 // positive number subtracted from invoice
+  reason: string;
+  issuedAt: string;
+  issuedBy?: string;
+  cancelInvoice?: boolean;        // if true → invoice fully cancelled
+}
+
 export type ReservationSource = "walk-in" | "phone" | "group" | "direct";
 
 export interface Reservation {
@@ -93,6 +105,18 @@ export interface Reservation {
   notes?: string; // free-text guest requests / special instructions
 }
 
+export type GuestIdType = "passport" | "national-id" | "driver-license" | "other";
+
+export interface GuestPreferences {
+  roomType?: string;        // preferred room type code
+  floor?: number;           // preferred floor
+  smoking?: boolean;
+  pillow?: string;          // e.g. "Soft", "Firm"
+  bedType?: string;         // e.g. "King", "Twin"
+  language?: string;
+  other?: string;           // free-form
+}
+
 export interface Guest {
   id: string;
   name: string;
@@ -106,6 +130,23 @@ export interface Guest {
   doNotRent?: boolean;
   vip?: boolean;
   notes?: string;
+  // v5: full personal profile
+  nationality?: string;
+  dateOfBirth?: string;          // YYYY-MM-DD
+  gender?: "male" | "female" | "other";
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  idType?: GuestIdType;
+  idNumber?: string;
+  idIssuedBy?: string;
+  idExpiry?: string;             // YYYY-MM-DD
+  idPhotoDataUrl?: string;       // base64 photo of ID document
+  profilePhotoDataUrl?: string;  // optional avatar
+  preferences?: GuestPreferences;
+  tags?: string[];               // e.g. ["VIP","Returning","Corporate"]
+  company?: string;
+  loyaltyNumber?: string;
 }
 
 export type PaymentStatus = "paid" | "pending" | "refunded";
@@ -382,7 +423,8 @@ export type AuditEntity =
   | "inventory"
   | "product"
   | "routing"
-  | "report";
+  | "report"
+  | "invoice";
 
 export type AuditAction =
   | "create"
@@ -394,7 +436,8 @@ export type AuditAction =
   | "archive"
   | "restore"
   | "rename"
-  | "price-change";
+  | "price-change"
+  | "credit-note";
 
 export interface AuditEntry {
   id: string;
@@ -434,6 +477,16 @@ interface HotelState {
   housekeepers: Housekeeper[];
   housekeepingTeams: HousekeepingTeam[];
   housekeeperReports: HousekeeperReport[];
+  // v5: financial
+  creditNotes: CreditNote[];
+
+  // Credit Notes
+  issueCreditNote: (input: {
+    reservationId: string;
+    amount: number;
+    reason: string;
+    cancelInvoice?: boolean;
+  }) => { ok: true; id: string; number: string } | { ok: false; error: string };
 
   // Rooms
   addRoom: (room: Omit<Room, "id">) => string;
@@ -449,6 +502,7 @@ interface HotelState {
 
   // Guests
   addGuest: (guest: Omit<Guest, "id" | "createdAt">) => string;
+  updateGuest: (id: string, patch: Partial<Omit<Guest, "id" | "createdAt">>) => void;
   archiveGuest: (id: string) => { ok: boolean; error?: string };
   restoreGuest: (id: string) => void;
 
@@ -710,6 +764,7 @@ export const useHotelStore = create<HotelState>()(
         housekeepers: [],
         housekeepingTeams: [],
         housekeeperReports: [],
+        creditNotes: [],
         settings: {
           hotelName: "NEXORA OS",
           hotelCode: "NXR",
@@ -874,6 +929,20 @@ export const useHotelStore = create<HotelState>()(
             description: `Guest "${guest.name}" added`,
           });
           return id;
+        },
+        updateGuest: (id, patch) => {
+          const before = get().guests.find((g) => g.id === id);
+          if (!before) return;
+          set((s) => ({
+            guests: s.guests.map((g) => (g.id === id ? { ...g, ...patch } : g)),
+          }));
+          log({
+            entity: "guest",
+            entityId: id,
+            action: "update",
+            description: `Guest "${before.name}" updated`,
+            metadata: { fields: Object.keys(patch) },
+          });
         },
         archiveGuest: (id) => {
           const guest = get().guests.find((g) => g.id === id);
@@ -2099,11 +2168,46 @@ export const useHotelStore = create<HotelState>()(
 
         // -------------------- Audit --------------------
         clearAuditLog: () => set({ auditLog: [] }),
+
+        // -------------------- Credit Notes --------------------
+        issueCreditNote: ({ reservationId, amount, reason, cancelInvoice }) => {
+          const state = get();
+          const reservation = state.reservations.find((r) => r.id === reservationId);
+          if (!reservation) return { ok: false, error: "Reservation not found" };
+          if (!reservation.invoice) return { ok: false, error: "No invoice on this reservation" };
+          if (amount <= 0) return { ok: false, error: "Amount must be greater than zero" };
+          if (amount > reservation.invoice.total + 0.01)
+            return { ok: false, error: "Amount cannot exceed invoice total" };
+
+          const year = new Date().getFullYear();
+          const seq = state.creditNotes.filter((n) => n.number.includes(`-${year}-`)).length + 1;
+          const number = `CN-${year}-${String(seq).padStart(6, "0")}`;
+          const id = uid();
+          const note: CreditNote = {
+            id,
+            number,
+            reservationId,
+            invoiceNumber: reservation.invoice.invoiceNumber,
+            amount: round2(amount),
+            reason: reason.trim() || "—",
+            issuedAt: new Date().toISOString(),
+            cancelInvoice: !!cancelInvoice,
+          };
+          set((s) => ({ creditNotes: [...s.creditNotes, note] }));
+          log({
+            entity: "invoice",
+            entityId: reservationId,
+            action: "credit-note",
+            description: `Credit note ${number} issued (${amount.toFixed(2)}) — ${reason}`,
+            metadata: { number, amount, cancelInvoice },
+          });
+          return { ok: true, id, number };
+        },
       };
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 4,
+      version: 5,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
       migrate: (persisted: unknown, version: number) => {
@@ -2163,6 +2267,10 @@ export const useHotelStore = create<HotelState>()(
           state.housekeepers ??= [];
           state.housekeepingTeams ??= [];
           state.housekeeperReports ??= [];
+        }
+        // v4 → v5: credit notes
+        if (version < 5) {
+          (state as Partial<HotelState>).creditNotes ??= [];
         }
         return state as HotelState;
       },

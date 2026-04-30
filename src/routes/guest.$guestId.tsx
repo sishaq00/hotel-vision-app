@@ -1,16 +1,18 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useHotelStore } from "@/store/hotel-store";
+import { EditGuestDialog } from "@/components/guests/EditGuestDialog";
 
 export const Route = createFileRoute("/guest/$guestId")({
   component: GuestProfile,
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/guest/$guestId")({
 
 function GuestProfile() {
   const { guestId } = Route.useParams();
+  const [editOpen, setEditOpen] = useState(false);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
   const reservations = useHotelStore((s) =>
     s.reservations.filter((r) => r.guestId === guestId)
@@ -72,40 +75,120 @@ function GuestProfile() {
         {/* Header card */}
         <Card className="border-border/60 p-5 shadow-card">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold">{guest.name}</h2>
-                {guest.vip && (
-                  <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
-                    <Crown className="h-3 w-3" /> VIP
-                  </Badge>
+            <div className="flex gap-4">
+              <Avatar className="h-20 w-20">
+                {guest.profilePhotoDataUrl && (
+                  <AvatarImage src={guest.profilePhotoDataUrl} alt={guest.name} />
                 )}
-                {guest.doNotRent && (
-                  <Badge variant="outline" className="border-destructive/40 text-destructive gap-1">
-                    <Ban className="h-3 w-3" /> Do Not Rent
-                  </Badge>
+                <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
+                  {guest.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-semibold">{guest.name}</h2>
+                  {guest.vip && (
+                    <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
+                      <Crown className="h-3 w-3" /> VIP
+                    </Badge>
+                  )}
+                  {guest.doNotRent && (
+                    <Badge variant="outline" className="border-destructive/40 text-destructive gap-1">
+                      <Ban className="h-3 w-3" /> Do Not Rent
+                    </Badge>
+                  )}
+                </div>
+                <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
+                  {guest.email && <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {guest.email}</div>}
+                  {guest.phone && <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {guest.phone}</div>}
+                  {(guest.country || guest.city || guest.nationality) && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {[guest.nationality, guest.city, guest.country].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
+                  {guest.dateOfBirth && (
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" /> Born {guest.dateOfBirth}
+                    </div>
+                  )}
+                  {guest.idType && (
+                    <div className="flex items-center gap-1.5">
+                      <IdCard className="h-3.5 w-3.5" />
+                      <span className="capitalize">{guest.idType.replace("-", " ")}:</span>
+                      <span className="font-mono">{guest.idNumber}</span>
+                      {guest.idExpiry && <span className="text-xs">(exp {guest.idExpiry})</span>}
+                    </div>
+                  )}
+                </div>
+                {(guest.tags ?? []).length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Tag className="h-3 w-3 text-muted-foreground" />
+                    {(guest.tags ?? []).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+                {guest.notes && (
+                  <p className="mt-3 max-w-md rounded-md border border-border bg-muted/40 p-2 text-xs text-foreground">
+                    📝 {guest.notes}
+                  </p>
                 )}
               </div>
-              <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
-                {guest.email && <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {guest.email}</div>}
-                {guest.phone && <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {guest.phone}</div>}
-                {guest.country && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {guest.country}</div>}
-              </div>
-              {guest.notes && (
-                <p className="mt-3 max-w-md rounded-md border border-border bg-muted/40 p-2 text-xs text-foreground">
-                  📝 {guest.notes}
-                </p>
-              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-              <Stat label="Total stays" value={stats.totalStays} />
-              <Stat label="Active" value={stats.activeStays} />
-              <Stat label="Nights" value={stats.totalNights} />
-              <Stat label="Spent" value={`${settings.currency} ${stats.totalSpent.toFixed(0)}`} />
+            <div className="flex flex-col items-end gap-3">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1">
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+              <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+                <Stat label="Total stays" value={stats.totalStays} />
+                <Stat label="Active" value={stats.activeStays} />
+                <Stat label="Nights" value={stats.totalNights} />
+                <Stat label="Spent" value={`${settings.currency} ${stats.totalSpent.toFixed(0)}`} />
+              </div>
             </div>
           </div>
         </Card>
+
+        {/* ID document photo + Preferences */}
+        {(guest.idPhotoDataUrl || guest.preferences) && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {guest.idPhotoDataUrl && (
+              <Card className="border-border/60 p-4 shadow-card">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                  <IdCard className="h-4 w-4 text-primary" /> ID Document
+                </div>
+                <img
+                  src={guest.idPhotoDataUrl}
+                  alt="ID"
+                  className="max-h-64 w-full rounded border border-border object-contain"
+                />
+              </Card>
+            )}
+            {guest.preferences &&
+              Object.values(guest.preferences).some((v) => v !== undefined && v !== "") && (
+                <Card className="border-border/60 p-4 shadow-card">
+                  <div className="mb-3 text-sm font-semibold">Preferences</div>
+                  <dl className="grid grid-cols-2 gap-2 text-xs">
+                    {guest.preferences.roomType && <PrefRow label="Room type" value={guest.preferences.roomType} />}
+                    {guest.preferences.floor !== undefined && <PrefRow label="Floor" value={String(guest.preferences.floor)} />}
+                    {guest.preferences.bedType && <PrefRow label="Bed" value={guest.preferences.bedType} />}
+                    {guest.preferences.pillow && <PrefRow label="Pillow" value={guest.preferences.pillow} />}
+                    {guest.preferences.language && <PrefRow label="Language" value={guest.preferences.language} />}
+                    {guest.preferences.smoking !== undefined && (
+                      <PrefRow label="Smoking" value={guest.preferences.smoking ? "Yes" : "No"} />
+                    )}
+                    {guest.preferences.other && (
+                      <div className="col-span-2 mt-1 rounded border border-border bg-muted/30 p-2">
+                        {guest.preferences.other}
+                      </div>
+                    )}
+                  </dl>
+                </Card>
+              )}
+          </div>
+        )}
 
         {/* Reservations */}
         <Card className="border-border/60 shadow-card">
@@ -180,6 +263,7 @@ function GuestProfile() {
           )}
         </Card>
       </div>
+      <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
     </AppLayout>
   );
 }
@@ -190,5 +274,14 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-bold text-foreground">{value}</p>
     </div>
+  );
+}
+
+function PrefRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium text-foreground">{value}</dd>
+    </>
   );
 }
