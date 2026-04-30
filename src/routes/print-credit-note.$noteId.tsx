@@ -59,7 +59,7 @@ function PrintCreditNote() {
         </div>
         <div style={{ textAlign: "right", fontSize: 12 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{settings.hotelName}</div>
-          {settings.hotelAddress && <div style={{ color: "#6b7280" }}>{settings.hotelAddress}</div>}
+          {settings.address && <div style={{ color: "#6b7280" }}>{settings.address}</div>}
           {settings.taxId && <div style={{ color: "#6b7280" }}>Tax ID: {settings.taxId}</div>}
         </div>
       </div>
