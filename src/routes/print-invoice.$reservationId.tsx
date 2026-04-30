@@ -126,7 +126,7 @@ function PrintInvoice() {
               <div className="muted">
                 {settings.address && <div>{settings.address}</div>}
                 {settings.contactPhone && <div>Tel: {settings.contactPhone}</div>}
-                {settings.email && <div>{settings.email}</div>}
+                {settings.contactEmail && <div>{settings.contactEmail}</div>}
                 {settings.taxId && <div>Tax ID: {settings.taxId}</div>}
               </div>
             </div>
@@ -213,7 +213,7 @@ function PrintInvoice() {
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id}>
-                    <td>{new Date(p.createdAt).toLocaleString()}</td>
+                    <td>{new Date(p.date).toLocaleString()}</td>
                     <td style={{ textTransform: "capitalize" }}>{p.method}</td>
                     <td style={{ textAlign: "right" }}>{fmt(p.amount)}</td>
                   </tr>
