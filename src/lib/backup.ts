@@ -40,6 +40,7 @@ export function downloadBackup() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  markBackupDownloaded();
 }
 
 export async function restoreFromFile(file: File): Promise<boolean> {
