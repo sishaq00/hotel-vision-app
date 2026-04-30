@@ -31,7 +31,7 @@ export function NotificationsBell() {
     const overdue = reservations.filter(
       (r) => r.status === "checked-in" && (r.checkOut ?? "").slice(0, 10) < today
     );
-    const ooo = rooms.filter((r) => r.status === "out-of-order" || r.status === "maintenance");
+    const ooo = rooms.filter((r) => r.status === "maintenance");
     return { arrivals, departures, overdue, ooo };
   }, [reservations, rooms]);
 
