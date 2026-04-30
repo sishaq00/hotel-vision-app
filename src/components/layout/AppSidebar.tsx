@@ -56,52 +56,53 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useT } from "@/lib/i18n";
 
 // Top-level items (always visible) — matches HOTEL KEY layout
 const topItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "In House", url: "/in-house", icon: BedDouble },
-  { title: "Departures", url: "/departures", icon: LogOut },
-  { title: "Arrivals", url: "/arrivals", icon: CalendarCheck },
-  { title: "Recently Viewed", url: "/recently-viewed", icon: Eye },
-  { title: "Availability", url: "/availability", icon: Grid3x3 },
-  { title: "Search Reservations", url: "/search-reservations", icon: Search },
+  { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
+  { key: "nav.in-house", url: "/in-house", icon: BedDouble },
+  { key: "nav.departures", url: "/departures", icon: LogOut },
+  { key: "nav.arrivals", url: "/arrivals", icon: CalendarCheck },
+  { key: "nav.recently-viewed", url: "/recently-viewed", icon: Eye },
+  { key: "nav.availability", url: "/availability", icon: Grid3x3 },
+  { key: "nav.search-reservations", url: "/search-reservations", icon: Search },
 ] as const;
 
 // Bulk Routing & Postings group
 const bulkRoutingItems = [
-  { title: "Bulk Routing Setup", url: "/bulk-routing/setup", icon: Receipt },
-  { title: "Fast Posting", url: "/bulk-routing/fast-posting", icon: Zap },
+  { key: "nav.bulk-setup", url: "/bulk-routing/setup", icon: Receipt },
+  { key: "nav.fast-posting", url: "/bulk-routing/fast-posting", icon: Zap },
 ] as const;
 
 // "More" expandable group
 const moreItems = [
-  { title: "Archived Reservations", url: "/archived-reservations", icon: Archive },
-  { title: "Batch Process", url: "/batch-process", icon: Layers },
-  { title: "Group Master", url: "/group-master", icon: Users },
-  { title: "Guest Profiles", url: "/guests", icon: Users },
-  { title: "Search Invoice", url: "/search-invoice", icon: FileSearch },
-  { title: "Open Folios", url: "/open-folios", icon: FolderOpen },
-  { title: "Maintenance", url: "/maintenance", icon: Wrench },
-  { title: "Housekeeping", url: "/housekeeping", icon: Sparkles },
-  { title: "Reminders", url: "/reminders", icon: Bell },
-  { title: "Night Audit", url: "/night-audit", icon: Moon },
-  { title: "House Inventory", url: "/house-inventory", icon: Package },
-  { title: "Product Inventory", url: "/product-inventory", icon: ShoppingBag },
-  { title: "House Accounts", url: "/house-accounts", icon: Wallet },
-  { title: "Lost and Found", url: "/lost-found", icon: PackageSearch },
-  { title: "Shift Management", url: "/shift-management", icon: Clock },
-  { title: "Advance Deposits", url: "/advance-deposits", icon: CreditCard },
+  { key: "nav.archived", url: "/archived-reservations", icon: Archive },
+  { key: "nav.batch-process", url: "/batch-process", icon: Layers },
+  { key: "nav.group-master", url: "/group-master", icon: Users },
+  { key: "nav.guest-profiles", url: "/guests", icon: Users },
+  { key: "nav.search-invoice", url: "/search-invoice", icon: FileSearch },
+  { key: "nav.open-folios", url: "/open-folios", icon: FolderOpen },
+  { key: "nav.maintenance", url: "/maintenance", icon: Wrench },
+  { key: "nav.housekeeping", url: "/housekeeping", icon: Sparkles },
+  { key: "nav.reminders", url: "/reminders", icon: Bell },
+  { key: "nav.night-audit", url: "/night-audit", icon: Moon },
+  { key: "nav.house-inventory", url: "/house-inventory", icon: Package },
+  { key: "nav.product-inventory", url: "/product-inventory", icon: ShoppingBag },
+  { key: "nav.house-accounts", url: "/house-accounts", icon: Wallet },
+  { key: "nav.lost-found", url: "/lost-found", icon: PackageSearch },
+  { key: "nav.shift-management", url: "/shift-management", icon: Clock },
+  { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard },
 ] as const;
 
 const bottomItems: ReadonlyArray<{
-  title: string;
+  key: string;
   url: string;
   icon: typeof BarChart3;
   external?: boolean;
 }> = [
-  { title: "Report Queue", url: "/report-queue", icon: ListChecks },
-  { title: "Reports", url: "/reports", icon: BarChart3, external: true },
+  { key: "nav.report-queue", url: "/report-queue", icon: ListChecks },
+  { key: "nav.reports", url: "/reports", icon: BarChart3, external: true },
 ];
 
 export function AppSidebar() {
@@ -109,13 +110,14 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const path = location.pathname;
+  const { t } = useT();
 
   const isActive = (url: string) =>
     url === "/" ? path === "/" : path === url || path.startsWith(url + "/");
 
   // Auto-open groups if any child matches current route
   const bulkOpen = bulkRoutingItems.some((i) => isActive(i.url));
-  const moreOpen = moreItems.some((i) => isActive(i.url));
+  const _moreOpen = moreItems.some((i) => isActive(i.url));
 
   const [bulkExpanded, setBulkExpanded] = useState<boolean>(bulkOpen);
   const [moreExpanded, setMoreExpanded] = useState<boolean>(true);
@@ -130,10 +132,10 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-xs font-semibold leading-tight text-sidebar-foreground">
-                NEXORA OS
+                {t("app.name")}
               </p>
               <p className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-sidebar-foreground/60">
-                Hotel Suite
+                {t("nav.hotel-suite")}
               </p>
             </div>
           )}
@@ -146,10 +148,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {topItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={t(item.key)}
                     className={cn(
                       "h-8 rounded text-[13px] text-sidebar-foreground/90",
                       "hover:bg-sidebar-accent hover:text-sidebar-foreground",
@@ -159,7 +161,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.title}</span>
+                      <span>{t(item.key)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -176,10 +178,10 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     className="h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    tooltip="Bulk Routing and Postings"
+                    tooltip={t("nav.bulk-routing")}
                   >
                     <Receipt className="h-4 w-4 shrink-0" />
-                    <span>Bulk Routing and Postings</span>
+                    <span>{t("nav.bulk-routing")}</span>
                     <ChevronDown
                       className={cn(
                         "ml-auto h-3.5 w-3.5 transition-transform",
@@ -192,7 +194,7 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
                   {bulkRoutingItems.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
+                    <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
                         isActive={isActive(item.url)}
@@ -200,7 +202,7 @@ export function AppSidebar() {
                       >
                         <Link to={item.url}>
                           <item.icon className="h-3.5 w-3.5" />
-                          <span>{item.title}</span>
+                          <span>{t(item.key)}</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -219,10 +221,10 @@ export function AppSidebar() {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     className="h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    tooltip="More"
+                    tooltip={t("nav.more")}
                   >
                     <MoreHorizontal className="h-4 w-4 shrink-0" />
-                    <span>More</span>
+                    <span>{t("nav.more")}</span>
                     <ChevronDown
                       className={cn(
                         "ml-auto h-3.5 w-3.5 transition-transform",
@@ -235,7 +237,7 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarMenuSub className="mr-0 ml-3 border-sidebar-border pl-2">
                   {moreItems.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
+                    <SidebarMenuSubItem key={item.key}>
                       <SidebarMenuSubButton
                         asChild
                         isActive={isActive(item.url)}
@@ -243,7 +245,7 @@ export function AppSidebar() {
                       >
                         <Link to={item.url}>
                           <item.icon className="h-3.5 w-3.5" />
-                          <span>{item.title}</span>
+                          <span>{t(item.key)}</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -259,10 +261,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {bottomItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={t(item.key)}
                     className={cn(
                       "h-8 rounded text-[13px] text-sidebar-foreground/90",
                       "hover:bg-sidebar-accent hover:text-sidebar-foreground",
@@ -272,7 +274,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{item.title}</span>
+                      <span className="flex-1">{t(item.key)}</span>
                       {item.external && (
                         <ExternalLink className="h-3 w-3 opacity-60" />
                       )}
@@ -291,7 +293,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Audit Log"
+                  tooltip={t("nav.audit")}
                   className={cn(
                     "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     isActive("/audit") && "bg-sidebar-accent text-sidebar-foreground font-medium",
@@ -299,14 +301,14 @@ export function AppSidebar() {
                 >
                   <Link to="/audit">
                     <History className="h-4 w-4" />
-                    <span>Audit Log</span>
+                    <span>{t("nav.audit")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Settings"
+                  tooltip={t("nav.settings")}
                   className={cn(
                     "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     isActive("/settings") && "bg-sidebar-accent text-sidebar-foreground font-medium",
@@ -314,7 +316,7 @@ export function AppSidebar() {
                 >
                   <Link to="/settings">
                     <SettingsIcon className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t("nav.settings")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

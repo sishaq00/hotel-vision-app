@@ -32,6 +32,7 @@ import {
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useHotelStore, type PaymentMethod } from "@/store/hotel-store";
+import { ExportButtons } from "@/components/system/ExportButtons";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/payments")({
@@ -135,12 +136,28 @@ function PaymentsPage() {
                 className="pl-9"
               />
             </div>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 shadow-md">
-                  <Plus className="h-4 w-4" /> Record payment
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <ExportButtons
+                rows={payments.map((p) => {
+                  const r = reservations.find((x) => x.id === p.reservationId);
+                  const g = r ? guests.find((x) => x.id === r.guestId) : null;
+                  return {
+                    Date: p.date,
+                    Guest: g?.name ?? "—",
+                    Reservation: p.reservationId,
+                    Amount: p.amount,
+                    Method: p.method,
+                    Status: p.status,
+                  };
+                })}
+                filename="payments"
+              />
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 shadow-md">
+                    <Plus className="h-4 w-4" /> Record payment
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-[420px]">
                 <DialogHeader>
                   <DialogTitle>Record payment</DialogTitle>
@@ -198,6 +215,7 @@ function PaymentsPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {filtered.length === 0 ? (

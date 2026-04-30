@@ -168,3 +168,17 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---- Print styles -------------------------------------------------------- */
+@media print {
+  /* Hide chrome (sidebar, topbar, buttons) when printing */
+  [data-sidebar], header.sticky, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  body { background: white !important; color: black !important; }
+  .print-area { box-shadow: none !important; border: none !important; }
+  @page { margin: 16mm; }
+}
+
+/* ---- RTL polish ---------------------------------------------------------- */
+html[dir="rtl"] body { font-family: "Segoe UI", "Tahoma", system-ui, sans-serif; }
+html[dir="rtl"] .lucide { transform: none; }
