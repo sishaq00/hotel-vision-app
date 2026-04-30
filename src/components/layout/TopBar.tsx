@@ -1,8 +1,10 @@
 import { HelpCircle, ChevronDown, Globe, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useHotelStore } from "@/store/hotel-store";
+import { NotificationsBell } from "@/components/system/NotificationsBell";
 import {
   Select,
   SelectContent,
@@ -36,6 +38,9 @@ export function TopBar(_props: TopBarProps) {
   const settings = useHotelStore((s) => s.settings);
   const updateSettings = useHotelStore((s) => s.updateSettings);
   const openShift = useHotelStore((s) => s.shifts.find((x) => x.status === "open"));
+  // Render date only after mount to avoid SSR/CSR hydration mismatch
+  const [today, setToday] = useState<string>("");
+  useEffect(() => setToday(formatToday()), []);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card px-3 md:px-4">
@@ -68,7 +73,9 @@ export function TopBar(_props: TopBarProps) {
 
       {/* Date (center) */}
       <div className="hidden flex-1 justify-center md:flex">
-        <p className="text-sm font-medium text-muted-foreground">{formatToday()}</p>
+        <p className="text-sm font-medium text-muted-foreground" suppressHydrationWarning>
+          {today || "\u00A0"}
+        </p>
       </div>
 
       {/* Right cluster */}
