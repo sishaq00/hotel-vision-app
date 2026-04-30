@@ -42,7 +42,30 @@ function ReportsHub() {
   const { t } = useT();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [previewReport, setPreviewReport] = useState<{ def: ReportDefinition; rows: Record<string, unknown>[] } | null>(null);
+
+  // Try to filter rows by any date-like column within [from, to].
+  const applyDateFilter = (rows: Record<string, unknown>[]) => {
+    if (!dateFrom && !dateTo) return rows;
+    const from = dateFrom ? new Date(dateFrom).getTime() : -Infinity;
+    const to = dateTo ? new Date(dateTo).getTime() + 86_400_000 - 1 : Infinity;
+    return rows.filter((row) => {
+      for (const v of Object.values(row)) {
+        if (typeof v !== "string") continue;
+        // ISO date or datetime
+        if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
+          const t2 = new Date(v).getTime();
+          if (!Number.isNaN(t2) && t2 >= from && t2 <= to) return true;
+        }
+      }
+      // No date columns → keep row (filter doesn't apply)
+      return !Object.values(row).some(
+        (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)
+      );
+    });
+  };
 
   const filtered = useMemo(() => {
     return REPORT_DEFINITIONS.filter((r) => {
