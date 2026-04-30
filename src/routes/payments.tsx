@@ -215,6 +215,7 @@ function PaymentsPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {filtered.length === 0 ? (
