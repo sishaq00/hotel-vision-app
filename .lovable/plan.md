@@ -1,188 +1,123 @@
-## الفهم الكامل للمتطلبات
+## ملخص
 
-1. **النظام يبقى أوفلاين 100%** — لا Cloud، لا Supabase، كل البيانات في `localStorage`.
-2. **حساب مدير (Admin)** بصلاحيات كاملة + إنشاء حسابات موظفين (Reception/Staff).
-3. **صلاحيات مرنة لكل موظف** — المدير يحدّد ما يستطيع كل موظف فعله.
-4. **الدفع نقداً فقط (Cash)** — حذف بطاقات/بوابات إلكترونية.
-5. **Night Audit يدوي** يشغّله الموظف، مع نظام إشعارات.
-6. **🆕 تقارير محاسبية تفصيلية لكل مستخدم** — كل عملية تُنسب لمن قام بها (مدّد ليلة، قبض مبلغ، سجّل دخول/خروج…).
+تحويل **Shift Management** ليكون قلب يوم الموظف: زر "إنهاء الشفت" يفتح **تقرير شفت تفصيلي** بكل عملياته (حجوزات، تمديد/تقليص، بيع منتجات/Minibar، مدفوعات نقدية، تغييرات غرف…)، مع **حقل توقيع** و**زر طباعة** ليرفقه مع المال المستلم.
+بالإضافة: جعل **Night Audit** قابلاً للتشغيل في أي وقت + **تذكير تلقائي الساعة 3 صباحاً** عبر `NotificationsBell`.
 
 ---
 
-## 1. نظام المستخدمين والصلاحيات (Offline)
+## 1. ربط الشفت بالمستخدم الفعلي
 
-**ملف جديد:** `src/store/auth-store.ts` (Zustand + persist)
+**`src/store/hotel-store.ts`** — تعديل `startShift`:
+- بدل أخذ `userName` يدوياً، يقرأ من `useAuthStore.getState().current()` ويأخذ `userId` و`userName` تلقائياً.
+- إضافة `manualOpening` لإدخال الـ float النقدي الافتتاحي فقط.
+- يمنع فتح أكثر من شفت مفتوح لنفس المستخدم.
 
-- جدول `users`: `{ id, username, passwordHash, fullName, role: "admin" | "staff", permissions: string[], active, createdAt }`
-- جلسة حالية: `{ userId, loginAt }`
-- كلمات السر بـ **SHA-256** عبر Web Crypto API.
-- مستخدم افتراضي عند أول تشغيل: `admin / admin123` مع تنبيه لتغييرها.
-
-**قائمة الصلاحيات:**
-```
-dashboard.view
-reservations.view / .create / .edit / .cancel / .extend
-checkin.perform / checkout.perform
-rooms.view / rooms.manage
-guests.view / guests.manage
-housekeeping.view / .update
-maintenance.manage
-payments.view / payments.record / payments.refund
-reports.view / reports.export / reports.user-activity
-night-audit.run
-shifts.manage
-users.manage          ← Admin فقط
-settings.manage       ← Admin فقط
-audit.view            ← Admin فقط
-```
-
-المدير يحصل تلقائياً على كل الصلاحيات.
+**`src/routes/shift-management.tsx`**:
+- زر "Start new shift" يستخدم المستخدم الحالي مباشرة (يختفي حقل الاسم).
+- في "Currently open" يظهر زر **"إنهاء الشفت وعرض التقرير"** بدل الـ dialog البسيط الحالي.
 
 ---
 
-## 2. صفحات جديدة
+## 2. تقرير الشفت (الحدث الرئيسي)
 
-| المسار | الوصف |
+**ملف جديد:** `src/lib/shift-report.ts`
+دالة `buildShiftReport(shiftId)` تجمع من `useActivityStore` + `useHotelStore` كل ما حدث **بين `startedAt` و الآن** ومن المستخدم نفسه:
+
+| القسم | المحتوى |
 |---|---|
-| `/login` | تسجيل دخول (username + password). |
-| `/_authenticated/*` | Layout يحمي كل الصفحات الداخلية. |
-| `/users` | إدارة المستخدمين — Admin فقط. إضافة/تعطيل/إعادة كلمة سر/تعديل صلاحيات. |
-| `/profile` | تغيير كلمة السر الشخصية. |
-| `/reports/user-activity` | **🆕 تقرير نشاط المستخدمين** (تفاصيل أدناه). |
+| رأس | اسم الفندق + شعار + اسم الموظف + تاريخ ووقت بداية/نهاية الشفت + المدة |
+| الحجوزات الجديدة | لكل حجز: ضيف، غرفة، تواريخ، السعر، الوقت |
+| Check-in / Check-out | غرفة + ضيف + الوقت + المبلغ المحصل عند الخروج |
+| **تمديد / تقليص الإقامة** | الغرفة، الليالي القديمة → الجديدة، فرق المبلغ، الوقت |
+| **مبيعات منتجات (Minibar/Spa/…)** | اسم الصنف، الكمية، الغرفة المُحتسب عليها، السعر، الوقت |
+| المدفوعات النقدية المستلمة | لكل دفعة: الحجز/الضيف، المبلغ، الوقت |
+| استرجاع/تعديل دفعة | تفاصيل + سبب |
+| تغييرات حالة الغرف | (Out of order, صيانة، تنظيف…) |
+| **الملخص المالي** | مجموع المقبوض النقدي، عدد العمليات، رصيد الكاش الافتتاحي، الرصيد المتوقع للتسليم |
+| التوقيعات | خانتان: توقيع الموظف + توقيع المستلم (المدير/المناوبة التالية) |
+
+**ملف جديد:** `src/components/shifts/EndShiftReportDialog.tsx`
+- Dialog كبير يعرض التقرير بشكل قابل للقراءة.
+- حقل **"Closing cash count"** + ملاحظات.
+- زر **🖨️ Print Shift Report** → يفتح نافذة طباعة بصفحة منسّقة A4.
+- زر **📄 Download PDF** عبر `report-pdf.ts` (نفس النمط الموجود).
+- زر **Confirm & Close Shift** يستدعي `endShift` مع المبلغ والملاحظات + يسجّل في `activity-store` (action: `shift.close`).
+
+**ملف جديد:** `src/routes/print-shift.$shiftId.tsx`
+- صفحة طباعة مستقلة (مثل `print-invoice`) بحجم A4، أبيض، خانة توقيع في الأسفل + سطر "المبلغ المسلَّم: ____ ____" يدوي.
 
 ---
 
-## 3. 🆕 نظام تتبّع نشاط المستخدمين (Activity Log)
+## 3. ربط مبيعات المنتجات بالموظف
 
-**ملف جديد:** `src/store/activity-store.ts`
+حالياً `productItems` لا تُسجَّل عمليات البيع. سنضيف:
 
-كل عملية حسّاسة تُسجَّل تلقائياً مع:
-```ts
-{
-  id, userId, userName, timestamp,
-  action: "login" | "logout" | "reservation.create" | "reservation.extend" 
-        | "checkin" | "checkout" | "payment.record" | "payment.refund"
-        | "night-audit" | "room.status-change" | "user.create" | ...,
-  entityType: "reservation" | "payment" | "room" | "guest" | "user",
-  entityId: string,
-  amount?: number,           // للعمليات المالية
-  details: {                 // معلومات إضافية حسب نوع العملية
-    roomNumber?, guestName?, oldValue?, newValue?, nightsAdded?, ...
-  }
-}
-```
+**`hotel-store.ts`:**
+- `interface ProductSale { id; productId; productName; quantity; unitPrice; total; roomId?; reservationId?; soldAt; userId; userName; shiftId? }`
+- مصفوفة `productSales: ProductSale[]` + action `recordProductSale(...)` يقلّص المخزون ويضيف للـ activity log (`payment.record` + تفاصيل المنتج).
 
-**نقاط الربط (يُسجَّل تلقائياً عند):**
-- تسجيل دخول/خروج المستخدم.
-- إنشاء/تعديل/إلغاء حجز.
-- Check-in / Check-out.
-- **تمديد ليلة (Extend stay)** — مع عدد الليالي والمبلغ الإضافي.
-- استلام دفعة نقدية — مع المبلغ والحجز المرتبط.
-- استرجاع/تعديل دفعة.
-- تشغيل Night Audit.
-- تغيير حالة غرفة (Out of order / Maintenance).
-- إدارة المستخدمين (إنشاء، تعطيل، تعديل صلاحيات).
+**`src/routes/product-inventory.tsx`** — إضافة زر "Sell" بجانب كل منتج يفتح dialog (الكمية + اختيار غرفة/حجز اختياري) → يستدعي `recordProductSale`.
+
+تظهر هذه المبيعات تلقائياً في تقرير الشفت.
 
 ---
 
-## 4. 🆕 صفحة تقرير نشاط المستخدم `/reports/user-activity`
+## 4. تمديد / تقليص الإقامة — تسجيل صريح
 
-**القسم 1: ملخص لكل مستخدم (جدول)**
-| المستخدم | عدد العمليات | حجوزات أنشأها | Check-ins | Check-outs | تمديدات | إجمالي المقبوض (Cash) | عدد المناوبات |
-|---|---|---|---|---|---|---|---|
-
-**القسم 2: تفاصيل العمليات** — جدول قابل للفلترة:
-- فلتر بالمستخدم.
-- فلتر بنطاق التاريخ (من/إلى).
-- فلتر بنوع العملية.
-- فلتر بالغرفة/الضيف.
-
-**القسم 3: ملخص مالي لكل مستخدم**
-- إجمالي المقبوضات النقدية لكل موظف خلال الفترة.
-- متوسط قيمة الحجز.
-- عدد الإلغاءات.
-
-**التصدير:**
-- زر **Export Excel** (XLSX) — جدول كامل لجميع العمليات + ورقة منفصلة للملخص لكل مستخدم.
-- زر **Export PDF** — تقرير مطبوع بشعار الفندق + الفترة + اسم المُصدِر.
-- زر **Print**.
-
-**صلاحية الوصول:**
-- `reports.user-activity` للموظفين (يرى نشاطه فقط افتراضياً).
-- Admin يرى الكل ويستطيع التصدير.
+البحث الحالي عن action `reservation.extend` موجود في `activity-store`، لكن يجب التأكد من ربطه. إن لم يكن، إضافة:
+- في `hotel-store.ts` → action `changeReservationDates(id, newCheckOut)` يحسب الفرق ويُسجّل في activity log:
+  ```
+  action: "reservation.extend"
+  details: { oldCheckOut, newCheckOut, nightsDelta: +/-N, amountDelta }
+  ```
+- زر "Extend / Shorten stay" في `ReservationsTable` (موجود مسبقاً يحتاج فقط الربط بهذا الـ action إن لم يكن مربوطاً).
 
 ---
 
-## 5. تعديلات على الواجهة الحالية
+## 5. Night Audit — اختياري + تذكير 3 صباحاً
 
-- **TopBar:** اسم المستخدم الحقيقي + زر **Logout** + اسم الدور (Admin/Staff).
-- **Sidebar:** فلترة العناصر تلقائياً حسب صلاحيات المستخدم. رابط "Users" و"User Activity Report" يظهران للمدير فقط (أو حسب الصلاحية).
-- **CheckoutDialog / PaymentForm:** Cash فقط، إزالة Card/Bank/Online من `paymentSchema`.
-- **NewReservationDialog / Extend Stay:** عند الحفظ، يُسجَّل العامل الذي قام بالعملية.
+**`src/routes/night-audit.tsx`:**
+- إزالة الإلزام بأن يكون `auditDate = اليوم`. السماح للمدير باختيار أي تاريخ من date picker.
+- حفظ آخر تشغيل في `localStorage` key `nexora-last-night-audit`.
 
----
-
-## 6. Night Audit يدوي + الإشعارات
-
-- زر بارز في `/night-audit` (موجود) يتحقق من صلاحية `night-audit.run`.
-- عند التنفيذ: يقفل اليوم، يحسب إيرادات اليوم، يأخذ snapshot، يُسجَّل في activity log باسم الموظف.
-- تذكير في `NotificationsBell` بعد 11 مساءً إذا لم يُشغَّل اليوم.
+**`src/components/system/NotificationsBell.tsx`:**
+- إضافة فحص: لو الساعة الحالية ≥ 3:00 صباحاً ولم يُشغَّل audit لتاريخ اليوم السابق → إضافة تنبيه `"Night Audit pending — last run: YYYY-MM-DD"` بلون warning يقود إلى `/night-audit`.
 
 ---
 
-## 7. الملفات المتأثرة
+## 6. الصلاحيات
 
-**ملفات جديدة:**
-- `src/lib/crypto.ts` — SHA-256 helper
-- `src/lib/permissions.ts` — قائمة الصلاحيات + helpers (`hasPermission`)
-- `src/store/auth-store.ts`
-- `src/store/activity-store.ts`
-- `src/routes/login.tsx`
-- `src/routes/_authenticated.tsx` — layout حماية
-- `src/routes/_authenticated/users.tsx`
-- `src/routes/_authenticated/profile.tsx`
-- `src/routes/_authenticated/reports.user-activity.tsx`
-- `src/components/auth/LoginForm.tsx`
-- `src/components/auth/PermissionGate.tsx`
-- `src/components/users/UserFormDialog.tsx`
-- `src/components/users/PermissionsEditor.tsx`
-- `src/components/reports/UserActivityTable.tsx`
-- `src/components/reports/UserActivitySummary.tsx`
-- `src/lib/activity-export.ts` — تصدير Excel/PDF
-
-**ملفات معدّلة:**
-- نقل كل المسارات الحالية تحت `_authenticated/`.
-- `src/components/layout/TopBar.tsx`
-- `src/components/layout/AppSidebar.tsx`
-- `src/components/reservations/CheckoutDialog.tsx` + `NewReservationDialog.tsx`
-- `src/lib/validation.ts` (paymentSchema → cash فقط)
-- `src/routes/payments.tsx`
-- `src/routes/night-audit.tsx`
-- `src/components/system/NotificationsBell.tsx`
-- `src/store/hotel-store.ts` — إضافة `createdByUserId` لكل عملية، ربط actions بـ activity logger.
+في `permissions.ts` (موجود):
+- `shifts.manage` → فتح/إغلاق شفت خاص.
+- `shifts.view-all` → المدير يرى تقارير كل الشفتات (جديد).
+- `products.sell` → تنفيذ بيع منتج.
+- المدير يحصل على الكل تلقائياً.
 
 ---
 
-## ⚠️ ملاحظات أمنية مهمة
+## 7. الملفات المتأثرة (ملخّص)
 
-- بما أن النظام أوفلاين، **أي شخص لديه وصول للجهاز يستطيع نظرياً فتح Developer Tools وقراءة localStorage**. هذا النظام يحمي من المستخدمين العاديين عبر الواجهة، لكنه ليس حماية ضد مهاجم تقني له وصول فيزيائي.
-- لا يوجد "نسيت كلمة السر" — المدير وحده يعيد التعيين. إذا فقد المدير كلمته، الحل الوحيد مسح localStorage (وفقدان البيانات).
-- للحماية الحقيقية مستقبلاً → Lovable Cloud مع RLS.
+**جديد:**
+- `src/lib/shift-report.ts`
+- `src/components/shifts/EndShiftReportDialog.tsx`
+- `src/components/shifts/SellProductDialog.tsx`
+- `src/routes/print-shift.$shiftId.tsx`
 
----
-
-## ترتيب التنفيذ
-
-1. `crypto.ts` + `permissions.ts` + `auth-store` + مستخدم admin افتراضي.
-2. صفحة `/login` و layout `_authenticated`، نقل المسارات.
-3. صفحة `/users` (إدارة الحسابات والصلاحيات).
-4. تعديل TopBar + Sidebar.
-5. `activity-store` + ربطها بكل actions في `hotel-store` (حجوزات، دفعات، تمديد، check-in/out).
-6. صفحة `/reports/user-activity` + التصدير Excel/PDF.
-7. تنظيف بوابات الدفع → Cash فقط.
-8. Night Audit اليدوي + تذكير الإشعار.
-9. اختبار شامل: admin → ينشئ موظف بصلاحيات محدودة → يسجّل دخوله → يجري عمليات → admin يفتح التقرير ويرى نشاطه بالأرقام.
+**معدّل:**
+- `src/store/hotel-store.ts` — `startShift`, `endShift`, جديد: `productSales` + `recordProductSale`, تأكيد `extend` يسجّل في activity.
+- `src/routes/shift-management.tsx` — استبدال EndShiftDialog بـ EndShiftReportDialog، استخدام المستخدم الحالي.
+- `src/routes/product-inventory.tsx` — زر Sell.
+- `src/routes/night-audit.tsx` — date picker + حفظ آخر تشغيل.
+- `src/components/system/NotificationsBell.tsx` — تنبيه 3 صباحاً.
+- `src/lib/permissions.ts` — صلاحيات جديدة.
 
 ---
 
-هل توافق على الخطة؟ أو تريد تعديل (مثلاً: حقول إضافية في التقرير، دور ثالث كـ "محاسب"، أو تغيير اسم المدير الافتراضي)؟
+## ملاحظات إضافية أقترح إضافتها
+
+1. **تنبيه قبل إنهاء الشفت** إذا الكاش المعدود ≠ (الافتتاحي + المقبوض النقدي) → يطلب تأكيد + سبب الفرق.
+2. **قفل الشفت بعد الإغلاق** — لا يمكن تعديل أي عملية مسجَّلة فيه (read-only) لمنع التلاعب اللاحق.
+3. **رابط مباشر من تقرير المدير** (`/reports/user-activity`) لفتح/طباعة أي شفت سابق.
+4. **مجموع التوقيعات الإلكترونية** — لاحقاً يمكن إضافة canvas للتوقيع بالماوس/اللمس وحفظه كصورة في الـ shift record.
+
+هل تريد إضافة هذه الأربع نقاط أيضاً؟ أم أبدأ بالخطة كما هي؟
