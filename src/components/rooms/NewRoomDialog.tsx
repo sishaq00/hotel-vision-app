@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { roomSchema, parseOrToast } from "@/lib/validation";
 
 // Auto-generate a short code from a room type name (e.g. "Royal Suite" -> "RS")
 function autoCode(name: string): string {
@@ -71,11 +72,17 @@ export function NewRoomDialog() {
 
   const submitSingle = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!number.trim()) return toast.error("Room number is required");
-    if (!type.trim()) return toast.error("Room type is required");
     const code = (typeCode.trim() || autoCode(type)).toUpperCase();
-    addRoom({ number: number.trim(), type: type.trim(), typeCode: code, floor, price, status: "available" });
-    toast.success(`Room ${number} added`, { description: `${type} · ${code}` });
+    const parsed = parseOrToast(roomSchema, {
+      number: number.trim(),
+      type: type.trim(),
+      typeCode: code,
+      floor,
+      price,
+    });
+    if (!parsed) return;
+    addRoom({ ...parsed, status: "available" });
+    toast.success(`Room ${parsed.number} added`, { description: `${parsed.type} · ${parsed.typeCode}` });
     resetSingle();
     setOpen(false);
   };
