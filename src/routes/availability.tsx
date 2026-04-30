@@ -224,7 +224,7 @@ function AvailabilityPage() {
             <div className="space-y-2 text-sm">
               <Detail k="Status" v={viewRes.status} />
               <Detail k="Confirmation" v={viewRes.confirmationNumber ?? viewRes.id.slice(0, 8)} />
-              <Detail k="Total" v={`${viewRes.totalAmount.toFixed(2)}`} />
+              <Detail k="Total" v={`${(viewRes.totalAmount ?? 0).toFixed(2)}`} />
               {viewRes.invoice && (
                 <Detail k="Invoice" v={viewRes.invoice.invoiceNumber} />
               )}
