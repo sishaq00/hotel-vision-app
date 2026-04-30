@@ -1,7 +1,8 @@
 // Shared reservations table used by In-House, Arrivals, Departures,
 // Recently Viewed, Search and Archived pages.
-import { Download, LogIn, LogOut, Printer, X } from "lucide-react";
+import { Download, LogIn, LogOut, Printer, X, CalendarPlus } from "lucide-react";
 import { useState } from "react";
+import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { Button } from "@/components/ui/button";
 import {
   Table,
