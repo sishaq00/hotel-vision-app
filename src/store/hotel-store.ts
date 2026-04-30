@@ -415,6 +415,10 @@ interface HotelState {
   addRoutingRule: (r: Omit<RoutingRule, "id">) => string;
   toggleRoutingRule: (id: string) => void;
 
+  // Reports
+  recordReportRun: (r: Omit<ReportRun, "id" | "ranAt">) => string;
+  clearReportRuns: () => void;
+
   // Settings
   updateSettings: (s: Partial<HotelSettings>) => void;
 
@@ -523,6 +527,7 @@ export const useHotelStore = create<HotelState>()(
         inventoryItems: [],
         productItems: [],
         routingRules: [],
+        reportRuns: [],
         settings: {
           hotelName: "NEXORA OS",
           hotelCode: "NXR",
