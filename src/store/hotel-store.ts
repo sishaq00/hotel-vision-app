@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { logActivity } from "@/store/activity-store";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
@@ -792,6 +793,14 @@ export const useHotelStore = create<HotelState>()(
             description: `Reservation for ${guest?.name ?? "guest"} · Room ${room.number} · ${r.checkIn} → ${r.checkOut}`,
             metadata: { roomId: r.roomId, guestId: r.guestId, total: r.totalAmount },
           });
+          logActivity({
+            action: "reservation.create",
+            entityType: "reservation",
+            entityId: id,
+            amount: r.totalAmount,
+            description: `Created reservation · ${guest?.name ?? "guest"} · Room ${room.number}`,
+            details: { roomNumber: room.number, guestName: guest?.name, checkIn: r.checkIn, checkOut: r.checkOut },
+          });
           return { ok: true as const, id };
         },
 
@@ -817,6 +826,13 @@ export const useHotelStore = create<HotelState>()(
             action: "check-in",
             description: `Check-in: ${guest?.name ?? "guest"} → Room ${room?.number ?? "?"}`,
             metadata: { at: now },
+          });
+          logActivity({
+            action: "checkin",
+            entityType: "reservation",
+            entityId: id,
+            description: `Checked in ${guest?.name ?? "guest"} → Room ${room?.number ?? "?"}`,
+            details: { roomNumber: room?.number, guestName: guest?.name },
           });
         },
 
@@ -904,6 +920,14 @@ export const useHotelStore = create<HotelState>()(
             description: `Check-out: ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber} · $${invoice.total.toFixed(2)}`,
             metadata: { at: now, invoice },
           });
+          logActivity({
+            action: "checkout",
+            entityType: "reservation",
+            entityId: id,
+            amount: invoice.total,
+            description: `Checked out ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber}`,
+            details: { roomNumber: room.number, guestName: guest?.name, invoiceNumber: invoice.invoiceNumber, paid: !!opts?.markPaid },
+          });
           return invoice;
         },
 
@@ -926,6 +950,13 @@ export const useHotelStore = create<HotelState>()(
             description: `Reservation cancelled · ${guest?.name ?? "guest"}`,
             metadata: { at: now },
           });
+          logActivity({
+            action: "reservation.cancel",
+            entityType: "reservation",
+            entityId: id,
+            description: `Cancelled reservation · ${guest?.name ?? "guest"}`,
+            details: { guestName: guest?.name },
+          });
         },
 
         // -------------------- Payments --------------------
@@ -938,6 +969,14 @@ export const useHotelStore = create<HotelState>()(
             action: "create",
             description: `Payment $${p.amount} (${p.method}) · ${p.status}`,
             metadata: { reservationId: p.reservationId },
+          });
+          logActivity({
+            action: "payment.record",
+            entityType: "payment",
+            entityId: id,
+            amount: p.amount,
+            description: `Recorded ${p.method} payment $${p.amount.toFixed(2)}`,
+            details: { reservationId: p.reservationId, method: p.method, status: p.status },
           });
           return id;
         },
