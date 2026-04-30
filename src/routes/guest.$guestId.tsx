@@ -263,6 +263,7 @@ function GuestProfile() {
           )}
         </Card>
       </div>
+      <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
     </AppLayout>
   );
 }
@@ -273,5 +274,14 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-bold text-foreground">{value}</p>
     </div>
+  );
+}
+
+function PrefRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium text-foreground">{value}</dd>
+    </>
   );
 }
