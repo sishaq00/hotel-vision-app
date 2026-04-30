@@ -28,6 +28,17 @@ export const Route = createFileRoute("/availability")({
     ],
   }),
   component: AvailabilityPage,
+  errorComponent: ({ error, reset }) => (
+    <AppLayout title="Availability" subtitle="Something went wrong loading the grid">
+      <Card className="border-destructive/40 p-6">
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-destructive">Unable to render availability</h2>
+          <p className="text-sm text-muted-foreground break-all">{error?.message ?? "Unknown error"}</p>
+          <Button onClick={reset} variant="outline">Try again</Button>
+        </div>
+      </Card>
+    </AppLayout>
+  ),
 });
 
 const DAYS = 14;
