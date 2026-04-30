@@ -25,13 +25,15 @@ export const Route = createFileRoute("/housekeeping")({
   component: HousekeepingPage,
 });
 
-const HK_STATUSES: HousekeepingStatus[] = ["dirty", "clean", "inspected", "out-of-order"];
+const HK_STATUSES: HousekeepingStatus[] = ["dirty", "clean", "inspected", "out-of-order", "departure", "stayover"];
 
 const STATUS_STYLE: Record<HousekeepingStatus, string> = {
   dirty: "bg-warning/15 text-warning-foreground border-warning/30",
   clean: "bg-info/10 text-info border-info/20",
   inspected: "bg-success/10 text-success border-success/20",
   "out-of-order": "bg-destructive/10 text-destructive border-destructive/20",
+  departure: "bg-destructive/10 text-destructive border-destructive/20",
+  stayover: "bg-amber-500/10 text-amber-600 border-amber-500/30",
 };
 
 function HousekeepingPage() {
