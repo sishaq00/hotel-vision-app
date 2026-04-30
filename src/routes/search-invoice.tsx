@@ -40,6 +40,7 @@ function SearchInvoicePage() {
         guest: guests.find((g) => g.id === r.guestId),
         room: rooms.find((rm) => rm.id === r.roomId),
       }))
+      .filter((x): x is { reservation: typeof x.reservation; guest: typeof x.guest; room: NonNullable<typeof x.room> } => !!x.room)
       .filter(({ reservation, guest }) => {
         const inv = reservation.invoice!;
         if (query) {
@@ -90,7 +91,7 @@ function SearchInvoicePage() {
                     <TableCell className="text-right font-mono">{inv.currency} {inv.total.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" onClick={() =>
-                        downloadInvoicePDF({ invoice: inv, guest, room, settings })
+                        downloadInvoicePDF({ invoice: inv, reservation, guest, room, settings })
                       }>
                         <Download className="h-3 w-3" /> PDF
                       </Button>
