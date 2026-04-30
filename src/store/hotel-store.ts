@@ -2207,7 +2207,7 @@ export const useHotelStore = create<HotelState>()(
     },
     {
       name: "nexora-os-hotel-v1",
-      version: 4,
+      version: 5,
       storage: safeStorage,
       // Persist everything (including audit log) so no data is lost on reload.
       migrate: (persisted: unknown, version: number) => {
