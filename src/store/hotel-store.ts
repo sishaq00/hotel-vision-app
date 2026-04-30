@@ -4,7 +4,19 @@ import { useAuthStore } from "@/store/auth-store";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
-export type HousekeepingStatus = "clean" | "dirty" | "inspected" | "out-of-order";
+export type HousekeepingStatus =
+  | "clean"
+  | "dirty"
+  | "inspected"
+  | "out-of-order"
+  | "departure"   // expected to depart today (post-NA classification)
+  | "stayover";   // staying — needs touch-up clean
+export type HousekeepingTaskType =
+  | "departure"
+  | "stayover"
+  | "touch-up"
+  | "deep-clean"
+  | "inspection";
 // Free-form room type to support unlimited custom hotel layouts
 export type RoomType = string;
 
@@ -22,6 +34,21 @@ export interface Room {
   accessible?: boolean;
   archived?: boolean;    // soft-delete flag — record is preserved
   archivedAt?: string;
+  // v4: assignment & cleaning lifecycle
+  zone?: string;          // e.g. "North Wing"
+  building?: string;      // e.g. "Main", "Annex"
+  bedCode?: string;       // e.g. "K1KN", "O2ON"
+  taskType?: HousekeepingTaskType;
+  assignedHousekeeperId?: string;
+  assignedAt?: string;
+  assignedBy?: string;
+  cleaningStartedAt?: string;
+  cleaningFinishedAt?: string;
+  cleaningValue?: number; // cost/value attached to cleaning this room (for payroll)
+  dndFlag?: boolean;
+  refusedService?: boolean;
+  housekeepingNotes?: string;
+  housekeepingPhotos?: string[]; // base64 data URLs
 }
 
 export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
