@@ -63,8 +63,8 @@ export function DashboardCharts() {
             <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
@@ -72,15 +72,15 @@ export function DashboardCharts() {
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   fontSize: 12,
                 }}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
+                stroke="var(--primary)"
                 strokeWidth={2}
                 fill="url(#rev)"
               />
@@ -104,13 +104,13 @@ export function DashboardCharts() {
               <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   fontSize: 12,
                 }}
                 formatter={(v) => [`${v}%`, "Occupancy"]}
               />
-              <Bar dataKey="occupancy" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="occupancy" fill="var(--primary)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
