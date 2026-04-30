@@ -1066,8 +1066,6 @@ export const useHotelStore = create<HotelState>()(
           let userId = userName;
           let resolvedName = userName;
           try {
-            // dynamic require to avoid circular import at module load
-            const { useAuthStore } = require("@/store/auth-store") as typeof import("@/store/auth-store");
             const me = useAuthStore.getState().current();
             if (me) {
               userId = me.id;
