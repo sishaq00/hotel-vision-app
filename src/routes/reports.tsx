@@ -39,6 +39,7 @@ function ReportsHub() {
   }));
   const recordReportRun = useHotelStore((s) => s.recordReportRun);
 
+  const { t } = useT();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [previewReport, setPreviewReport] = useState<{ def: ReportDefinition; rows: Record<string, unknown>[] } | null>(null);
