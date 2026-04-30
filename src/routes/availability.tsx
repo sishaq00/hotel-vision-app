@@ -29,15 +29,19 @@ export const Route = createFileRoute("/availability")({
   }),
   component: AvailabilityPage,
   errorComponent: ({ error, reset }) => (
-    <AppLayout title="Availability" subtitle="Something went wrong loading the grid">
-      <Card className="border-destructive/40 p-6">
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-destructive">Unable to render availability</h2>
-          <p className="text-sm text-muted-foreground break-all">{error?.message ?? "Unknown error"}</p>
-          <Button onClick={reset} variant="outline">Try again</Button>
+    <div className="min-h-screen bg-background p-6">
+      <div className="mx-auto max-w-2xl rounded-lg border border-destructive/40 bg-card p-6 shadow-card">
+        <h2 className="mb-2 text-lg font-semibold text-destructive">Unable to render Availability</h2>
+        <pre className="mb-4 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-3 text-xs text-muted-foreground">
+          {error?.message ?? "Unknown error"}
+          {error?.stack ? `\n\n${error.stack}` : ""}
+        </pre>
+        <div className="flex gap-2">
+          <Button onClick={reset} variant="outline" size="sm">Try again</Button>
+          <Button onClick={() => (window.location.href = "/")} size="sm">Go home</Button>
         </div>
-      </Card>
-    </AppLayout>
+      </div>
+    </div>
   ),
 });
 
@@ -62,9 +66,9 @@ function cellStateFor(room: Room, iso: string, reservations: Reservation[]): Cel
 }
 
 function AvailabilityPage() {
-  const rooms = useHotelStore((s) => s.rooms.filter((r) => !r.archived));
-  const reservations = useHotelStore((s) => s.reservations);
-  const guests = useHotelStore((s) => s.guests);
+  const rooms = useHotelStore((s) => (Array.isArray(s.rooms) ? s.rooms.filter((r) => !r.archived) : []));
+  const reservations = useHotelStore((s) => (Array.isArray(s.reservations) ? s.reservations : []));
+  const guests = useHotelStore((s) => (Array.isArray(s.guests) ? s.guests : []));
   const checkInAction = useHotelStore((s) => s.checkIn);
   const cancelAction = useHotelStore((s) => s.cancelReservation);
   const { t } = useT();
