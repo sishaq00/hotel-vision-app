@@ -121,3 +121,21 @@ export function restoreAutoBackup(key: string): boolean {
   window.localStorage.setItem(STORE_KEY, raw);
   return true;
 }
+
+// ---- External backup reminder ---------------------------------------------
+const LAST_DOWNLOAD_KEY = "nexora-last-download-backup";
+
+/** Mark that user just downloaded an external backup file. */
+export function markBackupDownloaded() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LAST_DOWNLOAD_KEY, new Date().toISOString());
+}
+
+/** Returns days since last download, or null if never. */
+export function daysSinceLastDownload(): number | null {
+  if (typeof window === "undefined") return null;
+  const last = window.localStorage.getItem(LAST_DOWNLOAD_KEY);
+  if (!last) return null;
+  const diff = Date.now() - new Date(last).getTime();
+  return Math.floor(diff / 86_400_000);
+}
