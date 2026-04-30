@@ -24,13 +24,28 @@ function PrintInvoice() {
     s.payments.filter((p) => p.reservationId === reservationId),
   );
   const settings = useHotelStore((s) => s.settings);
+  const creditNotes = useHotelStore((s) =>
+    s.creditNotes.filter((n) => n.reservationId === reservationId),
+  );
+  const [qrUrl, setQrUrl] = useState<string>("");
 
   useEffect(() => {
     if (reservation?.invoice) recordPrint(reservationId, "invoice-a4");
-    const t = setTimeout(() => window.print(), 400);
+    const t = setTimeout(() => window.print(), 600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId]);
+
+  useEffect(() => {
+    if (!reservation?.invoice) return;
+    generateInvoiceQR({
+      sellerName: settings.hotelName,
+      vatNumber: settings.taxId ?? "",
+      timestamp: reservation.invoice.issuedAt,
+      invoiceTotal: reservation.invoice.total,
+      vatTotal: reservation.invoice.taxAmount,
+    }).then(setQrUrl).catch(() => setQrUrl(""));
+  }, [reservation, settings.hotelName, settings.taxId]);
 
   if (!reservation || !reservation.invoice) {
     return (
