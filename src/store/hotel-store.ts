@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { logActivity } from "@/store/activity-store";
+import { useAuthStore } from "@/store/auth-store";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type RoomStatus = "available" | "occupied" | "cleaning" | "maintenance";
