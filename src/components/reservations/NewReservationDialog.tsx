@@ -75,6 +75,9 @@ export function NewReservationDialog({
   const [codeInput, setCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
 
+  // Manual rate override
+  const [manualRate, setManualRate] = useState<ManualRateValue | null>(null);
+
   const tryApplyCode = (raw: string) => {
     const found = findValidCode(raw);
     if (!found) {
