@@ -288,6 +288,56 @@ export function NewReservationDialog({
             </div>
           )}
 
+          {/* Discount code */}
+          <div className="space-y-1.5">
+            <Label htmlFor="res-discount" className="flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5" /> Discount code
+            </Label>
+            {appliedCode ? (
+              <div className="flex items-center justify-between rounded-md border border-success/40 bg-success/10 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-success" />
+                  <span className="font-mono font-semibold">{appliedCode.code}</span>
+                  <span className="text-muted-foreground">· -{appliedCode.percent}%</span>
+                </div>
+                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={removeCode}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  id="res-discount"
+                  placeholder="WELCOME10"
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                  className="font-mono"
+                />
+                <Button type="button" variant="outline" onClick={() => tryApplyCode(codeInput)} disabled={!codeInput.trim()}>
+                  Apply
+                </Button>
+              </div>
+            )}
+            {!appliedCode && (() => {
+              const quick = loadDiscountCodes().filter(isCodeValidToday).slice(0, 5);
+              if (quick.length === 0) return null;
+              return (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {quick.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => tryApplyCode(c.code)}
+                      className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] font-mono hover:bg-primary/10 hover:border-primary/40"
+                    >
+                      {c.code} · {c.percent}%
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+
           {(() => {
             if (!roomId || !datesValid) return null;
             const room = rooms.find((r) => r.id === roomId);
@@ -296,16 +346,20 @@ export function NewReservationDialog({
               room.price, room.type, checkIn, checkOut,
             );
             const baseTotal = room.price * nights;
+            const discountInfo = appliedCode ? applyDiscount(total, appliedCode.percent) : null;
+            const finalTotal = discountInfo ? discountInfo.finalTotal : total;
             return (
-              <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-sm space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
                     {nights} × {t("co.room")} {room.number}
                   </span>
-                  <span className="font-semibold">${total.toLocaleString()}</span>
+                  <span className={discountInfo ? "text-muted-foreground line-through" : "font-semibold"}>
+                    ${total.toLocaleString()}
+                  </span>
                 </div>
                 {appliedPlan && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-primary">
+                  <div className="flex items-center gap-1.5 text-xs text-primary">
                     <Tag className="h-3 w-3" />
                     <span>{appliedPlan.name}</span>
                     {total !== baseTotal && (
@@ -314,6 +368,18 @@ export function NewReservationDialog({
                       </span>
                     )}
                   </div>
+                )}
+                {discountInfo && (
+                  <>
+                    <div className="flex items-center justify-between text-xs text-success">
+                      <span>Discount {appliedCode!.code} (-{appliedCode!.percent}%)</span>
+                      <span>−${discountInfo.discount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border pt-1 mt-1">
+                      <span className="font-medium">Total</span>
+                      <span className="font-semibold text-base">${finalTotal.toLocaleString()}</span>
+                    </div>
+                  </>
                 )}
               </div>
             );
