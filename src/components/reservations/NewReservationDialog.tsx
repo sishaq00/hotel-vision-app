@@ -25,7 +25,8 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { guestSchema, reservationSchema, parseOrToast } from "@/lib/validation";
 import { computeStayPrice } from "@/lib/rate-plans";
-import { Tag, Percent, X, Check } from "lucide-react";
+import { Tag, Percent, X, Check, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   type DiscountCode,
   findValidCode,
