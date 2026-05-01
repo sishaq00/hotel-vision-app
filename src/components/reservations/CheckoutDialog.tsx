@@ -27,6 +27,8 @@ import {
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
+import { recordRateOverride } from "@/lib/print-log";
 
 interface CheckoutDialogProps {
   reservation: Reservation;
