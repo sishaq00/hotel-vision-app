@@ -38,6 +38,7 @@ import { Route as HouseInventoryRouteImport } from './routes/house-inventory'
 import { Route as HouseAccountsRouteImport } from './routes/house-accounts'
 import { Route as GuestsRouteImport } from './routes/guests'
 import { Route as GroupMasterRouteImport } from './routes/group-master'
+import { Route as DiscountCodesRouteImport } from './routes/discount-codes'
 import { Route as DeparturesRouteImport } from './routes/departures'
 import { Route as CreditNotesRouteImport } from './routes/credit-notes'
 import { Route as BatchProcessRouteImport } from './routes/batch-process'
@@ -205,6 +206,11 @@ const GroupMasterRoute = GroupMasterRouteImport.update({
   path: '/group-master',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiscountCodesRoute = DiscountCodesRouteImport.update({
+  id: '/discount-codes',
+  path: '/discount-codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeparturesRoute = DeparturesRouteImport.update({
   id: '/departures',
   path: '/departures',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/batch-process': typeof BatchProcessRoute
   '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
   '/house-accounts': typeof HouseAccountsRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByTo {
   '/batch-process': typeof BatchProcessRoute
   '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
   '/house-accounts': typeof HouseAccountsRoute
@@ -431,6 +439,7 @@ export interface FileRoutesById {
   '/batch-process': typeof BatchProcessRoute
   '/credit-notes': typeof CreditNotesRoute
   '/departures': typeof DeparturesRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/group-master': typeof GroupMasterRoute
   '/guests': typeof GuestsRoute
   '/house-accounts': typeof HouseAccountsRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/batch-process'
     | '/credit-notes'
     | '/departures'
+    | '/discount-codes'
     | '/group-master'
     | '/guests'
     | '/house-accounts'
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/batch-process'
     | '/credit-notes'
     | '/departures'
+    | '/discount-codes'
     | '/group-master'
     | '/guests'
     | '/house-accounts'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/batch-process'
     | '/credit-notes'
     | '/departures'
+    | '/discount-codes'
     | '/group-master'
     | '/guests'
     | '/house-accounts'
@@ -642,6 +654,7 @@ export interface RootRouteChildren {
   BatchProcessRoute: typeof BatchProcessRoute
   CreditNotesRoute: typeof CreditNotesRoute
   DeparturesRoute: typeof DeparturesRoute
+  DiscountCodesRoute: typeof DiscountCodesRoute
   GroupMasterRoute: typeof GroupMasterRoute
   GuestsRoute: typeof GuestsRoute
   HouseAccountsRoute: typeof HouseAccountsRoute
@@ -889,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupMasterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/discount-codes': {
+      id: '/discount-codes'
+      path: '/discount-codes'
+      fullPath: '/discount-codes'
+      preLoaderRoute: typeof DiscountCodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/departures': {
       id: '/departures'
       path: '/departures'
@@ -1060,6 +1080,7 @@ const rootRouteChildren: RootRouteChildren = {
   BatchProcessRoute: BatchProcessRoute,
   CreditNotesRoute: CreditNotesRoute,
   DeparturesRoute: DeparturesRoute,
+  DiscountCodesRoute: DiscountCodesRoute,
   GroupMasterRoute: GroupMasterRoute,
   GuestsRoute: GuestsRoute,
   HouseAccountsRoute: HouseAccountsRoute,
@@ -1104,3 +1125,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
