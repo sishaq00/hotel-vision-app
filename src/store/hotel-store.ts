@@ -689,8 +689,16 @@ function buildInvoice(args: {
   const { reservation, room, settings, invoiceNumber, issuedAt } = args;
   // Use actual stay if checked out today, otherwise planned dates
   const nights = computeNights(reservation.checkIn, reservation.checkOut);
-  const ratePerNight = room.price;
-  const subtotal = round2(ratePerNight * nights);
+  // Honor a manual rate / total override stored on the reservation:
+  // if totalAmount differs from rack (room.price * nights), derive the effective
+  // per-night rate from it. Otherwise fall back to the rack rate.
+  const rackSubtotal = round2(room.price * nights);
+  const overrideActive =
+    reservation.totalAmount > 0 &&
+    nights > 0 &&
+    Math.abs(reservation.totalAmount - rackSubtotal) > 0.01;
+  const subtotal = overrideActive ? round2(reservation.totalAmount) : rackSubtotal;
+  const ratePerNight = nights > 0 ? round2(subtotal / nights) : room.price;
   const taxRate = Math.max(0, settings.taxRate ?? 0);
   const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
   const taxAmount = round2(subtotal * taxRate);
