@@ -68,6 +68,26 @@ export function NewReservationDialog({
     new Date(Date.now() + 86400000).toISOString().slice(0, 10),
   );
 
+  // Discount code state
+  const [codeInput, setCodeInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
+
+  const tryApplyCode = (raw: string) => {
+    const found = findValidCode(raw);
+    if (!found) {
+      toast.error("Invalid or expired code");
+      return;
+    }
+    setAppliedCode(found);
+    setCodeInput(found.code);
+    toast.success(`${found.percent}% discount applied`);
+  };
+
+  const removeCode = () => {
+    setAppliedCode(null);
+    setCodeInput("");
+  };
+
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
   const addGuest = useHotelStore((s) => s.addGuest);
