@@ -35,6 +35,8 @@ import {
   loadDiscountCodes,
   isCodeValidToday,
 } from "@/lib/discount-codes";
+import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
+import { recordRateOverride } from "@/lib/print-log";
 
 interface NewReservationDialogProps {
   trigger?: React.ReactNode | null;
