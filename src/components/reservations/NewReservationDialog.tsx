@@ -113,6 +113,8 @@ export function NewReservationDialog({
     setExistingGuestId("__new__"); setRoomId(""); setNotes("");
     setCheckIn(new Date().toISOString().slice(0, 10));
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+    setAppliedCode(null);
+    setCodeInput("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -139,20 +141,33 @@ export function NewReservationDialog({
     if (!room) return;
     const { total, nights } = computeStayPrice(room.price, room.type, checkIn, checkOut);
 
+    // Apply discount code, if any
+    let finalTotal = total;
+    let extraNote = "";
+    if (appliedCode) {
+      const { discount, finalTotal: ft } = applyDiscount(total, appliedCode.percent);
+      finalTotal = ft;
+      extraNote = `[Discount ${appliedCode.code} -${appliedCode.percent}% = -${discount}]`;
+    }
+
+    const composedNotes = [notes.trim(), extraNote].filter(Boolean).join(" ").trim() || undefined;
+
     const result = addReservation({
       guestId,
       roomId,
       checkIn,
       checkOut,
       status: "confirmed",
-      totalAmount: total,
-      notes: notes.trim() || undefined,
+      totalAmount: finalTotal,
+      notes: composedNotes,
     });
 
     if (!result.ok) {
       toast.error(t("res.cannot-create"), { description: result.error });
       return;
     }
+
+    if (appliedCode) consumeCode(appliedCode.id);
 
     toast.success(t("res.created"), {
       description: `${nights} ${nights > 1 ? t("co.nights-plural") : t("co.nights")} · ${t("co.room")} ${room.number}`,
