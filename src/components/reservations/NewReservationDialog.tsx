@@ -365,9 +365,15 @@ export function NewReservationDialog({
             if (!roomId || !datesValid) return null;
             const room = rooms.find((r) => r.id === roomId);
             if (!room) return null;
-            const { total, nights, appliedPlan } = computeStayPrice(
+            const planResult = computeStayPrice(
               room.price, room.type, checkIn, checkOut,
             );
+            const nights = planResult.nights;
+            const appliedPlan = manualRate ? null : planResult.appliedPlan;
+            // Manual rate overrides rate plan entirely.
+            const total = manualRate
+              ? Math.round(manualRate.amount * nights * 100) / 100
+              : planResult.total;
             const baseTotal = room.price * nights;
             const nightlyEffective = nights > 0 ? total / nights : room.price;
             const discountInfo = appliedCode ? applyDiscount(total, appliedCode.percent) : null;
