@@ -25,7 +25,15 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { guestSchema, reservationSchema, parseOrToast } from "@/lib/validation";
 import { computeStayPrice } from "@/lib/rate-plans";
-import { Tag } from "lucide-react";
+import { Tag, Percent, X, Check } from "lucide-react";
+import {
+  type DiscountCode,
+  findValidCode,
+  applyDiscount,
+  consumeCode,
+  loadDiscountCodes,
+  isCodeValidToday,
+} from "@/lib/discount-codes";
 
 interface NewReservationDialogProps {
   trigger?: React.ReactNode | null;
