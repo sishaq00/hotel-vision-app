@@ -335,6 +335,22 @@ export function NewReservationDialog({
             </div>
           )}
 
+          {/* Custom rate override (manual price per night) */}
+          {roomId && (() => {
+            const room = rooms.find((r) => r.id === roomId);
+            if (!room) return null;
+            return (
+              <CustomRateControl
+                defaultRate={room.price}
+                value={manualRate}
+                onChange={setManualRate}
+                fieldLabel="Manual rate per night"
+                triggerLabel="Override rate / سعر مخصص"
+                currency="$"
+              />
+            );
+          })()}
+
           {/* Discount code — picker button + popover */}
           <DiscountPicker
             appliedCode={appliedCode}
