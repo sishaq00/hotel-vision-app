@@ -38,6 +38,7 @@ import {
   ShieldCheck,
   UserCog,
   FileMinus,
+  Percent,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -109,6 +110,7 @@ const moreItems: ReadonlyArray<NavItem> = [
   { key: "nav.shift-management", url: "/shift-management", icon: Clock, permission: "shifts.manage" },
   { key: "nav.advance-deposits", url: "/advance-deposits", icon: CreditCard, permission: "payments.view" },
   { key: "nav.rate-plans", url: "/rate-plans", icon: Tag, permission: "rooms.manage" },
+  { key: "Discount Codes", url: "/discount-codes", icon: Percent, permission: "rooms.manage" },
   { key: "nav.templates", url: "/templates", icon: MessageSquareText },
 ];
 
