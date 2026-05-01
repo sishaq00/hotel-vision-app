@@ -50,6 +50,8 @@ export function CheckoutDialog({
 
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [markPaid, setMarkPaid] = useState(true);
+  // Final-total adjustment (e.g. compensation, last-minute discount/charge).
+  const [finalAdjust, setFinalAdjust] = useState<ManualRateValue | null>(null);
 
   const guest = guests.find((g) => g.id === reservation.guestId);
   const room = rooms.find((r) => r.id === reservation.roomId);
