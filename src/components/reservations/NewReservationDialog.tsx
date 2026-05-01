@@ -202,6 +202,20 @@ export function NewReservationDialog({
 
     if (activeCode) consumeCode(activeCode.id);
 
+    if (manualRate && result.ok && result.id) {
+      const guest = guests.find((g) => g.id === guestId);
+      recordRateOverride({
+        context: "new-reservation",
+        reservationId: result.id,
+        roomNumber: room.number,
+        guestName: guest?.name ?? name,
+        oldAmount: room.price,
+        newAmount: manualRate.amount,
+        unit: "per-night",
+        reason: manualRate.reason,
+      });
+    }
+
     toast.success(t("res.created"), {
       description: `${nights} ${nights > 1 ? t("co.nights-plural") : t("co.nights")} · ${t("co.room")} ${room.number}`,
     });
