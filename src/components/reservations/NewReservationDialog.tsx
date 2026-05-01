@@ -146,7 +146,13 @@ export function NewReservationDialog({
 
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
-    const { total, nights } = computeStayPrice(room.price, room.type, checkIn, checkOut);
+    const planResult = computeStayPrice(room.price, room.type, checkIn, checkOut);
+    const nights = planResult.nights;
+
+    // Manual rate override takes precedence over rate plans (rack rate is always shown for context).
+    const baseSubtotal = manualRate
+      ? Math.round(manualRate.amount * nights * 100) / 100
+      : planResult.total;
 
     // Re-validate the discount code at submit time (it may have expired or hit cap).
     let activeCode = appliedCode;
@@ -160,15 +166,24 @@ export function NewReservationDialog({
     }
 
     // Apply discount across the FULL stay (all nights).
-    let finalTotal = total;
-    let extraNote = "";
-    if (activeCode) {
-      const { discount, finalTotal: ft } = applyDiscount(total, activeCode.percent);
-      finalTotal = ft;
-      extraNote = `[Discount ${activeCode.code} -${activeCode.percent}% on ${nights} night${nights > 1 ? "s" : ""} = -$${discount}, final $${ft}]`;
+    let finalTotal = baseSubtotal;
+    const extraNotes: string[] = [];
+
+    if (manualRate) {
+      extraNotes.push(
+        `[Manual rate $${manualRate.amount}/night (rack $${room.price}) on ${nights} night${nights > 1 ? "s" : ""} — Reason: ${manualRate.reason}]`,
+      );
     }
 
-    const composedNotes = [notes.trim(), extraNote].filter(Boolean).join(" ").trim() || undefined;
+    if (activeCode) {
+      const { discount, finalTotal: ft } = applyDiscount(baseSubtotal, activeCode.percent);
+      finalTotal = ft;
+      extraNotes.push(
+        `[Discount ${activeCode.code} -${activeCode.percent}% on ${nights} night${nights > 1 ? "s" : ""} = -$${discount}, final $${ft}]`,
+      );
+    }
+
+    const composedNotes = [notes.trim(), ...extraNotes].filter(Boolean).join(" ").trim() || undefined;
 
     const result = addReservation({
       guestId,
