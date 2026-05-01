@@ -170,9 +170,37 @@ export function CheckoutDialog({
             <div className="my-2 h-px bg-border" />
             <div className="flex items-baseline justify-between">
               <span className="text-base font-semibold text-foreground">{t("co.total-due")}</span>
-              <span className="text-xl font-bold text-foreground">{fmt(invoice.total)}</span>
+              <span className={`text-xl font-bold ${finalAdjust ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                {fmt(invoice.total)}
+              </span>
             </div>
+            {finalAdjust && (
+              <>
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className={adjustmentDelta < 0 ? "text-success" : "text-destructive"}>
+                    Adjustment ({adjustmentDelta >= 0 ? "+" : ""}{fmt(adjustmentDelta)})
+                  </span>
+                  <span className={adjustmentDelta < 0 ? "text-success" : "text-destructive"}>
+                    {adjustmentDelta >= 0 ? "+" : ""}{fmt(adjustmentDelta)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-border pt-2">
+                  <span className="text-base font-semibold text-foreground">Adjusted total</span>
+                  <span className="text-2xl font-bold text-foreground">{fmt(adjustedTotal)}</span>
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Final adjustment override */}
+          <CustomRateControl
+            defaultRate={invoice.total}
+            value={finalAdjust}
+            onChange={setFinalAdjust}
+            fieldLabel="Final total adjustment"
+            triggerLabel="Adjust final total / تعديل الإجمالي"
+            currency={invoice.currency + " "}
+          />
 
           {/* Payment */}
           <div className="grid grid-cols-2 gap-3">
