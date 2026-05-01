@@ -385,11 +385,23 @@ export function NewReservationDialog({
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm space-y-2">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Nightly rate</span>
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      Nightly rate
+                      {manualRate && (
+                        <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[9px] font-semibold text-warning uppercase tracking-wide">
+                          Manual
+                        </span>
+                      )}
+                    </span>
                     <span className={discountInfo ? "text-muted-foreground line-through" : "font-medium"}>
                       ${nightlyEffective.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
+                  {manualRate && manualRate.amount !== room.price && (
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>(rack rate ${room.price.toLocaleString()}/night)</span>
+                    </div>
+                  )}
                   {discountInfo && (
                     <>
                       <div className="flex items-center justify-between text-xs text-success">
