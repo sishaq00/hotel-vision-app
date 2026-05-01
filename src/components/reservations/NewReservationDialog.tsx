@@ -121,6 +121,7 @@ export function NewReservationDialog({
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
     setAppliedCode(null);
     setCodeInput("");
+    setManualRate(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
