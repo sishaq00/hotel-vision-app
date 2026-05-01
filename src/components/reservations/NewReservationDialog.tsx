@@ -142,13 +142,24 @@ export function NewReservationDialog({
     if (!room) return;
     const { total, nights } = computeStayPrice(room.price, room.type, checkIn, checkOut);
 
-    // Apply discount code, if any
+    // Re-validate the discount code at submit time (it may have expired or hit cap).
+    let activeCode = appliedCode;
+    if (activeCode) {
+      const stillValid = findValidCode(activeCode.code);
+      if (!stillValid) {
+        toast.warning("Discount code is no longer valid — removed");
+        activeCode = null;
+        setAppliedCode(null);
+      }
+    }
+
+    // Apply discount across the FULL stay (all nights).
     let finalTotal = total;
     let extraNote = "";
-    if (appliedCode) {
-      const { discount, finalTotal: ft } = applyDiscount(total, appliedCode.percent);
+    if (activeCode) {
+      const { discount, finalTotal: ft } = applyDiscount(total, activeCode.percent);
       finalTotal = ft;
-      extraNote = `[Discount ${appliedCode.code} -${appliedCode.percent}% = -${discount}]`;
+      extraNote = `[Discount ${activeCode.code} -${activeCode.percent}% on ${nights} night${nights > 1 ? "s" : ""} = -$${discount}, final $${ft}]`;
     }
 
     const composedNotes = [notes.trim(), extraNote].filter(Boolean).join(" ").trim() || undefined;
@@ -168,7 +179,7 @@ export function NewReservationDialog({
       return;
     }
 
-    if (appliedCode) consumeCode(appliedCode.id);
+    if (activeCode) consumeCode(activeCode.id);
 
     toast.success(t("res.created"), {
       description: `${nights} ${nights > 1 ? t("co.nights-plural") : t("co.nights")} · ${t("co.room")} ${room.number}`,
