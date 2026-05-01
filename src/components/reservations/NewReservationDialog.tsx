@@ -35,6 +35,8 @@ import {
   loadDiscountCodes,
   isCodeValidToday,
 } from "@/lib/discount-codes";
+import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
+import { recordRateOverride } from "@/lib/print-log";
 
 interface NewReservationDialogProps {
   trigger?: React.ReactNode | null;
@@ -72,6 +74,9 @@ export function NewReservationDialog({
   // Discount code state
   const [codeInput, setCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
+
+  // Manual rate override
+  const [manualRate, setManualRate] = useState<ManualRateValue | null>(null);
 
   const tryApplyCode = (raw: string) => {
     const found = findValidCode(raw);
@@ -116,6 +121,7 @@ export function NewReservationDialog({
     setCheckOut(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
     setAppliedCode(null);
     setCodeInput("");
+    setManualRate(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,7 +146,13 @@ export function NewReservationDialog({
 
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
-    const { total, nights } = computeStayPrice(room.price, room.type, checkIn, checkOut);
+    const planResult = computeStayPrice(room.price, room.type, checkIn, checkOut);
+    const nights = planResult.nights;
+
+    // Manual rate override takes precedence over rate plans (rack rate is always shown for context).
+    const baseSubtotal = manualRate
+      ? Math.round(manualRate.amount * nights * 100) / 100
+      : planResult.total;
 
     // Re-validate the discount code at submit time (it may have expired or hit cap).
     let activeCode = appliedCode;
@@ -154,15 +166,24 @@ export function NewReservationDialog({
     }
 
     // Apply discount across the FULL stay (all nights).
-    let finalTotal = total;
-    let extraNote = "";
-    if (activeCode) {
-      const { discount, finalTotal: ft } = applyDiscount(total, activeCode.percent);
-      finalTotal = ft;
-      extraNote = `[Discount ${activeCode.code} -${activeCode.percent}% on ${nights} night${nights > 1 ? "s" : ""} = -$${discount}, final $${ft}]`;
+    let finalTotal = baseSubtotal;
+    const extraNotes: string[] = [];
+
+    if (manualRate) {
+      extraNotes.push(
+        `[Manual rate $${manualRate.amount}/night (rack $${room.price}) on ${nights} night${nights > 1 ? "s" : ""} — Reason: ${manualRate.reason}]`,
+      );
     }
 
-    const composedNotes = [notes.trim(), extraNote].filter(Boolean).join(" ").trim() || undefined;
+    if (activeCode) {
+      const { discount, finalTotal: ft } = applyDiscount(baseSubtotal, activeCode.percent);
+      finalTotal = ft;
+      extraNotes.push(
+        `[Discount ${activeCode.code} -${activeCode.percent}% on ${nights} night${nights > 1 ? "s" : ""} = -$${discount}, final $${ft}]`,
+      );
+    }
+
+    const composedNotes = [notes.trim(), ...extraNotes].filter(Boolean).join(" ").trim() || undefined;
 
     const result = addReservation({
       guestId,
@@ -180,6 +201,20 @@ export function NewReservationDialog({
     }
 
     if (activeCode) consumeCode(activeCode.id);
+
+    if (manualRate && result.ok && result.id) {
+      const guest = guests.find((g) => g.id === guestId);
+      recordRateOverride({
+        context: "new-reservation",
+        reservationId: result.id,
+        roomNumber: room.number,
+        guestName: guest?.name ?? name,
+        oldAmount: room.price,
+        newAmount: manualRate.amount,
+        unit: "per-night",
+        reason: manualRate.reason,
+      });
+    }
 
     toast.success(t("res.created"), {
       description: `${nights} ${nights > 1 ? t("co.nights-plural") : t("co.nights")} · ${t("co.room")} ${room.number}`,
@@ -300,6 +335,22 @@ export function NewReservationDialog({
             </div>
           )}
 
+          {/* Custom rate override (manual price per night) */}
+          {roomId && (() => {
+            const room = rooms.find((r) => r.id === roomId);
+            if (!room) return null;
+            return (
+              <CustomRateControl
+                defaultRate={room.price}
+                value={manualRate}
+                onChange={setManualRate}
+                fieldLabel="Manual rate per night"
+                triggerLabel="Override rate / سعر مخصص"
+                currency="$"
+              />
+            );
+          })()}
+
           {/* Discount code — picker button + popover */}
           <DiscountPicker
             appliedCode={appliedCode}
@@ -314,9 +365,15 @@ export function NewReservationDialog({
             if (!roomId || !datesValid) return null;
             const room = rooms.find((r) => r.id === roomId);
             if (!room) return null;
-            const { total, nights, appliedPlan } = computeStayPrice(
+            const planResult = computeStayPrice(
               room.price, room.type, checkIn, checkOut,
             );
+            const nights = planResult.nights;
+            const appliedPlan = manualRate ? null : planResult.appliedPlan;
+            // Manual rate overrides rate plan entirely.
+            const total = manualRate
+              ? Math.round(manualRate.amount * nights * 100) / 100
+              : planResult.total;
             const baseTotal = room.price * nights;
             const nightlyEffective = nights > 0 ? total / nights : room.price;
             const discountInfo = appliedCode ? applyDiscount(total, appliedCode.percent) : null;
@@ -328,11 +385,23 @@ export function NewReservationDialog({
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm space-y-2">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Nightly rate</span>
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      Nightly rate
+                      {manualRate && (
+                        <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[9px] font-semibold text-warning uppercase tracking-wide">
+                          Manual
+                        </span>
+                      )}
+                    </span>
                     <span className={discountInfo ? "text-muted-foreground line-through" : "font-medium"}>
                       ${nightlyEffective.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
+                  {manualRate && manualRate.amount !== room.price && (
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>(rack rate ${room.price.toLocaleString()}/night)</span>
+                    </div>
+                  )}
                   {discountInfo && (
                     <>
                       <div className="flex items-center justify-between text-xs text-success">

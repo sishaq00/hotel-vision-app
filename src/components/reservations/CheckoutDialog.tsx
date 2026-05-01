@@ -27,6 +27,8 @@ import {
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
+import { recordRateOverride } from "@/lib/print-log";
 
 interface CheckoutDialogProps {
   reservation: Reservation;
@@ -48,6 +50,8 @@ export function CheckoutDialog({
 
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [markPaid, setMarkPaid] = useState(true);
+  // Final-total adjustment (e.g. compensation, last-minute discount/charge).
+  const [finalAdjust, setFinalAdjust] = useState<ManualRateValue | null>(null);
 
   const guest = guests.find((g) => g.id === reservation.guestId);
   const room = rooms.find((r) => r.id === reservation.roomId);
@@ -67,7 +71,32 @@ export function CheckoutDialog({
       maximumFractionDigits: 2,
     })}`;
 
+  const adjustedTotal = finalAdjust ? finalAdjust.amount : invoice.total;
+  const adjustmentDelta = finalAdjust ? adjustedTotal - invoice.total : 0;
+
   const handleConfirm = (downloadPdf: boolean) => {
+    // If a final adjustment is set, mutate the reservation's totalAmount so
+    // buildInvoice (called inside checkOut) derives the adjusted subtotal/tax.
+    // To preserve the user's adjusted TOTAL exactly, we back-solve the subtotal.
+    if (finalAdjust && room) {
+      const taxRate = Math.max(0, settings.taxRate ?? 0);
+      const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
+      const factor = 1 + taxRate + serviceFeeRate;
+      const targetSubtotal = factor > 0 ? Math.round((adjustedTotal / factor) * 100) / 100 : adjustedTotal;
+      const noteAddendum = `[Final adjustment at checkout: ${invoice.currency} ${invoice.total.toFixed(2)} → ${invoice.currency} ${adjustedTotal.toFixed(2)} (Δ ${adjustmentDelta >= 0 ? "+" : ""}${adjustmentDelta.toFixed(2)}) — Reason: ${finalAdjust.reason}]`;
+      useHotelStore.setState((s) => ({
+        reservations: s.reservations.map((r) =>
+          r.id === reservation.id
+            ? {
+                ...r,
+                totalAmount: targetSubtotal,
+                notes: [r.notes?.trim(), noteAddendum].filter(Boolean).join(" ").trim(),
+              }
+            : r,
+        ),
+      }));
+    }
+
     const finalInvoice = checkOut(reservation.id, {
       paymentMethod: method,
       markPaid,
@@ -75,6 +104,18 @@ export function CheckoutDialog({
     if (!finalInvoice) {
       toast.error(t("co.failed"));
       return;
+    }
+    if (finalAdjust && room) {
+      recordRateOverride({
+        context: "checkout-adjustment",
+        reservationId: reservation.id,
+        roomNumber: room.number,
+        guestName: guest?.name,
+        oldAmount: invoice.total,
+        newAmount: adjustedTotal,
+        unit: "total",
+        reason: finalAdjust.reason,
+      });
     }
     if (downloadPdf) {
       downloadInvoicePDF({
@@ -129,9 +170,37 @@ export function CheckoutDialog({
             <div className="my-2 h-px bg-border" />
             <div className="flex items-baseline justify-between">
               <span className="text-base font-semibold text-foreground">{t("co.total-due")}</span>
-              <span className="text-xl font-bold text-foreground">{fmt(invoice.total)}</span>
+              <span className={`text-xl font-bold ${finalAdjust ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                {fmt(invoice.total)}
+              </span>
             </div>
+            {finalAdjust && (
+              <>
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className={adjustmentDelta < 0 ? "text-success" : "text-destructive"}>
+                    Adjustment ({adjustmentDelta >= 0 ? "+" : ""}{fmt(adjustmentDelta)})
+                  </span>
+                  <span className={adjustmentDelta < 0 ? "text-success" : "text-destructive"}>
+                    {adjustmentDelta >= 0 ? "+" : ""}{fmt(adjustmentDelta)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-border pt-2">
+                  <span className="text-base font-semibold text-foreground">Adjusted total</span>
+                  <span className="text-2xl font-bold text-foreground">{fmt(adjustedTotal)}</span>
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Final adjustment override */}
+          <CustomRateControl
+            defaultRate={invoice.total}
+            value={finalAdjust}
+            onChange={setFinalAdjust}
+            fieldLabel="Final total adjustment"
+            triggerLabel="Adjust final total / تعديل الإجمالي"
+            currency={invoice.currency + " "}
+          />
 
           {/* Payment */}
           <div className="grid grid-cols-2 gap-3">
