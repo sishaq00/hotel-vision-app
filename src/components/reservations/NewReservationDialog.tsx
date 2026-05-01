@@ -411,3 +411,169 @@ export function NewReservationDialog({
     </Dialog>
   );
 }
+
+interface DiscountPickerProps {
+  appliedCode: DiscountCode | null;
+  onApply: (code: string) => void;
+  onRemove: () => void;
+  codeInput: string;
+  setCodeInput: (v: string) => void;
+}
+
+function DiscountPicker({
+  appliedCode,
+  onApply,
+  onRemove,
+  codeInput,
+  setCodeInput,
+}: DiscountPickerProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const codes = loadDiscountCodes().filter(isCodeValidToday);
+  const filtered = search.trim()
+    ? codes.filter(
+        (c) =>
+          c.code.toLowerCase().includes(search.toLowerCase()) ||
+          c.label.toLowerCase().includes(search.toLowerCase()),
+      )
+    : codes;
+
+  const handlePick = (code: string) => {
+    onApply(code);
+    setOpen(false);
+    setSearch("");
+  };
+
+  if (appliedCode) {
+    return (
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-1.5">
+          <Percent className="h-3.5 w-3.5" /> Discount applied
+        </Label>
+        <div className="flex items-center justify-between rounded-md border border-success/50 bg-success/10 px-3 py-2.5 text-sm">
+          <div className="flex items-center gap-2">
+            <Check className="h-4 w-4 text-success" />
+            <span className="font-mono font-semibold">{appliedCode.code}</span>
+            <span className="text-muted-foreground">· {appliedCode.label}</span>
+            <span className="rounded-full bg-success/20 px-2 py-0.5 text-xs font-semibold text-success">
+              −{appliedCode.percent}%
+            </span>
+          </div>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={onRemove}
+            aria-label="Remove discount"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5">
+        <Percent className="h-3.5 w-3.5" /> Discount code (optional)
+      </Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start gap-2 h-10 border-dashed"
+          >
+            <Percent className="h-4 w-4" />
+            Apply discount code
+            {codes.length > 0 && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                {codes.length} available
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[360px] p-3" align="start">
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search or type code…"
+                className="pl-7 h-8 text-sm font-mono uppercase"
+              />
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                No discount codes available.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto">
+                {filtered.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handlePick(c.code)}
+                    className="group flex flex-col items-start rounded-md border border-border bg-card p-2.5 text-left transition-colors hover:border-primary hover:bg-primary/5"
+                  >
+                    <div className="flex w-full items-baseline justify-between">
+                      <span className="font-mono text-xs font-bold">{c.code}</span>
+                      <span className="text-lg font-bold text-primary">
+                        −{c.percent}%
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground line-clamp-1">
+                      {c.label}
+                    </span>
+                    {c.maxUses != null && (
+                      <span className="text-[10px] text-muted-foreground mt-0.5">
+                        {c.usedCount}/{c.maxUses} used
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {search.trim() && (
+              <div className="flex gap-2 border-t border-border pt-2">
+                <Input
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                  placeholder="Type custom code"
+                  className="font-mono h-8 text-xs"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    if (codeInput.trim()) {
+                      onApply(codeInput);
+                      setOpen(false);
+                      setSearch("");
+                    } else if (search.trim()) {
+                      onApply(search);
+                      setOpen(false);
+                      setSearch("");
+                    }
+                  }}
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground text-center">
+              Discount applies to the entire stay (all nights).
+            </p>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
