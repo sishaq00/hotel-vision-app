@@ -71,7 +71,32 @@ export function CheckoutDialog({
       maximumFractionDigits: 2,
     })}`;
 
+  const adjustedTotal = finalAdjust ? finalAdjust.amount : invoice.total;
+  const adjustmentDelta = finalAdjust ? adjustedTotal - invoice.total : 0;
+
   const handleConfirm = (downloadPdf: boolean) => {
+    // If a final adjustment is set, mutate the reservation's totalAmount so
+    // buildInvoice (called inside checkOut) derives the adjusted subtotal/tax.
+    // To preserve the user's adjusted TOTAL exactly, we back-solve the subtotal.
+    if (finalAdjust && room) {
+      const taxRate = Math.max(0, settings.taxRate ?? 0);
+      const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
+      const factor = 1 + taxRate + serviceFeeRate;
+      const targetSubtotal = factor > 0 ? Math.round((adjustedTotal / factor) * 100) / 100 : adjustedTotal;
+      const noteAddendum = `[Final adjustment at checkout: ${invoice.currency} ${invoice.total.toFixed(2)} → ${invoice.currency} ${adjustedTotal.toFixed(2)} (Δ ${adjustmentDelta >= 0 ? "+" : ""}${adjustmentDelta.toFixed(2)}) — Reason: ${finalAdjust.reason}]`;
+      useHotelStore.setState((s) => ({
+        reservations: s.reservations.map((r) =>
+          r.id === reservation.id
+            ? {
+                ...r,
+                totalAmount: targetSubtotal,
+                notes: [r.notes?.trim(), noteAddendum].filter(Boolean).join(" ").trim(),
+              }
+            : r,
+        ),
+      }));
+    }
+
     const finalInvoice = checkOut(reservation.id, {
       paymentMethod: method,
       markPaid,
@@ -79,6 +104,18 @@ export function CheckoutDialog({
     if (!finalInvoice) {
       toast.error(t("co.failed"));
       return;
+    }
+    if (finalAdjust && room) {
+      recordRateOverride({
+        context: "checkout-adjustment",
+        reservationId: reservation.id,
+        roomNumber: room.number,
+        guestName: guest?.name,
+        oldAmount: invoice.total,
+        newAmount: adjustedTotal,
+        unit: "total",
+        reason: finalAdjust.reason,
+      });
     }
     if (downloadPdf) {
       downloadInvoicePDF({
