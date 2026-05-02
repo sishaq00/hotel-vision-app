@@ -39,6 +39,7 @@ import {
   UserCog,
   FileMinus,
   Percent,
+  Pencil,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -384,6 +385,23 @@ export function AppSidebar() {
                     <Link to="/print-log">
                       <Printer className="h-4 w-4" />
                       <span>Print Log</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {can("audit.view") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="Rate Overrides"
+                    className={cn(
+                      "h-8 rounded text-[13px] text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                      isActive("/rate-overrides") && "bg-sidebar-accent text-sidebar-foreground font-medium",
+                    )}
+                  >
+                    <Link to="/rate-overrides">
+                      <Pencil className="h-4 w-4" />
+                      <span>Rate Overrides</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

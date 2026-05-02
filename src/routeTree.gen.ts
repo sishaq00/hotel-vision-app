@@ -23,6 +23,7 @@ import { Route as ReportQueueRouteImport } from './routes/report-queue'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as RecentlyViewedRouteImport } from './routes/recently-viewed'
 import { Route as RatePlansRouteImport } from './routes/rate-plans'
+import { Route as RateOverridesRouteImport } from './routes/rate-overrides'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductInventoryRouteImport } from './routes/product-inventory'
 import { Route as PrintLogRouteImport } from './routes/print-log'
@@ -129,6 +130,11 @@ const RecentlyViewedRoute = RecentlyViewedRouteImport.update({
 const RatePlansRoute = RatePlansRouteImport.update({
   id: '/rate-plans',
   path: '/rate-plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RateOverridesRoute = RateOverridesRouteImport.update({
+  id: '/rate-overrides',
+  path: '/rate-overrides',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/profile': typeof ProfileRoute
+  '/rate-overrides': typeof RateOverridesRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/profile': typeof ProfileRoute
+  '/rate-overrides': typeof RateOverridesRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/print-log': typeof PrintLogRoute
   '/product-inventory': typeof ProductInventoryRoute
   '/profile': typeof ProfileRoute
+  '/rate-overrides': typeof RateOverridesRoute
   '/rate-plans': typeof RatePlansRoute
   '/recently-viewed': typeof RecentlyViewedRoute
   '/reminders': typeof RemindersRoute
@@ -510,6 +519,7 @@ export interface FileRouteTypes {
     | '/print-log'
     | '/product-inventory'
     | '/profile'
+    | '/rate-overrides'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/print-log'
     | '/product-inventory'
     | '/profile'
+    | '/rate-overrides'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/print-log'
     | '/product-inventory'
     | '/profile'
+    | '/rate-overrides'
     | '/rate-plans'
     | '/recently-viewed'
     | '/reminders'
@@ -670,6 +682,7 @@ export interface RootRouteChildren {
   PrintLogRoute: typeof PrintLogRoute
   ProductInventoryRoute: typeof ProductInventoryRoute
   ProfileRoute: typeof ProfileRoute
+  RateOverridesRoute: typeof RateOverridesRoute
   RatePlansRoute: typeof RatePlansRoute
   RecentlyViewedRoute: typeof RecentlyViewedRoute
   RemindersRoute: typeof RemindersRoute
@@ -795,6 +808,13 @@ declare module '@tanstack/react-router' {
       path: '/rate-plans'
       fullPath: '/rate-plans'
       preLoaderRoute: typeof RatePlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rate-overrides': {
+      id: '/rate-overrides'
+      path: '/rate-overrides'
+      fullPath: '/rate-overrides'
+      preLoaderRoute: typeof RateOverridesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -1096,6 +1116,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrintLogRoute: PrintLogRoute,
   ProductInventoryRoute: ProductInventoryRoute,
   ProfileRoute: ProfileRoute,
+  RateOverridesRoute: RateOverridesRoute,
   RatePlansRoute: RatePlansRoute,
   RecentlyViewedRoute: RecentlyViewedRoute,
   RemindersRoute: RemindersRoute,
