@@ -440,11 +440,7 @@ function RateOverridesPage() {
                             variant="ghost"
                             className="h-7 px-2"
                           >
-                            <Link
-                              to="/search-reservations"
-                              search={{ q: reservation.id } as never}
-                              title="Open reservation"
-                            >
+                            <Link to="/search-reservations" title="Open reservations">
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Link>
                           </Button>
