@@ -13,6 +13,8 @@ import {
 import { AppLayout } from "@/components/layout/AppLayout";
 import { NewReservationDialog } from "@/components/reservations/NewReservationDialog";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { RoomsGridPanel } from "@/components/dashboard/RoomsGridPanel";
+import { TodayGuestsPanel } from "@/components/dashboard/TodayGuestsPanel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -448,6 +450,13 @@ function Dashboard() {
 
         {/* Trend charts */}
         <DashboardCharts />
+
+        {/* Rooms visual grid */}
+        <RoomsGridPanel />
+
+        {/* Today's guests strip */}
+        <TodayGuestsPanel />
+
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <QuickAction
