@@ -240,8 +240,7 @@ export function TodayGuestsPanel() {
       {extendFor && (
         <ExtendStayDialog
           reservation={extendFor}
-          open
-          onOpenChange={(o) => !o && setExtendFor(null)}
+          onClose={() => setExtendFor(null)}
         />
       )}
     </Card>
