@@ -451,6 +451,13 @@ function Dashboard() {
         {/* Trend charts */}
         <DashboardCharts />
 
+        {/* Rooms visual grid */}
+        <RoomsGridPanel />
+
+        {/* Today's guests strip */}
+        <TodayGuestsPanel />
+
+
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <QuickAction
             label={t("qa.walk-in")}
