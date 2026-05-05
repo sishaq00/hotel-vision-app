@@ -177,10 +177,12 @@ function NightAuditWizard() {
     });
     markStepDone("report");
     setLastNightAuditDate(auditDate);
+    // Post nightly room charges (one per checked-in reservation, idempotent per date)
+    const charges = postNightlyRoomCharges(auditDate);
     // Reclassify housekeeping rooms based on reservations
     const hk = runHkReclassify();
     toast.success("Night audit completed", {
-      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy · HK: ${hk.stayover} stayover, ${hk.departure} departure`,
+      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy · HK: ${hk.stayover} stayover, ${hk.departure} departure · ${charges.count} nightly charge(s) ${settings.currency} ${charges.total.toFixed(2)}`,
     });
   };
 
