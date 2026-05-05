@@ -52,6 +52,7 @@ function NightAuditWizard() {
   const guests = useHotelStore((s) => s.guests);
   const markNoShow = useHotelStore((s) => s.markNoShow);
   const runHkReclassify = useHotelStore((s) => s.runNightAuditHousekeeping);
+  const postNightlyRoomCharges = useHotelStore((s) => s.postNightlyRoomCharges);
 
   const setLastNightAuditDate = useHotelStore((s) => s.setLastNightAuditDate);
   const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
