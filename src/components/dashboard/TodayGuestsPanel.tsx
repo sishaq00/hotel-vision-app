@@ -88,6 +88,10 @@ export function TodayGuestsPanel() {
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
             Departing today
           </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-500/40 bg-pink-500/10 px-2 py-0.5 font-medium text-pink-600 dark:text-pink-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            Checked-out
+          </span>
         </div>
       </div>
 
