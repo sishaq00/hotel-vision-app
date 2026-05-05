@@ -103,6 +103,9 @@ export interface Reservation {
   confirmationNumber?: string;
   recentlyViewedAt?: string;
   notes?: string; // free-text guest requests / special instructions
+  // Tracks the last audit date a nightly room charge was posted for this reservation.
+  // Prevents duplicate charges if the night audit is re-run.
+  lastNightlyChargeDate?: string;
 }
 
 export type GuestIdType = "passport" | "national-id" | "driver-license" | "other";
