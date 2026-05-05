@@ -28,19 +28,36 @@ export function TodayGuestsPanel() {
   const rooms = useHotelStore((s) => s.rooms);
   const guests = useHotelStore((s) => s.guests);
   const payments = useHotelStore((s) => s.payments);
+  const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
   const today = todayISO();
+  // After night audit runs for "today", treat departing logic from the audit date.
+  const effectiveToday = lastAuditDate && lastAuditDate > today ? lastAuditDate : today;
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [checkoutFor, setCheckoutFor] = useState<Reservation | null>(null);
   const [extendFor, setExtendFor] = useState<Reservation | null>(null);
 
-  const inHouse = useMemo(
-    () =>
-      reservations
-        .filter((r) => r.status === "checked-in")
-        .sort((a, b) => a.checkOut.localeCompare(b.checkOut)),
-    [reservations],
-  );
+  type RowState = "staying" | "departing" | "checked-out";
+  const getRowState = (r: Reservation): RowState => {
+    if (r.status === "checked-out") return "checked-out";
+    if (r.status === "checked-in" && r.checkOut <= effectiveToday) return "departing";
+    return "staying";
+  };
+
+  // Show in-house + recently checked-out (last 6h) so user sees the pink transition
+  const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+  const inHouse = useMemo(() => {
+    const nowMs = Date.now();
+    return reservations
+      .filter((r) => {
+        if (r.status === "checked-in") return true;
+        if (r.status === "checked-out" && r.checkedOutAt) {
+          return nowMs - new Date(r.checkedOutAt).getTime() <= SIX_HOURS_MS;
+        }
+        return false;
+      })
+      .sort((a, b) => a.checkOut.localeCompare(b.checkOut));
+  }, [reservations]);
 
   const balanceFor = (res: Reservation) => {
     const paid = payments
@@ -71,6 +88,10 @@ export function TodayGuestsPanel() {
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
             Departing today
           </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-500/40 bg-pink-500/10 px-2 py-0.5 font-medium text-pink-600 dark:text-pink-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            Checked-out
+          </span>
         </div>
       </div>
 
@@ -98,19 +119,26 @@ export function TodayGuestsPanel() {
               {inHouse.map((res) => {
                 const guest = guests.find((g) => g.id === res.guestId);
                 const room = rooms.find((r) => r.id === res.roomId);
-                const departing = res.checkOut === today;
+                const rowState = getRowState(res);
                 const nights = nightsBetween(res.checkIn, res.checkOut);
                 const balance = balanceFor(res);
+                const rowBg =
+                  rowState === "checked-out"
+                    ? "bg-pink-500/5 hover:bg-pink-500/10"
+                    : rowState === "departing"
+                    ? "bg-destructive/5 hover:bg-destructive/10"
+                    : "bg-success/5 hover:bg-success/10";
+                const checkOutColor =
+                  rowState === "checked-out"
+                    ? "text-pink-600 dark:text-pink-400"
+                    : rowState === "departing"
+                    ? "text-destructive"
+                    : "text-foreground";
                 return (
                   <tr
                     key={res.id}
                     onClick={() => setOpenId(res.id)}
-                    className={cn(
-                      "cursor-pointer text-xs transition-colors",
-                      departing
-                        ? "bg-destructive/5 hover:bg-destructive/10"
-                        : "bg-success/5 hover:bg-success/10",
-                    )}
+                    className={cn("cursor-pointer text-xs transition-colors", rowBg)}
                   >
                     <td className="border-b border-border/60 px-2 py-2 font-medium text-foreground">
                       {guest?.name ?? "—"}
@@ -120,12 +148,7 @@ export function TodayGuestsPanel() {
                       {room?.typeCode ?? "—"}
                     </td>
                     <td className="border-b border-border/60 px-2 py-2 text-muted-foreground">{res.checkIn}</td>
-                    <td
-                      className={cn(
-                        "border-b border-border/60 px-2 py-2 font-medium",
-                        departing ? "text-destructive" : "text-foreground",
-                      )}
-                    >
+                    <td className={cn("border-b border-border/60 px-2 py-2 font-medium", checkOutColor)}>
                       {res.checkOut}
                     </td>
                     <td className="border-b border-border/60 px-2 py-2 text-right tabular-nums">
@@ -141,18 +164,25 @@ export function TodayGuestsPanel() {
                       )}
                     >
                       ${balance.toFixed(2)}
+
                     </td>
                     <td className="border-b border-border/60 px-2 py-2">
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                          departing
+                          rowState === "checked-out"
+                            ? "border-pink-500/40 bg-pink-500/10 text-pink-600 dark:text-pink-400"
+                            : rowState === "departing"
                             ? "border-destructive/40 bg-destructive/10 text-destructive"
                             : "border-success/40 bg-success/10 text-success",
                         )}
                       >
                         <span className="h-1 w-1 rounded-full bg-current" />
-                        {departing ? "Departing" : "Staying"}
+                        {rowState === "checked-out"
+                          ? "Checked-out"
+                          : rowState === "departing"
+                          ? "Departing"
+                          : "Staying"}
                       </span>
                     </td>
                   </tr>

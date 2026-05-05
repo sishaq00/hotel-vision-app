@@ -103,6 +103,9 @@ export interface Reservation {
   confirmationNumber?: string;
   recentlyViewedAt?: string;
   notes?: string; // free-text guest requests / special instructions
+  // Tracks the last audit date a nightly room charge was posted for this reservation.
+  // Prevents duplicate charges if the night audit is re-run.
+  lastNightlyChargeDate?: string;
 }
 
 export type GuestIdType = "passport" | "national-id" | "driver-license" | "other";
@@ -587,6 +590,9 @@ interface HotelState {
 
   // Night audit reclassify
   runNightAuditHousekeeping: () => { stayover: number; departure: number; cleared: number };
+
+  // Night audit: auto-post nightly room charges for in-house reservations
+  postNightlyRoomCharges: (auditDate: string) => { count: number; total: number };
 
   // Lost & Found
   addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
@@ -2172,6 +2178,46 @@ export const useHotelStore = create<HotelState>()(
             metadata: { stayover, departure, cleared },
           });
           return { stayover, departure, cleared };
+        },
+
+        // -------------------- Night audit: post nightly room charges --------------------
+        postNightlyRoomCharges: (auditDate) => {
+          const state = get();
+          const rooms = state.rooms;
+          let count = 0;
+          let total = 0;
+          const nowIso = new Date().toISOString();
+          set((s) => ({
+            reservations: s.reservations.map((res) => {
+              if (res.status !== "checked-in") return res;
+              // Only charge for nights truly within the stay window:
+              // checkIn <= auditDate < checkOut (last night before checkout)
+              if (!(res.checkIn <= auditDate && auditDate < res.checkOut)) return res;
+              if (res.lastNightlyChargeDate === auditDate) return res; // already posted
+              const room = rooms.find((r) => r.id === res.roomId);
+              if (!room) return res;
+              count++;
+              total += room.price;
+              return {
+                ...res,
+                totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
+                lastNightlyChargeDate: auditDate,
+                notes: [res.notes?.trim(), `[Night audit ${auditDate}: room charge ${room.price.toFixed(2)}]`]
+                  .filter(Boolean)
+                  .join(" "),
+              };
+            }),
+          }));
+          if (count > 0) {
+            log({
+              entity: "reservation",
+              entityId: "night-audit",
+              action: "update",
+              description: `Night audit posted ${count} nightly room charge(s) totalling ${total.toFixed(2)}`,
+              metadata: { auditDate, count, total, postedAt: nowIso },
+            });
+          }
+          return { count, total: Math.round(total * 100) / 100 };
         },
 
         // -------------------- Audit --------------------
