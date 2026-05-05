@@ -79,6 +79,7 @@ type NavItem = {
 const topItems: ReadonlyArray<NavItem> = [
   { key: "nav.dashboard", url: "/", icon: LayoutDashboard, permission: "dashboard.view" },
   { key: "nav.in-house", url: "/in-house", icon: BedDouble, permission: "reservations.view" },
+  { key: "nav.rooms", url: "/rooms", icon: BedDouble, permission: "rooms.manage" },
   { key: "nav.departures", url: "/departures", icon: LogOut, permission: "reservations.view" },
   { key: "nav.arrivals", url: "/arrivals", icon: CalendarCheck, permission: "reservations.view" },
   { key: "nav.recently-viewed", url: "/recently-viewed", icon: Eye, permission: "reservations.view" },

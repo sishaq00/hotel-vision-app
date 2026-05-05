@@ -212,10 +212,25 @@ export function TodayGuestsPanel() {
                   </Link>
                 </Button>
               )}
-              <Button variant="outline" onClick={() => setExtendFor(opened)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const r = opened;
+                  setOpenId(null);
+                  setExtendFor(r);
+                }}
+              >
                 Extend
               </Button>
-              <Button onClick={() => setCheckoutFor(opened)}>Check-out</Button>
+              <Button
+                onClick={() => {
+                  const r = opened;
+                  setOpenId(null);
+                  setCheckoutFor(r);
+                }}
+              >
+                Check-out
+              </Button>
               <Button variant="ghost" onClick={() => setOpenId(null)}>
                 Close
               </Button>
