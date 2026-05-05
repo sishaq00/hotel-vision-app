@@ -2180,6 +2180,46 @@ export const useHotelStore = create<HotelState>()(
           return { stayover, departure, cleared };
         },
 
+        // -------------------- Night audit: post nightly room charges --------------------
+        postNightlyRoomCharges: (auditDate) => {
+          const state = get();
+          const rooms = state.rooms;
+          let count = 0;
+          let total = 0;
+          const nowIso = new Date().toISOString();
+          set((s) => ({
+            reservations: s.reservations.map((res) => {
+              if (res.status !== "checked-in") return res;
+              // Only charge for nights truly within the stay window:
+              // checkIn <= auditDate < checkOut (last night before checkout)
+              if (!(res.checkIn <= auditDate && auditDate < res.checkOut)) return res;
+              if (res.lastNightlyChargeDate === auditDate) return res; // already posted
+              const room = rooms.find((r) => r.id === res.roomId);
+              if (!room) return res;
+              count++;
+              total += room.price;
+              return {
+                ...res,
+                totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
+                lastNightlyChargeDate: auditDate,
+                notes: [res.notes?.trim(), `[Night audit ${auditDate}: room charge ${room.price.toFixed(2)}]`]
+                  .filter(Boolean)
+                  .join(" "),
+              };
+            }),
+          }));
+          if (count > 0) {
+            log({
+              entity: "reservation",
+              entityId: "night-audit",
+              action: "update",
+              description: `Night audit posted ${count} nightly room charge(s) totalling ${total.toFixed(2)}`,
+              metadata: { auditDate, count, total, postedAt: nowIso },
+            });
+          }
+          return { count, total: Math.round(total * 100) / 100 };
+        },
+
         // -------------------- Audit --------------------
         clearAuditLog: () => set({ auditLog: [] }),
 
