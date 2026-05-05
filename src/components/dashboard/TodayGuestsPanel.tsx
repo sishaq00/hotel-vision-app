@@ -119,19 +119,26 @@ export function TodayGuestsPanel() {
               {inHouse.map((res) => {
                 const guest = guests.find((g) => g.id === res.guestId);
                 const room = rooms.find((r) => r.id === res.roomId);
-                const departing = res.checkOut === today;
+                const rowState = getRowState(res);
                 const nights = nightsBetween(res.checkIn, res.checkOut);
                 const balance = balanceFor(res);
+                const rowBg =
+                  rowState === "checked-out"
+                    ? "bg-pink-500/5 hover:bg-pink-500/10"
+                    : rowState === "departing"
+                    ? "bg-destructive/5 hover:bg-destructive/10"
+                    : "bg-success/5 hover:bg-success/10";
+                const checkOutColor =
+                  rowState === "checked-out"
+                    ? "text-pink-600 dark:text-pink-400"
+                    : rowState === "departing"
+                    ? "text-destructive"
+                    : "text-foreground";
                 return (
                   <tr
                     key={res.id}
                     onClick={() => setOpenId(res.id)}
-                    className={cn(
-                      "cursor-pointer text-xs transition-colors",
-                      departing
-                        ? "bg-destructive/5 hover:bg-destructive/10"
-                        : "bg-success/5 hover:bg-success/10",
-                    )}
+                    className={cn("cursor-pointer text-xs transition-colors", rowBg)}
                   >
                     <td className="border-b border-border/60 px-2 py-2 font-medium text-foreground">
                       {guest?.name ?? "—"}
@@ -141,12 +148,7 @@ export function TodayGuestsPanel() {
                       {room?.typeCode ?? "—"}
                     </td>
                     <td className="border-b border-border/60 px-2 py-2 text-muted-foreground">{res.checkIn}</td>
-                    <td
-                      className={cn(
-                        "border-b border-border/60 px-2 py-2 font-medium",
-                        departing ? "text-destructive" : "text-foreground",
-                      )}
-                    >
+                    <td className={cn("border-b border-border/60 px-2 py-2 font-medium", checkOutColor)}>
                       {res.checkOut}
                     </td>
                     <td className="border-b border-border/60 px-2 py-2 text-right tabular-nums">
@@ -162,6 +164,7 @@ export function TodayGuestsPanel() {
                       )}
                     >
                       ${balance.toFixed(2)}
+
                     </td>
                     <td className="border-b border-border/60 px-2 py-2">
                       <span
