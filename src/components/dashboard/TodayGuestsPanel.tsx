@@ -244,10 +244,7 @@ export function TodayGuestsPanel() {
           reservation={checkoutFor}
           open
           onOpenChange={(o) => {
-            if (!o) {
-              setCheckoutFor(null);
-              setOpenId(null);
-            }
+            if (!o) setCheckoutFor(null);
           }}
         />
       )}
