@@ -170,13 +170,19 @@ export function TodayGuestsPanel() {
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                          departing
+                          rowState === "checked-out"
+                            ? "border-pink-500/40 bg-pink-500/10 text-pink-600 dark:text-pink-400"
+                            : rowState === "departing"
                             ? "border-destructive/40 bg-destructive/10 text-destructive"
                             : "border-success/40 bg-success/10 text-success",
                         )}
                       >
                         <span className="h-1 w-1 rounded-full bg-current" />
-                        {departing ? "Departing" : "Staying"}
+                        {rowState === "checked-out"
+                          ? "Checked-out"
+                          : rowState === "departing"
+                          ? "Departing"
+                          : "Staying"}
                       </span>
                     </td>
                   </tr>
