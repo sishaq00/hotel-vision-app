@@ -28,19 +28,36 @@ export function TodayGuestsPanel() {
   const rooms = useHotelStore((s) => s.rooms);
   const guests = useHotelStore((s) => s.guests);
   const payments = useHotelStore((s) => s.payments);
+  const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
   const today = todayISO();
+  // After night audit runs for "today", treat departing logic from the audit date.
+  const effectiveToday = lastAuditDate && lastAuditDate > today ? lastAuditDate : today;
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [checkoutFor, setCheckoutFor] = useState<Reservation | null>(null);
   const [extendFor, setExtendFor] = useState<Reservation | null>(null);
 
-  const inHouse = useMemo(
-    () =>
-      reservations
-        .filter((r) => r.status === "checked-in")
-        .sort((a, b) => a.checkOut.localeCompare(b.checkOut)),
-    [reservations],
-  );
+  type RowState = "staying" | "departing" | "checked-out";
+  const getRowState = (r: Reservation): RowState => {
+    if (r.status === "checked-out") return "checked-out";
+    if (r.status === "checked-in" && r.checkOut <= effectiveToday) return "departing";
+    return "staying";
+  };
+
+  // Show in-house + recently checked-out (last 6h) so user sees the pink transition
+  const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+  const inHouse = useMemo(() => {
+    const nowMs = Date.now();
+    return reservations
+      .filter((r) => {
+        if (r.status === "checked-in") return true;
+        if (r.status === "checked-out" && r.checkedOutAt) {
+          return nowMs - new Date(r.checkedOutAt).getTime() <= SIX_HOURS_MS;
+        }
+        return false;
+      })
+      .sort((a, b) => a.checkOut.localeCompare(b.checkOut));
+  }, [reservations]);
 
   const balanceFor = (res: Reservation) => {
     const paid = payments
