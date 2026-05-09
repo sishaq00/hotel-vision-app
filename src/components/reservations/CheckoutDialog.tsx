@@ -60,11 +60,18 @@ export function CheckoutDialog({
   const guest = guests.find((g) => g.id === reservation.guestId);
   const room = rooms.find((r) => r.id === reservation.roomId);
 
-  // Live preview while dialog is open
+  // Live preview while dialog is open — recompute when extras change too
   const invoice = useMemo(
     () => previewInvoice(reservation.id),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [reservation.id, open, settings.taxRate, settings.serviceFeeRate],
+    [reservation.id, open, settings.taxRate, settings.serviceFeeRate, productSales, folios],
+  );
+
+  // Outstanding balance (already-recorded payments vs current invoice total)
+  const balanceInfo = useMemo(
+    () => getReservationBalance(reservation.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [reservation.id, open, payments, productSales, folios, settings.taxRate, settings.serviceFeeRate],
   );
 
   if (!room || !invoice) return null;
@@ -77,6 +84,7 @@ export function CheckoutDialog({
 
   const adjustedTotal = finalAdjust ? finalAdjust.amount : invoice.total;
   const adjustmentDelta = finalAdjust ? adjustedTotal - invoice.total : 0;
+  const outstanding = Math.max(0, (markPaid ? 0 : balanceInfo.balance));
 
   const handleConfirm = (downloadPdf: boolean) => {
     // If a final adjustment is set, mutate the reservation's totalAmount so
