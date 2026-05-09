@@ -197,6 +197,23 @@ export function CheckoutDialog({
               label={`${t("co.service-fee")} (${(invoice.serviceFeeRate * 100).toFixed(1)}%)`}
               value={fmt(invoice.serviceFeeAmount)}
             />
+            {invoice.extras && invoice.extras.length > 0 && (
+              <>
+                <div className="my-2 h-px bg-border" />
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Extras (POS / mini-bar / laundry)
+                </div>
+                {invoice.extras.map((e, i) => (
+                  <Row
+                    key={i}
+                    label={e.description}
+                    value={fmt(e.amount)}
+                    hint={e.category}
+                  />
+                ))}
+                <Row label="Extras subtotal" value={fmt(invoice.extrasTotal ?? 0)} />
+              </>
+            )}
             <div className="my-2 h-px bg-border" />
             <div className="flex items-baseline justify-between">
               <span className="text-base font-semibold text-foreground">{t("co.total-due")}</span>
