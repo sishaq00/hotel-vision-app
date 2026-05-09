@@ -239,6 +239,35 @@ export function CheckoutDialog({
             )}
           </div>
 
+          {/* Balance summary + outstanding warning */}
+          <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs">
+            <div className="flex items-baseline justify-between">
+              <span className="text-muted-foreground">Already paid</span>
+              <span className="font-medium tabular-nums text-foreground">{fmt(balanceInfo.paid)}</span>
+            </div>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-muted-foreground">Outstanding balance</span>
+              <span
+                className={`font-bold tabular-nums ${balanceInfo.balance > 0 ? "text-destructive" : "text-success"}`}
+              >
+                {fmt(balanceInfo.balance)}
+              </span>
+            </div>
+          </div>
+
+          {balanceInfo.balance > 0 && !markPaid && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="font-semibold">Folio not settled</div>
+                <div className="mt-0.5">
+                  The guest still owes {fmt(balanceInfo.balance)}. Tick "Record payment" to settle on
+                  check-out, or you'll be asked to confirm a forced (unpaid) check-out.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Final adjustment override */}
           <CustomRateControl
             defaultRate={invoice.total}
