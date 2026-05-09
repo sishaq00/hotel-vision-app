@@ -53,6 +53,7 @@ export function CheckoutDialog({
   const productSales = useHotelStore((s) => s.productSales);
   const folios = useHotelStore((s) => s.folios);
   const { t } = useT();
+  const confirm = useConfirm();
 
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [markPaid, setMarkPaid] = useState(true);
