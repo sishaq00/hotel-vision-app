@@ -1253,7 +1253,7 @@ export const useHotelStore = create<HotelState>()(
             entityId: id,
             amount: invoice.total,
             description: `Checked out ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber}`,
-            details: { roomNumber: room.number, guestName: guest?.name, invoiceNumber: invoice.invoiceNumber, paid: !!opts?.markPaid },
+            details: { roomNumber: room.number, guestName: guest?.name, invoiceNumber: invoice.invoiceNumber, paid: !!opts?.markPaid, forced: !!opts?.force },
           });
           return invoice;
         },
