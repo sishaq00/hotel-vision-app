@@ -53,6 +53,12 @@ export interface Room {
 
 export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
 
+export interface InvoiceExtraItem {
+  description: string;
+  amount: number;
+  category?: string;
+}
+
 export interface InvoiceSnapshot {
   invoiceNumber: string;
   issuedAt: string;
@@ -63,6 +69,9 @@ export interface InvoiceSnapshot {
   taxAmount: number;
   serviceFeeRate: number;
   serviceFeeAmount: number;
+  // Extra non-room charges (POS / mini-bar / laundry / spa / etc.)
+  extras?: InvoiceExtraItem[];
+  extrasTotal?: number;
   total: number;
   currency: string;
 }
