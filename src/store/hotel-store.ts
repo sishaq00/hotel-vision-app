@@ -2216,18 +2216,18 @@ export const useHotelStore = create<HotelState>()(
               }
 
               // Overstay: auditDate >= checkOut and still checked-in.
-              // Charge one extra night and auto-extend checkOut to auditDate + 1.
+              // Charge one extra night but DO NOT auto-extend checkOut.
+              // Row stays red (departing/overdue) until guest extends or checks out.
               overstayCount++;
               count++;
               total += room.price;
               return {
                 ...res,
                 totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
-                checkOut: nextDay(auditDate),
                 lastNightlyChargeDate: auditDate,
                 notes: [
                   res.notes?.trim(),
-                  `[Night audit ${auditDate}: overstay charge ${room.price.toFixed(2)}, auto-extended to ${nextDay(auditDate)}]`,
+                  `[Night audit ${auditDate}: overstay charge ${room.price.toFixed(2)} — awaiting guest decision]`,
                 ]
                   .filter(Boolean)
                   .join(" "),
