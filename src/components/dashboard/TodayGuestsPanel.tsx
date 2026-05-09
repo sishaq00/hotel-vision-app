@@ -28,6 +28,9 @@ export function TodayGuestsPanel() {
   const rooms = useHotelStore((s) => s.rooms);
   const guests = useHotelStore((s) => s.guests);
   const payments = useHotelStore((s) => s.payments);
+  const productSales = useHotelStore((s) => s.productSales);
+  const folios = useHotelStore((s) => s.folios);
+  const getReservationBalance = useHotelStore((s) => s.getReservationBalance);
   const lastAuditDate = useHotelStore((s) => s.lastNightAuditDate);
   const today = todayISO();
   // After night audit runs for "today", treat departing logic from the audit date.
@@ -60,10 +63,17 @@ export function TodayGuestsPanel() {
   }, [reservations]);
 
   const balanceFor = (res: Reservation) => {
-    const paid = payments
-      .filter((p) => p.reservationId === res.id && p.status === "paid")
-      .reduce((s, p) => s + p.amount, 0);
-    return Math.max(0, (res.totalAmount ?? 0) - paid);
+    // Use store selector so extras (POS / folio) are included.
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    payments; productSales; folios;
+    return getReservationBalance(res.id).balance;
+  };
+
+  const overstayNights = (res: Reservation) => {
+    if (res.status !== "checked-in") return 0;
+    if (res.checkOut > effectiveToday) return 0;
+    const ms = new Date(effectiveToday).getTime() - new Date(res.checkOut).getTime();
+    return Math.max(0, Math.round(ms / 86400000));
   };
 
   const opened = openId ? inHouse.find((r) => r.id === openId) ?? reservations.find((r) => r.id === openId) : null;
