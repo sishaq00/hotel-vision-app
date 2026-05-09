@@ -1,48 +1,47 @@
 ## الفهم
-1. ألوان صفوف "Today's guests" يجب أن تعكس حالة الإقامة بدقة:
-   - **أخضر (Staying)** — الضيف داخل مدّة الحجز (`checkOut > today` أو لم يُعمل Night Audit بعد لليوم الحالي).
-   - **أحمر (Departing)** — بعد تشغيل Night Audit، إذا أصبح `checkOut <= todayAfterAudit` ولا يزال `checked-in` ⇒ يجب أن يخرج اليوم.
-   - **وردي (Checked-out)** — بعد إجراء Check-out فعلياً (نُبقي الصف لساعات قليلة في القائمة بلون وردي بدل إخفائه فوراً).
-   - عند **Extend** يعود الصف للأخضر تلقائياً لأن `checkOut` أصبح أكبر من اليوم.
 
-2. **Auto-charge ليلي** عند Night Audit:
-   - حالياً Night Audit لا يُنشئ أي رسم تلقائي (لا يوجد `autoCharge`). الـ balance ثابت = `totalAmount − paid`.
-   - المطلوب: عند تشغيل Night Audit، لكل حجز `checked-in`، يُنشأ تلقائياً **room charge** لليلة المنقضية = `room.price` (يُضاف إلى `totalAmount` للحجز ويُسجَّل كـ folio charge من نوع `room`)، حتى يظهر الرصيد المتبقي بوضوح إذا لم يدفع الضيف الليلة.
+أنت محقّ، يوجد خطأ في منطق الـ Night Audit الحالي.
 
-## التغييرات
+**الحالة:**
+- الحجز: Check-in `2026-05-03`، Check-out `2026-05-04` (ليلة واحدة، السعر $99).
+- اليوم `2026-05-05`، الضيف لم يخرج (overstay).
+- الـ Balance يعرض $99 فقط — رغم أنه نام ليلتين إضافيتين (ليلة 4→5 وقريباً 5→6).
 
-### 1) `src/store/hotel-store.ts`
-- أضف داخل `runNightAuditHousekeeping` (أو دالة جديدة `postNightlyRoomCharges(auditDate)` تُستدعى من Night Audit):
-  - لكل حجز `status === "checked-in"` و `checkIn <= auditDate < checkOut`:
-    - أنشئ `FolioCharge` { type: "room", description: `Room night ${auditDate}`, amount: room.price, postedAt: now }
-    - زِد `reservation.totalAmount += room.price`.
-    - أضف سجل في `activity-store` كـ `night-audit-room-charge`.
-  - حماية ضد التكرار: خزّن في الحجز حقل `lastNightlyChargeDate?: string`؛ تخطَّ إذا كان `=== auditDate`.
-- أضف Selector مساعد `getRowState(reservation, today, lastAuditDate)` يرجع `"staying" | "departing" | "checked-out"`:
-  - `checked-out` ⇒ "checked-out"
-  - `checked-in` و `checkOut <= effectiveToday` (effectiveToday = max(today, lastAuditDate)) ⇒ "departing"
-  - وإلا ⇒ "staying"
+**السبب في الكود:**
+في `postNightlyRoomCharges` (`src/store/hotel-store.ts` سطر 2195):
+```
+if (!(res.checkIn <= auditDate && auditDate < res.checkOut)) return res;
+```
+هذا الشرط يتجاهل أي ليلة بعد `checkOut` ⇒ overstay لا يُحاسَب أبداً.
 
-### 2) `src/routes/night-audit.tsx`
-- في `stepReport` (أو خطوة جديدة قبل التقرير): استدعِ `postNightlyRoomCharges(auditDate)` وأظهر toast بعدد الرسوم المُسجَّلة والمبلغ الإجمالي.
-- اعرض الرقم في صفحة الـ wizard كـ Stat "Nightly charges posted".
+## الحل
 
-### 3) `src/components/dashboard/TodayGuestsPanel.tsx`
-- اقرأ `lastNightAuditDate` من المتجر.
-- استبدل منطق `departing = res.checkOut === today` بـ `getRowState(...)` ليأخذ Night Audit بالحسبان.
-- أضف لوناً وردياً للحجوزات `checked-out` التي تمّت اليوم (اعرض آخر 6 ساعات مثلاً)، نمط:
-  - Staying: `bg-success/5 hover:bg-success/10` + شارة خضراء
-  - Departing: `bg-destructive/5 hover:bg-destructive/10` + شارة حمراء
-  - Checked-out: `bg-pink-500/5 hover:bg-pink-500/10` + شارة وردية "Checked-out"
-- وسّع الـ filter ليشمل: `checked-in` + `checked-out` (آخر 6 ساعات فقط).
-- أضف الشارة الثالثة "Checked-out" في الـ legend أعلى اللوحة.
+عند تشغيل Night Audit، إذا كان الضيف لا يزال `checked-in` ويومٌ ما بعد `checkOut` (overstay)، نُسجّل ليلة إضافية ونمدّد `checkOut` تلقائياً يوماً واحداً، فيظهر اللون أخضر مرة أخرى ويزداد الـ balance بشكل صحيح.
 
-### 4) (اختياري بسيط) `src/components/dashboard/RoomsGridPanel.tsx`
-- نفس منطق اللون للغرف ذات حجز `departing` بعد الـ audit.
+### `src/store/hotel-store.ts` — `postNightlyRoomCharges`
+
+استبدل شرط الفلترة بثلاث حالات:
+
+1. **ليلة عادية:** `checkIn <= auditDate < checkOut` ⇒ سجّل room charge (كما هو الآن).
+2. **Overstay:** `auditDate >= checkOut` و `status === "checked-in"` ⇒
+   - سجّل room charge بسعر الغرفة.
+   - مدّد `checkOut` إلى `auditDate + 1 day` بحيث يبقى الحجز فعّالاً ويعود الصف أخضر.
+   - أضف ملاحظة `[Auto-extended due to overstay]` وسجّل في `activity-store` بـ action مختلف (`overstay-charge`).
+3. **قبل تاريخ الدخول:** تجاهل.
+
+استخدم `lastNightlyChargeDate === auditDate` لمنع التكرار في كلا الحالتين.
+
+### `src/routes/night-audit.tsx`
+
+عدّل الـ toast ليعرض عدد رسوم overstay منفصلاً عن الرسوم العادية (مثلاً: "Posted 3 nightly + 1 overstay charges, $396 total").
+
+غيّر إرجاع الدالة إلى `{ count, total, overstayCount }` لتظهر القيمة في الـ wizard.
 
 ## التحقّق
-- مثال: حجز 5/5 → 6/5، اليوم 5/5: الصف **أخضر**.
-- شغّل Night Audit بتاريخ 6/5: الصف يصبح **أحمر** + يُسجَّل room charge لليلة 5/5 ويزداد الـ balance بـ `room.price`.
-- إذا مدّد الضيف إلى 7/5 ⇒ يعود **أخضر**.
-- إذا تمّ Check-out ⇒ **وردي** ويظهر لفترة قصيرة ثم يختفي تلقائياً.
-- لا يتكرر الـ nightly charge إذا أُعيد تشغيل Night Audit بنفس اليوم (بفضل `lastNightlyChargeDate`).
+
+- حجز 5/3 → 5/4، Night Audit بتاريخ 5/5:
+  - تُسجَّل ليلة overstay واحدة بـ $99.
+  - `checkOut` يصبح `2026-05-06`.
+  - Total = $198، Balance = $198، الصف **أخضر**.
+- إذا أُعيد Night Audit بنفس اليوم: لا تكرار (محمي بـ `lastNightlyChargeDate`).
+- إذا دفع الضيف ثم خرج فعلياً: Check-out يعمل كالعادة.
