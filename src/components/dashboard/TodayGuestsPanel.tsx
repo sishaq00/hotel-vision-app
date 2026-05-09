@@ -132,6 +132,7 @@ export function TodayGuestsPanel() {
                 const rowState = getRowState(res);
                 const nights = nightsBetween(res.checkIn, res.checkOut);
                 const balance = balanceFor(res);
+                const overstay = overstayNights(res);
                 const rowBg =
                   rowState === "checked-out"
                     ? "bg-pink-500/5 hover:bg-pink-500/10"
@@ -151,7 +152,25 @@ export function TodayGuestsPanel() {
                     className={cn("cursor-pointer text-xs transition-colors", rowBg)}
                   >
                     <td className="border-b border-border/60 px-2 py-2 font-medium text-foreground">
-                      {guest?.name ?? "—"}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span>{guest?.name ?? "—"}</span>
+                        {balance > 0 && res.status === "checked-in" && (
+                          <span
+                            title="Outstanding balance"
+                            className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-destructive"
+                          >
+                            ⚠ ${balance.toFixed(2)}
+                          </span>
+                        )}
+                        {overstay > 0 && (
+                          <span
+                            title="Past check-out date"
+                            className="inline-flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400"
+                          >
+                            Overstay {overstay}N
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="border-b border-border/60 px-2 py-2">{room?.number ?? "—"}</td>
                     <td className="border-b border-border/60 px-2 py-2 text-muted-foreground">
