@@ -89,10 +89,9 @@ export function CheckoutDialog({
   const adjustmentDelta = finalAdjust ? adjustedTotal - invoice.total : 0;
   const outstanding = Math.max(0, (markPaid ? 0 : balanceInfo.balance));
 
-  const handleConfirm = (downloadPdf: boolean) => {
+  const handleConfirm = async (downloadPdf: boolean) => {
     // If a final adjustment is set, mutate the reservation's totalAmount so
     // buildInvoice (called inside checkOut) derives the adjusted subtotal/tax.
-    // To preserve the user's adjusted TOTAL exactly, we back-solve the subtotal.
     if (finalAdjust && room) {
       const taxRate = Math.max(0, settings.taxRate ?? 0);
       const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
@@ -112,9 +111,25 @@ export function CheckoutDialog({
       }));
     }
 
+    // Outstanding balance guard: if user is checking out without recording
+    // payment AND there is still money owed → require explicit confirmation.
+    let force = false;
+    if (!markPaid && balanceInfo.balance > 0) {
+      const ok = await confirm({
+        title: "Outstanding balance",
+        description: `${guest?.name ?? "Guest"} still owes ${fmt(balanceInfo.balance)}. Checking out now will leave the folio unpaid. Continue anyway?`,
+        confirmLabel: "Force check-out (unpaid)",
+        cancelLabel: "Go back",
+        destructive: true,
+      });
+      if (!ok) return;
+      force = true;
+    }
+
     const finalInvoice = checkOut(reservation.id, {
       paymentMethod: method,
       markPaid,
+      force,
     });
     if (!finalInvoice) {
       toast.error(t("co.failed"));
