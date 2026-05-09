@@ -592,7 +592,7 @@ interface HotelState {
   runNightAuditHousekeeping: () => { stayover: number; departure: number; cleared: number };
 
   // Night audit: auto-post nightly room charges for in-house reservations
-  postNightlyRoomCharges: (auditDate: string) => { count: number; total: number };
+  postNightlyRoomCharges: (auditDate: string) => { count: number; total: number; overstayCount: number };
 
   // Lost & Found
   addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
