@@ -181,8 +181,12 @@ function NightAuditWizard() {
     const charges = postNightlyRoomCharges(auditDate);
     // Reclassify housekeeping rooms based on reservations
     const hk = runHkReclassify();
+    const chargeMsg =
+      charges.count > 0
+        ? `${charges.count} charge(s)${charges.overstayCount ? ` (${charges.overstayCount} overstay)` : ""} ${settings.currency} ${charges.total.toFixed(2)}`
+        : "no charges";
     toast.success("Night audit completed", {
-      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy · HK: ${hk.stayover} stayover, ${hk.departure} departure · ${charges.count} nightly charge(s) ${settings.currency} ${charges.total.toFixed(2)}`,
+      description: `${settings.currency} ${summary.revenue.toFixed(2)} · ${summary.occupancy.toFixed(0)}% occupancy · HK: ${hk.stayover} stayover, ${hk.departure} departure · ${chargeMsg}`,
     });
   };
 

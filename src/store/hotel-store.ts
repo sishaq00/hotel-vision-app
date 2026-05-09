@@ -592,7 +592,7 @@ interface HotelState {
   runNightAuditHousekeeping: () => { stayover: number; departure: number; cleared: number };
 
   // Night audit: auto-post nightly room charges for in-house reservations
-  postNightlyRoomCharges: (auditDate: string) => { count: number; total: number };
+  postNightlyRoomCharges: (auditDate: string) => { count: number; total: number; overstayCount: number };
 
   // Lost & Found
   addLostFoundItem: (i: Omit<LostFoundItem, "id" | "foundAt" | "status">) => string;
@@ -2185,24 +2185,50 @@ export const useHotelStore = create<HotelState>()(
           const state = get();
           const rooms = state.rooms;
           let count = 0;
+          let overstayCount = 0;
           let total = 0;
           const nowIso = new Date().toISOString();
+          const nextDay = (d: string) => {
+            const dt = new Date(d + "T00:00:00");
+            dt.setDate(dt.getDate() + 1);
+            return dt.toISOString().slice(0, 10);
+          };
           set((s) => ({
             reservations: s.reservations.map((res) => {
               if (res.status !== "checked-in") return res;
-              // Only charge for nights truly within the stay window:
-              // checkIn <= auditDate < checkOut (last night before checkout)
-              if (!(res.checkIn <= auditDate && auditDate < res.checkOut)) return res;
-              if (res.lastNightlyChargeDate === auditDate) return res; // already posted
+              if (auditDate < res.checkIn) return res; // before stay
+              if (res.lastNightlyChargeDate === auditDate) return res; // already posted today
               const room = rooms.find((r) => r.id === res.roomId);
               if (!room) return res;
+
+              // Normal nightly charge: checkIn <= auditDate < checkOut
+              if (auditDate < res.checkOut) {
+                count++;
+                total += room.price;
+                return {
+                  ...res,
+                  totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
+                  lastNightlyChargeDate: auditDate,
+                  notes: [res.notes?.trim(), `[Night audit ${auditDate}: room charge ${room.price.toFixed(2)}]`]
+                    .filter(Boolean)
+                    .join(" "),
+                };
+              }
+
+              // Overstay: auditDate >= checkOut and still checked-in.
+              // Charge one extra night and auto-extend checkOut to auditDate + 1.
+              overstayCount++;
               count++;
               total += room.price;
               return {
                 ...res,
                 totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
+                checkOut: nextDay(auditDate),
                 lastNightlyChargeDate: auditDate,
-                notes: [res.notes?.trim(), `[Night audit ${auditDate}: room charge ${room.price.toFixed(2)}]`]
+                notes: [
+                  res.notes?.trim(),
+                  `[Night audit ${auditDate}: overstay charge ${room.price.toFixed(2)}, auto-extended to ${nextDay(auditDate)}]`,
+                ]
                   .filter(Boolean)
                   .join(" "),
               };
@@ -2213,11 +2239,11 @@ export const useHotelStore = create<HotelState>()(
               entity: "reservation",
               entityId: "night-audit",
               action: "update",
-              description: `Night audit posted ${count} nightly room charge(s) totalling ${total.toFixed(2)}`,
-              metadata: { auditDate, count, total, postedAt: nowIso },
+              description: `Night audit posted ${count} room charge(s) (${overstayCount} overstay) totalling ${total.toFixed(2)}`,
+              metadata: { auditDate, count, overstayCount, total, postedAt: nowIso },
             });
           }
-          return { count, total: Math.round(total * 100) / 100 };
+          return { count, overstayCount, total: Math.round(total * 100) / 100 };
         },
 
         // -------------------- Audit --------------------
