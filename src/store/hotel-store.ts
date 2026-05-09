@@ -529,11 +529,18 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
   markNoShow: (id: string) => void;
   markRecentlyViewed: (id: string) => void;
   previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
+  getReservationExtras: (reservationId: string) => InvoiceExtraItem[];
+  getReservationBalance: (reservationId: string) => {
+    total: number;
+    paid: number;
+    balance: number;
+    extrasTotal: number;
+  };
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
