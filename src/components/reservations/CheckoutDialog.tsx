@@ -29,6 +29,8 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
 import { recordRateOverride } from "@/lib/print-log";
+import { useConfirm } from "@/components/system/ConfirmDialog";
+import { AlertTriangle } from "lucide-react";
 
 interface CheckoutDialogProps {
   reservation: Reservation;
