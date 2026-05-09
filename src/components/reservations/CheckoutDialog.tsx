@@ -46,6 +46,10 @@ export function CheckoutDialog({
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
   const settings = useHotelStore((s) => s.settings);
+  const getReservationBalance = useHotelStore((s) => s.getReservationBalance);
+  const payments = useHotelStore((s) => s.payments);
+  const productSales = useHotelStore((s) => s.productSales);
+  const folios = useHotelStore((s) => s.folios);
   const { t } = useT();
 
   const [method, setMethod] = useState<PaymentMethod>("card");
