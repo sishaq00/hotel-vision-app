@@ -1110,6 +1110,40 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
+        getReservationExtras: (reservationId) => {
+          const sales = get().productSales.filter((s) => s.reservationId === reservationId);
+          const folios = get().folios.filter((f) => f.reservationId === reservationId);
+          const items: InvoiceExtraItem[] = [
+            ...sales.map((s) => ({
+              description: `${s.productName} ×${s.quantity}`,
+              amount: s.total,
+              category: s.category,
+            })),
+            ...folios.flatMap((f) =>
+              f.charges
+                .filter((c) => c.category !== "room")
+                .map((c) => ({
+                  description: c.description,
+                  amount: c.amount,
+                  category: c.category,
+                })),
+            ),
+          ];
+          return items;
+        },
+
+        getReservationBalance: (reservationId) => {
+          const res = get().reservations.find((r) => r.id === reservationId);
+          if (!res) return { total: 0, paid: 0, balance: 0, extrasTotal: 0 };
+          const inv = get().previewInvoice(reservationId);
+          const total = inv?.total ?? 0;
+          const extrasTotal = inv?.extrasTotal ?? 0;
+          const paid = get()
+            .payments.filter((p) => p.reservationId === reservationId && p.status === "paid")
+            .reduce((s, p) => s + p.amount, 0);
+          return { total, paid, balance: round2(Math.max(0, total - paid)), extrasTotal };
+        },
+
         previewInvoice: (reservationId) => {
           const res = get().reservations.find((r) => r.id === reservationId);
           if (!res) return null;
@@ -1124,6 +1158,7 @@ export const useHotelStore = create<HotelState>()(
             settings,
             invoiceNumber: nextInvoiceNumber(settings),
             issuedAt: new Date().toISOString(),
+            extras: get().getReservationExtras(reservationId),
           });
         },
 
@@ -1135,13 +1170,24 @@ export const useHotelStore = create<HotelState>()(
           const settings = get().settings;
           const now = new Date().toISOString();
           const invoiceNumber = nextInvoiceNumber(settings);
+          const extras = get().getReservationExtras(id);
           const invoice = buildInvoice({
             reservation: res,
             room,
             settings,
             invoiceNumber,
             issuedAt: now,
+            extras,
           });
+
+          // Guard: outstanding balance requires markPaid OR explicit force.
+          const paidSoFar = get()
+            .payments.filter((p) => p.reservationId === id && p.status === "paid")
+            .reduce((s, p) => s + p.amount, 0);
+          const outstanding = round2(Math.max(0, invoice.total - paidSoFar));
+          if (outstanding > 0 && !opts?.markPaid && !opts?.force) {
+            return null;
+          }
 
           set((s) => ({
             reservations: s.reservations.map((r) =>
