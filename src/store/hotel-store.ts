@@ -700,13 +700,10 @@ function buildInvoice(args: {
   settings: HotelSettings;
   invoiceNumber: string;
   issuedAt: string;
+  extras?: InvoiceExtraItem[];
 }): InvoiceSnapshot {
-  const { reservation, room, settings, invoiceNumber, issuedAt } = args;
-  // Use actual stay if checked out today, otherwise planned dates
+  const { reservation, room, settings, invoiceNumber, issuedAt, extras = [] } = args;
   const nights = computeNights(reservation.checkIn, reservation.checkOut);
-  // Honor a manual rate / total override stored on the reservation:
-  // if totalAmount differs from rack (room.price * nights), derive the effective
-  // per-night rate from it. Otherwise fall back to the rack rate.
   const rackSubtotal = round2(room.price * nights);
   const overrideActive =
     reservation.totalAmount > 0 &&
@@ -718,7 +715,8 @@ function buildInvoice(args: {
   const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
   const taxAmount = round2(subtotal * taxRate);
   const serviceFeeAmount = round2(subtotal * serviceFeeRate);
-  const total = round2(subtotal + taxAmount + serviceFeeAmount);
+  const extrasTotal = round2(extras.reduce((s, e) => s + (e.amount || 0), 0));
+  const total = round2(subtotal + taxAmount + serviceFeeAmount + extrasTotal);
   return {
     invoiceNumber,
     issuedAt,
@@ -729,6 +727,8 @@ function buildInvoice(args: {
     taxAmount,
     serviceFeeRate,
     serviceFeeAmount,
+    extras: extras.length ? extras : undefined,
+    extrasTotal: extras.length ? extrasTotal : undefined,
     total,
     currency: settings.currency || "USD",
   };
