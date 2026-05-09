@@ -29,6 +29,8 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { CustomRateControl, type ManualRateValue } from "./CustomRateControl";
 import { recordRateOverride } from "@/lib/print-log";
+import { useConfirm } from "@/components/system/ConfirmDialog";
+import { AlertTriangle } from "lucide-react";
 
 interface CheckoutDialogProps {
   reservation: Reservation;
@@ -46,7 +48,12 @@ export function CheckoutDialog({
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
   const settings = useHotelStore((s) => s.settings);
+  const getReservationBalance = useHotelStore((s) => s.getReservationBalance);
+  const payments = useHotelStore((s) => s.payments);
+  const productSales = useHotelStore((s) => s.productSales);
+  const folios = useHotelStore((s) => s.folios);
   const { t } = useT();
+  const confirm = useConfirm();
 
   const [method, setMethod] = useState<PaymentMethod>("card");
   const [markPaid, setMarkPaid] = useState(true);
@@ -56,11 +63,18 @@ export function CheckoutDialog({
   const guest = guests.find((g) => g.id === reservation.guestId);
   const room = rooms.find((r) => r.id === reservation.roomId);
 
-  // Live preview while dialog is open
+  // Live preview while dialog is open — recompute when extras change too
   const invoice = useMemo(
     () => previewInvoice(reservation.id),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [reservation.id, open, settings.taxRate, settings.serviceFeeRate],
+    [reservation.id, open, settings.taxRate, settings.serviceFeeRate, productSales, folios],
+  );
+
+  // Outstanding balance (already-recorded payments vs current invoice total)
+  const balanceInfo = useMemo(
+    () => getReservationBalance(reservation.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [reservation.id, open, payments, productSales, folios, settings.taxRate, settings.serviceFeeRate],
   );
 
   if (!room || !invoice) return null;
@@ -73,11 +87,11 @@ export function CheckoutDialog({
 
   const adjustedTotal = finalAdjust ? finalAdjust.amount : invoice.total;
   const adjustmentDelta = finalAdjust ? adjustedTotal - invoice.total : 0;
+  const outstanding = Math.max(0, (markPaid ? 0 : balanceInfo.balance));
 
-  const handleConfirm = (downloadPdf: boolean) => {
+  const handleConfirm = async (downloadPdf: boolean) => {
     // If a final adjustment is set, mutate the reservation's totalAmount so
     // buildInvoice (called inside checkOut) derives the adjusted subtotal/tax.
-    // To preserve the user's adjusted TOTAL exactly, we back-solve the subtotal.
     if (finalAdjust && room) {
       const taxRate = Math.max(0, settings.taxRate ?? 0);
       const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
@@ -97,9 +111,25 @@ export function CheckoutDialog({
       }));
     }
 
+    // Outstanding balance guard: if user is checking out without recording
+    // payment AND there is still money owed → require explicit confirmation.
+    let force = false;
+    if (!markPaid && balanceInfo.balance > 0) {
+      const ok = await confirm({
+        title: "Outstanding balance",
+        description: `${guest?.name ?? "Guest"} still owes ${fmt(balanceInfo.balance)}. Checking out now will leave the folio unpaid. Continue anyway?`,
+        confirmLabel: "Force check-out (unpaid)",
+        cancelLabel: "Go back",
+        destructive: true,
+      });
+      if (!ok) return;
+      force = true;
+    }
+
     const finalInvoice = checkOut(reservation.id, {
       paymentMethod: method,
       markPaid,
+      force,
     });
     if (!finalInvoice) {
       toast.error(t("co.failed"));
@@ -167,6 +197,23 @@ export function CheckoutDialog({
               label={`${t("co.service-fee")} (${(invoice.serviceFeeRate * 100).toFixed(1)}%)`}
               value={fmt(invoice.serviceFeeAmount)}
             />
+            {invoice.extras && invoice.extras.length > 0 && (
+              <>
+                <div className="my-2 h-px bg-border" />
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Extras (POS / mini-bar / laundry)
+                </div>
+                {invoice.extras.map((e, i) => (
+                  <Row
+                    key={i}
+                    label={e.description}
+                    value={fmt(e.amount)}
+                    hint={e.category}
+                  />
+                ))}
+                <Row label="Extras subtotal" value={fmt(invoice.extrasTotal ?? 0)} />
+              </>
+            )}
             <div className="my-2 h-px bg-border" />
             <div className="flex items-baseline justify-between">
               <span className="text-base font-semibold text-foreground">{t("co.total-due")}</span>
@@ -191,6 +238,35 @@ export function CheckoutDialog({
               </>
             )}
           </div>
+
+          {/* Balance summary + outstanding warning */}
+          <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs">
+            <div className="flex items-baseline justify-between">
+              <span className="text-muted-foreground">Already paid</span>
+              <span className="font-medium tabular-nums text-foreground">{fmt(balanceInfo.paid)}</span>
+            </div>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-muted-foreground">Outstanding balance</span>
+              <span
+                className={`font-bold tabular-nums ${balanceInfo.balance > 0 ? "text-destructive" : "text-success"}`}
+              >
+                {fmt(balanceInfo.balance)}
+              </span>
+            </div>
+          </div>
+
+          {balanceInfo.balance > 0 && !markPaid && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="font-semibold">Folio not settled</div>
+                <div className="mt-0.5">
+                  The guest still owes {fmt(balanceInfo.balance)}. Tick "Record payment" to settle on
+                  check-out, or you'll be asked to confirm a forced (unpaid) check-out.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Final adjustment override */}
           <CustomRateControl

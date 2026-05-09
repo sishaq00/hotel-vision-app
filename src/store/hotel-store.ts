@@ -53,6 +53,12 @@ export interface Room {
 
 export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
 
+export interface InvoiceExtraItem {
+  description: string;
+  amount: number;
+  category?: string;
+}
+
 export interface InvoiceSnapshot {
   invoiceNumber: string;
   issuedAt: string;
@@ -63,6 +69,9 @@ export interface InvoiceSnapshot {
   taxAmount: number;
   serviceFeeRate: number;
   serviceFeeAmount: number;
+  // Extra non-room charges (POS / mini-bar / laundry / spa / etc.)
+  extras?: InvoiceExtraItem[];
+  extrasTotal?: number;
   total: number;
   currency: string;
 }
@@ -520,11 +529,18 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean }) => InvoiceSnapshot | null;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
   markNoShow: (id: string) => void;
   markRecentlyViewed: (id: string) => void;
   previewInvoice: (reservationId: string) => InvoiceSnapshot | null;
+  getReservationExtras: (reservationId: string) => InvoiceExtraItem[];
+  getReservationBalance: (reservationId: string) => {
+    total: number;
+    paid: number;
+    balance: number;
+    extrasTotal: number;
+  };
 
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
@@ -691,13 +707,10 @@ function buildInvoice(args: {
   settings: HotelSettings;
   invoiceNumber: string;
   issuedAt: string;
+  extras?: InvoiceExtraItem[];
 }): InvoiceSnapshot {
-  const { reservation, room, settings, invoiceNumber, issuedAt } = args;
-  // Use actual stay if checked out today, otherwise planned dates
+  const { reservation, room, settings, invoiceNumber, issuedAt, extras = [] } = args;
   const nights = computeNights(reservation.checkIn, reservation.checkOut);
-  // Honor a manual rate / total override stored on the reservation:
-  // if totalAmount differs from rack (room.price * nights), derive the effective
-  // per-night rate from it. Otherwise fall back to the rack rate.
   const rackSubtotal = round2(room.price * nights);
   const overrideActive =
     reservation.totalAmount > 0 &&
@@ -709,7 +722,8 @@ function buildInvoice(args: {
   const serviceFeeRate = Math.max(0, settings.serviceFeeRate ?? 0);
   const taxAmount = round2(subtotal * taxRate);
   const serviceFeeAmount = round2(subtotal * serviceFeeRate);
-  const total = round2(subtotal + taxAmount + serviceFeeAmount);
+  const extrasTotal = round2(extras.reduce((s, e) => s + (e.amount || 0), 0));
+  const total = round2(subtotal + taxAmount + serviceFeeAmount + extrasTotal);
   return {
     invoiceNumber,
     issuedAt,
@@ -720,6 +734,8 @@ function buildInvoice(args: {
     taxAmount,
     serviceFeeRate,
     serviceFeeAmount,
+    extras: extras.length ? extras : undefined,
+    extrasTotal: extras.length ? extrasTotal : undefined,
     total,
     currency: settings.currency || "USD",
   };
@@ -1094,6 +1110,40 @@ export const useHotelStore = create<HotelState>()(
           });
         },
 
+        getReservationExtras: (reservationId) => {
+          const sales = get().productSales.filter((s) => s.reservationId === reservationId);
+          const folios = get().folios.filter((f) => f.reservationId === reservationId);
+          const items: InvoiceExtraItem[] = [
+            ...sales.map((s) => ({
+              description: `${s.productName} ×${s.quantity}`,
+              amount: s.total,
+              category: s.category,
+            })),
+            ...folios.flatMap((f) =>
+              f.charges
+                .filter((c) => c.category !== "room")
+                .map((c) => ({
+                  description: c.description,
+                  amount: c.amount,
+                  category: c.category,
+                })),
+            ),
+          ];
+          return items;
+        },
+
+        getReservationBalance: (reservationId) => {
+          const res = get().reservations.find((r) => r.id === reservationId);
+          if (!res) return { total: 0, paid: 0, balance: 0, extrasTotal: 0 };
+          const inv = get().previewInvoice(reservationId);
+          const total = inv?.total ?? 0;
+          const extrasTotal = inv?.extrasTotal ?? 0;
+          const paid = get()
+            .payments.filter((p) => p.reservationId === reservationId && p.status === "paid")
+            .reduce((s, p) => s + p.amount, 0);
+          return { total, paid, balance: round2(Math.max(0, total - paid)), extrasTotal };
+        },
+
         previewInvoice: (reservationId) => {
           const res = get().reservations.find((r) => r.id === reservationId);
           if (!res) return null;
@@ -1108,6 +1158,7 @@ export const useHotelStore = create<HotelState>()(
             settings,
             invoiceNumber: nextInvoiceNumber(settings),
             issuedAt: new Date().toISOString(),
+            extras: get().getReservationExtras(reservationId),
           });
         },
 
@@ -1119,13 +1170,24 @@ export const useHotelStore = create<HotelState>()(
           const settings = get().settings;
           const now = new Date().toISOString();
           const invoiceNumber = nextInvoiceNumber(settings);
+          const extras = get().getReservationExtras(id);
           const invoice = buildInvoice({
             reservation: res,
             room,
             settings,
             invoiceNumber,
             issuedAt: now,
+            extras,
           });
+
+          // Guard: outstanding balance requires markPaid OR explicit force.
+          const paidSoFar = get()
+            .payments.filter((p) => p.reservationId === id && p.status === "paid")
+            .reduce((s, p) => s + p.amount, 0);
+          const outstanding = round2(Math.max(0, invoice.total - paidSoFar));
+          if (outstanding > 0 && !opts?.markPaid && !opts?.force) {
+            return null;
+          }
 
           set((s) => ({
             reservations: s.reservations.map((r) =>
@@ -1191,7 +1253,7 @@ export const useHotelStore = create<HotelState>()(
             entityId: id,
             amount: invoice.total,
             description: `Checked out ${guest?.name ?? "guest"} ← Room ${room.number} · ${invoice.invoiceNumber}`,
-            details: { roomNumber: room.number, guestName: guest?.name, invoiceNumber: invoice.invoiceNumber, paid: !!opts?.markPaid },
+            details: { roomNumber: room.number, guestName: guest?.name, invoiceNumber: invoice.invoiceNumber, paid: !!opts?.markPaid, forced: !!opts?.force },
           });
           return invoice;
         },
