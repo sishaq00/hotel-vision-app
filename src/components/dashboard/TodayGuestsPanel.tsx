@@ -266,7 +266,11 @@ export function TodayGuestsPanel() {
             <DialogFooter className="flex-wrap gap-2">
               {openedGuest && (
                 <Button asChild variant="outline">
-                  <Link to="/guest/$guestId" params={{ guestId: openedGuest.id }}>
+                  <Link
+                    to="/guest/$guestId"
+                    params={{ guestId: openedGuest.id }}
+                    onClick={() => setOpenId(null)}
+                  >
                     Open profile
                   </Link>
                 </Button>
