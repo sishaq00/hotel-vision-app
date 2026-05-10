@@ -2,7 +2,7 @@
 // Green row = staying, Red row = departing today.
 // Click a guest name → full guest + folio info dialog.
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ function nightsBetween(a: string, b: string) {
 }
 
 export function TodayGuestsPanel() {
+  const navigate = useNavigate();
   const reservations = useHotelStore((s) => s.reservations);
   const rooms = useHotelStore((s) => s.rooms);
   const guests = useHotelStore((s) => s.guests);
@@ -265,14 +266,17 @@ export function TodayGuestsPanel() {
 
             <DialogFooter className="flex-wrap gap-2">
               {openedGuest && (
-                <Button asChild variant="outline">
-                  <Link
-                    to="/guest/$guestId"
-                    params={{ guestId: openedGuest.id }}
-                    onClick={() => setOpenId(null)}
-                  >
-                    Open profile
-                  </Link>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const guestId = openedGuest.id;
+                    setOpenId(null);
+                    window.setTimeout(() => {
+                      navigate({ to: "/guest/$guestId", params: { guestId } });
+                    }, 0);
+                  }}
+                >
+                  Open profile
                 </Button>
               )}
               <Button
