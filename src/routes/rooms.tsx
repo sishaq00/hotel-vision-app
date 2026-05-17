@@ -161,8 +161,8 @@ function RoomCard({ room, onStatusChange, onArchive }: {
 
         {/* Features icons */}
         <div className="mt-2 flex gap-2">
-          {room.smokingAllowed === false && <Wind className="h-3.5 w-3.5 text-muted-foreground/50" title="Non-smoking" />}
-          {room.accessible && <Eye className="h-3.5 w-3.5 text-blue-500/70" title="Accessible" />}
+          {room.smokingAllowed === false && <span title="Non-smoking"><Wind className="h-3.5 w-3.5 text-muted-foreground/50" /></span>}
+          {room.accessible && <span title="Accessible"><Eye className="h-3.5 w-3.5 text-blue-500/70" /></span>}
         </div>
 
         {/* Footer */}

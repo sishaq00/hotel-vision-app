@@ -28,7 +28,7 @@ const formatToday = () =>
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
 
-export function TopBar() {
+export function TopBar(_props: { title?: string; subtitle?: string } = {}) {
   const settings       = useHotelStore((s) => s.settings);
   const updateSettings = useHotelStore((s) => s.updateSettings);
   const reservations   = useHotelStore((s) => s.reservations);
