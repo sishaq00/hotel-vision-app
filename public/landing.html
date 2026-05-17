@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NEXORA OS — Professional Hotel Management System</title>
+<meta name="description" content="Complete hotel management system. Reservations, housekeeping, invoicing, night audit and more — works offline, syncs across all hotel computers."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#4f6ef7;
+  --primary-dark:#3a55d4;
+  --primary-light:#eef1fe;
+  --text:#0f172a;
+  --text-2:#475569;
+  --text-3:#94a3b8;
+  --border:#e2e8f0;
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --surface-3:#f1f5f9;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;color:var(--text);background:var(--surface);line-height:1.6;font-size:15px}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+
+/* ── Layout ── */
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+section{padding:80px 0}
+
+/* ── Nav ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--text)}
+.nav-logo-icon{width:34px;height:34px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;color:var(--text-2);font-weight:500;transition:color .15s}
+.nav-links a:hover{color:var(--primary)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:9px 20px;border-radius:8px;transition:all .15s;cursor:pointer;border:none;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,110,247,.35)}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-lg{font-size:16px;padding:13px 28px;border-radius:10px}
+
+/* ── Hero ── */
+.hero{background:linear-gradient(160deg,var(--surface) 0%,#eef1fe 60%,#e0e7ff 100%);padding:100px 0 80px}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px;margin-bottom:20px;border:1px solid rgba(79,110,247,.2)}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--primary)}
+.hero h1{font-size:46px;font-weight:800;line-height:1.12;letter-spacing:-.02em;color:var(--text);margin-bottom:18px}
+.hero h1 span{color:var(--primary)}
+.hero p{font-size:17px;color:var(--text-2);line-height:1.7;margin-bottom:32px;max-width:440px}
+.hero-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hero-note{font-size:12px;color:var(--text-3);margin-top:16px}
+.hero-img{border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;background:var(--surface-2)}
+
+/* Dashboard mockup */
+.dash-mock{width:100%;background:#f8fafc;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.dash-topbar{height:40px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px}
+.dash-dot{width:8px;height:8px;border-radius:50%}
+.dash-search{flex:1;max-width:180px;height:22px;background:#f1f5f9;border-radius:5px;margin-left:8px}
+.dash-badge{height:18px;border-radius:99px;padding:0 8px;font-size:9px;font-weight:600;display:flex;align-items:center}
+.dash-body{display:flex;min-height:300px}
+.dash-sidebar{width:130px;background:#fff;border-right:1px solid var(--border);padding:10px 6px}
+.dash-si{height:22px;border-radius:5px;margin-bottom:3px;background:#f1f5f9;display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:500;color:#64748b}
+.dash-si.active{background:#eef1fe;color:var(--primary)}
+.dash-content{flex:1;padding:14px;display:flex;flex-direction:column;gap:10px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:7px;padding:10px;border-left:3px solid}
+.kpi-v{font-size:18px;font-weight:700;color:var(--text)}
+.kpi-l{font-size:8px;color:#94a3b8;margin-top:1px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:7px;padding:10px;height:90px;position:relative;overflow:hidden}
+.chart-title{font-size:8px;font-weight:600;color:#64748b;margin-bottom:6px}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:55px}
+.bar{border-radius:3px 3px 0 0;background:var(--primary);opacity:.7;flex:1;transition:opacity .2s}
+.bar:nth-child(even){opacity:.45}
+.bar.highlight{opacity:1}
+.room-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.room-cell{height:18px;border-radius:3px;font-size:7px;display:flex;align-items:center;justify-content:center;font-weight:600}
+.rc-occ{background:#dbeafe;color:#1d4ed8}
+.rc-avail{background:#dcfce7;color:#15803d}
+.rc-clean{background:#fef3c7;color:#b45309}
+.rc-maint{background:#f1f5f9;color:#94a3b8}
+
+/* ── Stats bar ── */
+.stats-bar{background:var(--primary);color:#fff;padding:40px 0}
+.stats-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:0;text-align:center}
+.stat-item{padding:0 20px;border-right:1px solid rgba(255,255,255,.15)}
+.stat-item:last-child{border:none}
+.stat-num{font-size:38px;font-weight:800;letter-spacing:-.02em}
+.stat-lbl{font-size:13px;opacity:.8;margin-top:4px}
+
+/* ── Features ── */
+.section-label{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.section-title{font-size:36px;font-weight:800;letter-spacing:-.02em;margin-bottom:14px;line-height:1.18}
+.section-sub{font-size:16px;color:var(--text-2);max-width:520px;margin:0 auto;line-height:1.7}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:all .2s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;opacity:0;transition:opacity .2s}
+.feature-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px);border-color:rgba(79,110,247,.3)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+.feature-card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.feature-card p{font-size:14px;color:var(--text-2);line-height:1.65}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{background:var(--surface-3);color:var(--text-2);font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+
+/* ── Modules grid ── */
+.modules{background:var(--surface-2)}
+.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:48px}
+.module-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 16px;display:flex;align-items:center;gap:12px;transition:all .15s}
+.module-item:hover{border-color:var(--primary);background:var(--primary-light)}
+.module-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.module-name{font-size:13px;font-weight:600;color:var(--text)}
+.module-desc{font-size:11px;color:var(--text-3);margin-top:2px}
+
+/* ── How it works ── */
+.how-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-top:48px}
+.steps{display:flex;flex-direction:column;gap:24px}
+.step{display:flex;gap:16px;align-items:flex-start}
+.step-num{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--text-2);line-height:1.6}
+
+/* Tape chart mockup */
+.tape-mock{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.tape-header{background:#f8fafc;border-bottom:1px solid var(--border);display:flex;padding:8px 0;font-size:9px;font-weight:600;color:#94a3b8}
+.tape-day{width:36px;text-align:center;flex-shrink:0}
+.tape-room-col{width:80px;padding:0 10px;flex-shrink:0;font-weight:600;color:#64748b}
+.tape-row{display:flex;align-items:center;border-bottom:1px solid #f1f5f9;min-height:28px}
+.tape-room-lbl{width:80px;padding:0 10px;font-size:9px;font-weight:600;color:#475569;flex-shrink:0}
+.tape-cells{display:flex;position:relative;flex:1;height:22px}
+.tape-cell{width:36px;height:100%;border-right:1px solid #f1f5f9;flex-shrink:0;cursor:pointer}
+.tape-cell.today{background:#eef1fe}
+.tape-span{position:absolute;top:2px;bottom:2px;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:8px;font-weight:600;white-space:nowrap;overflow:hidden}
+.ts-blue{background:#3b82f6;color:#fff}
+.ts-green{background:#22c55e;color:#fff}
+.ts-gray{background:#e2e8f0;color:#64748b}
+
+/* ── Offline + LAN ── */
+.offline-section{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff}
+.offline-section .section-title{color:#fff}
+.offline-section .section-sub{color:#94a3b8}
+.offline-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin-top:48px}
+.network-diagram{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:32px;position:relative}
+.nd-server{background:var(--primary);border-radius:8px;padding:12px 16px;text-align:center;color:#fff;font-size:13px;font-weight:700;margin:0 auto 28px;width:fit-content}
+.nd-line{width:1px;height:24px;background:rgba(255,255,255,.2);margin:0 auto}
+.nd-devices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.nd-device{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;text-align:center;font-size:11px;color:#94a3b8}
+.nd-device strong{display:block;color:#e2e8f0;font-size:12px;margin-bottom:2px}
+.offline-points{display:flex;flex-direction:column;gap:20px}
+.op-item{display:flex;gap:14px;align-items:flex-start}
+.op-icon{width:38px;height:38px;border-radius:9px;background:rgba(79,110,247,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.op-title{font-size:15px;font-weight:600;color:#e2e8f0;margin-bottom:3px}
+.op-desc{font-size:13px;color:#94a3b8;line-height:1.6}
+
+/* ── Pricing ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;align-items:start}
+.price-card{border:1.5px solid var(--border);border-radius:14px;padding:32px;background:var(--surface);position:relative;transition:all .2s}
+.price-card:hover{box-shadow:var(--shadow-lg)}
+.price-card.popular{border-color:var(--primary);background:linear-gradient(160deg,#eef1fe 0%,#fff 100%)}
+.pop-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:99px;white-space:nowrap}
+.price-name{font-size:14px;font-weight:700;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.price-amount{font-size:42px;font-weight:800;color:var(--text);letter-spacing:-.03em;line-height:1}
+.price-amount span{font-size:18px;font-weight:600;color:var(--text-2)}
+.price-period{font-size:13px;color:var(--text-3);margin-bottom:24px;margin-top:4px}
+.price-divider{height:1px;background:var(--border);margin:20px 0}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:11px}
+.price-features li{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--text-2)}
+.price-features li::before{content:'✓';color:var(--primary);font-weight:700;flex-shrink:0}
+.price-features li.no{color:var(--text-3)}
+.price-features li.no::before{content:'—';color:var(--text-3)}
+.price-cta{display:flex;justify-content:center;margin-top:28px}
+
+/* ── FAQ ── */
+.faq-grid{display:flex;flex-direction:column;gap:0;margin-top:48px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+details{border-bottom:1px solid var(--border);background:var(--surface)}
+details:last-child{border:none}
+summary{padding:20px 24px;font-size:15px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;list-style:none;transition:background .15s}
+summary:hover{background:var(--surface-2)}
+summary::after{content:'＋';font-size:18px;color:var(--text-3);flex-shrink:0}
+details[open] summary::after{content:'－'}
+.faq-body{padding:0 24px 20px;font-size:14px;color:var(--text-2);line-height:1.75}
+
+/* ── CTA Section ── */
+.cta-section{background:linear-gradient(135deg,var(--primary) 0%,#6366f1 100%);color:#fff;text-align:center;padding:100px 0}
+.cta-section h2{font-size:40px;font-weight:800;letter-spacing:-.02em;margin-bottom:14px}
+.cta-section p{font-size:17px;opacity:.85;margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
+.cta-buttons{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.btn-white{background:#fff;color:var(--primary)}
+.btn-white:hover{background:#f1f5f9;transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.3)}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+
+/* ── Footer ── */
+footer{background:#0f172a;color:#94a3b8;padding:48px 0 32px}
+.footer-inner{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand p{font-size:13px;margin-top:12px;line-height:1.7;max-width:260px}
+.footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#e2e8f0;margin-bottom:14px}
+.footer-col a{display:block;font-size:13px;color:#94a3b8;margin-bottom:8px;transition:color .15s}
+.footer-col a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;justify-content:space-between;align-items:center;font-size:12px;flex-wrap:wrap;gap:12px}
+.footer-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:#fff;margin-bottom:6px}
+.footer-logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .hero-inner,.how-grid,.offline-grid,.footer-inner{grid-template-columns:1fr}
+  .hero h1{font-size:34px}
+  .features-grid,.modules-grid,.pricing-grid{grid-template-columns:1fr}
+  .stats-inner{grid-template-columns:repeat(2,1fr);gap:20px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .nav-links{display:none}
+  .hero-img{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">NXR</div>
+        NEXORA OS
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#offline">Offline & LAN</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div style="display:flex;gap:10px">
+        <a href="/login" class="btn btn-outline">Sign in</a>
+        <a href="#pricing" class="btn btn-primary">Get started</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge"><span class="hero-badge-dot"></span> Professional Hotel Management</div>
+        <h1>Run your hotel<br><span>smarter, faster,</span><br>offline.</h1>
+        <p>NEXORA OS is a complete hotel management system — reservations, check-in/out, housekeeping, invoicing, night audit, and LAN sync across all your computers. No internet required.</p>
+        <div class="hero-cta">
+          <a href="#pricing" class="btn btn-primary btn-lg">Start free trial</a>
+          <a href="#features" class="btn btn-outline btn-lg">See all features</a>
+        </div>
+        <p class="hero-note">✓ Works offline &nbsp;·&nbsp; ✓ Unlimited rooms &nbsp;·&nbsp; ✓ No monthly fees option</p>
+      </div>
+
+      <!-- Dashboard preview mockup -->
+      <div class="hero-img">
+        <div class="dash-mock">
+          <div class="dash-topbar">
+            <div class="dash-dot" style="background:#ef4444"></div>
+            <div class="dash-dot" style="background:#f59e0b;margin-left:4px"></div>
+            <div class="dash-dot" style="background:#22c55e;margin-left:4px"></div>
+            <div class="dash-search"></div>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <div class="dash-badge" style="background:#dcfce7;color:#15803d">Shift open</div>
+              <div class="dash-badge" style="background:#fde8e8;color:#dc2626">3 overdue</div>
+            </div>
+          </div>
+          <div class="dash-body">
+            <div class="dash-sidebar">
+              <div class="dash-si active">📊 Dashboard</div>
+              <div class="dash-si">🏨 In House</div>
+              <div class="dash-si">↙ Arrivals</div>
+              <div class="dash-si">↗ Departures</div>
+              <div class="dash-si">📅 Availability</div>
+              <div style="height:8px"></div>
+              <div class="dash-si">🧾 Payments</div>
+              <div class="dash-si">✨ Housekeeping</div>
+              <div class="dash-si">🌙 Night Audit</div>
+              <div class="dash-si">📈 Reports</div>
+            </div>
+            <div class="dash-content">
+              <div class="kpi-row">
+                <div class="kpi" style="border-left-color:#4f6ef7">
+                  <div class="kpi-v">87%</div>
+                  <div class="kpi-l">Occupancy</div>
+                </div>
+                <div class="kpi" style="border-left-color:#22c55e">
+                  <div class="kpi-v">$12,400</div>
+                  <div class="kpi-l">Revenue today</div>
+                </div>
+                <div class="kpi" style="border-left-color:#a855f7">
+                  <div class="kpi-v">8</div>
+                  <div class="kpi-l">Arrivals</div>
+                </div>
+                <div class="kpi" style="border-left-color:#f59e0b">
+                  <div class="kpi-v">5</div>
+                  <div class="kpi-l">Departures</div>
+                </div>
+              </div>
+              <div class="chart-row">
+                <div class="chart-card">
+                  <div class="chart-title">Revenue — last 14 days</div>
+                  <div class="chart-bars">
+                    <div class="bar" style="height:40%"></div><div class="bar" style="height:55%"></div><div class="bar" style="height:48%"></div><div class="bar" style="height:65%"></div><div class="bar" style="height:42%"></div><div class="bar" style="height:70%"></div><div class="bar highlight" style="height:88%"></div><div class="bar" style="height:60%"></div><div class="bar" style="height:75%"></div><div class="bar" style="height:50%"></div><div class="bar" style="height:82%"></div><div class="bar" style="height:66%"></div><div class="bar" style="height:91%"></div><div class="bar highlight" style="height:100%"></div>
+                  </div>
+                </div>
+                <div class="chart-card" style="padding:10px">
+                  <div class="chart-title">Room status grid</div>
+                  <div class="room-grid" style="margin-top:6px">
+                    <div class="room-cell rc-occ">101</div><div class="room-cell rc-occ">102</div><div class="room-cell rc-avail">103</div><div class="room-cell rc-occ">104</div><div class="room-cell rc-clean">105</div><div class="room-cell rc-occ">106</div><div class="room-cell rc-occ">107</div><div class="room-cell rc-avail">108</div>
+                    <div class="room-cell rc-avail">201</div><div class="room-cell rc-occ">202</div><div class="room-cell rc-occ">203</div><div class="room-cell rc-avail">204</div><div class="room-cell rc-occ">205</div><div class="room-cell rc-clean">206</div><div class="room-cell rc-occ">207</div><div class="room-cell rc-occ">208</div>
+                    <div class="room-cell rc-occ">301</div><div class="room-cell rc-avail">302</div><div class="room-cell rc-occ">303</div><div class="room-cell rc-occ">304</div><div class="room-cell rc-maint">305</div><div class="room-cell rc-occ">306</div><div class="room-cell rc-clean">307</div><div class="room-cell rc-occ">308</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats bar ── -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-num">∞</div>
+        <div class="stat-lbl">Rooms — no limit</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">52</div>
+        <div class="stat-lbl">Screens & features</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-lbl">Offline capable</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">AR/EN</div>
+        <div class="stat-lbl">Arabic & English UI</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Features ── -->
+<section id="features">
+  <div class="container" style="text-align:center">
+    <div class="section-label">Why NEXORA OS</div>
+    <h2 class="section-title">Everything your hotel needs,<br>nothing it doesn't.</h2>
+    <p class="section-sub">Built for real hotel operations — from a 10-room guesthouse to a 300-room property.</p>
+    <div class="features-grid" style="text-align:left">
+
+      <div class="feature-card" style="--card-color:#4f6ef7">
+        <div class="feature-icon" style="background:#eef1fe">🏨</div>
+        <h3>Front Desk Operations</h3>
+        <p>Walk-ins, reservations, check-in, check-out, room moves, and extended stays — all from one screen with keyboard shortcuts.</p>
+        <div class="tag-row">
+          <span class="tag">Tape chart</span><span class="tag">Quick check-in</span><span class="tag">Group booking</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#f0fdf4">💳</div>
+        <h3>Invoicing & Payments</h3>
+        <p>Automatic invoices with VAT, service fees, and extras. Supports cash, card, and bank transfer. PDF export on checkout.</p>
+        <div class="tag-row">
+          <span class="tag">VAT compliant</span><span class="tag">Credit notes</span><span class="tag">Advance deposits</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#fef9ec">✨</div>
+        <h3>Housekeeping</h3>
+        <p>Assign rooms to staff, track cleaning progress floor by floor, mark departure cleans, and upload photos for inspections.</p>
+        <div class="tag-row">
+          <span class="tag">Team assignment</span><span class="tag">OOO management</span><span class="tag">Photo upload</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#fff1f2">📊</div>
+        <h3>Reports & Night Audit</h3>
+        <p>Daily revenue, occupancy, arrivals/departures, and guest reports. Automated nightly room charge posting with full audit trail.</p>
+        <div class="tag-row">
+          <span class="tag">Export to Excel</span><span class="tag">PDF reports</span><span class="tag">Audit log</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#f5f3ff">🔐</div>
+        <h3>Multi-User & Roles</h3>
+        <p>Admin and staff roles with 34 granular permissions. Brute-force protection, 4-hour idle timeout, and full activity log.</p>
+        <div class="tag-row">
+          <span class="tag">RBAC</span><span class="tag">Activity log</span><span class="tag">Shift management</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#ecfdf5">🌐</div>
+        <h3>Arabic & English</h3>
+        <p>Full right-to-left Arabic interface and left-to-right English. Switch languages instantly from any screen.</p>
+        <div class="tag-row">
+          <span class="tag">RTL support</span><span class="tag">Arabic invoices</span><span class="tag">Bilingual</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Modules ── -->
+<section id="modules" class="modules">
+  <div class="container" style="text-align:center">
+    <div class="section-label">Complete System</div>
+    <h2 class="section-title">52 screens. One system.</h2>
+    <p class="section-sub">Every module a hotel needs — included in every plan, nothing to unlock.</p>
+    <div class="modules-grid" style="text-align:left">
+      <div class="module-item"><div class="module-icon">🏨</div><div><div class="module-name">Dashboard</div><div class="module-desc">Live KPIs & room grid</div></div></div>
+      <div class="module-item"><div class="module-icon">📅</div><div><div class="module-name">Tape Chart</div><div class="module-desc">Visual availability</div></div></div>
+      <div class="module-item"><div class="module-icon">↙</div><div><div class="module-name">Arrivals</div><div class="module-desc">Daily check-in queue</div></div></div>
+      <div class="module-item"><div class="module-icon">↗</div><div><div class="module-name">Departures</div><div class="module-desc">Checkout with invoice</div></div></div>
+      <div class="module-item"><div class="module-icon">👥</div><div><div class="module-name">Guest Profiles</div><div class="module-desc">History & preferences</div></div></div>
+      <div class="module-item"><div class="module-icon">🏢</div><div><div class="module-name">Group Master</div><div class="module-desc">Block & group booking</div></div></div>
+      <div class="module-item"><div class="module-icon">✨</div><div><div class="module-name">Housekeeping</div><div class="module-desc">Assign, track, inspect</div></div></div>
+      <div class="module-item"><div class="module-icon">🔧</div><div><div class="module-name">Maintenance</div><div class="module-desc">Tickets & work orders</div></div></div>
+      <div class="module-item"><div class="module-icon">💰</div><div><div class="module-name">Payments</div><div class="module-desc">Cash, card, transfer</div></div></div>
+      <div class="module-item"><div class="module-icon">🧾</div><div><div class="module-name">Invoices</div><div class="module-desc">A4 PDF + 80mm receipt</div></div></div>
+      <div class="module-item"><div class="module-icon">📦</div><div><div class="module-name">Folios</div><div class="module-desc">Open accounts & extras</div></div></div>
+      <div class="module-item"><div class="module-icon">🌙</div><div><div class="module-name">Night Audit</div><div class="module-desc">Auto nightly charges</div></div></div>
+      <div class="module-item"><div class="module-icon">📈</div><div><div class="module-name">Reports</div><div class="module-desc">Revenue, occupancy, ADR</div></div></div>
+      <div class="module-item"><div class="module-icon">🕐</div><div><div class="module-name">Shift Management</div><div class="module-desc">Open/close cash drawer</div></div></div>
+      <div class="module-item"><div class="module-icon">🔍</div><div><div class="module-name">Lost & Found</div><div class="module-desc">Item tracking</div></div></div>
+      <div class="module-item"><div class="module-icon">🏷</div><div><div class="module-name">Rate Plans</div><div class="module-desc">Seasonal & promo rates</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ── -->
+<section>
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-label">Availability — Tape Chart</div>
+      <h2 class="section-title">See every room. Book in one click.</h2>
+    </div>
+    <div class="how-grid">
+      <!-- Tape chart mockup -->
+      <div class="tape-mock">
+        <div class="tape-header" style="display:flex">
+          <div class="tape-room-col">Room</div>
+          <div class="tape-day" style="color:#4f6ef7;font-weight:700">15</div>
+          <div class="tape-day">16</div>
+          <div class="tape-day">17</div>
+          <div class="tape-day">18</div>
+          <div class="tape-day">19</div>
+          <div class="tape-day">20</div>
+          <div class="tape-day">21</div>
+        </div>
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;padding:4px 10px;background:#f8fafc;border-bottom:1px solid #f1f5f9">Floor 1</div>
+        <!-- Row 101 -->
+        <div class="tape-row">
+          <div class="tape-room-lbl">101 · DLX</div>
+          <div class="tape-cells">
+            <div class="tape-cell today"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div>
+            <div class="tape-span ts-green" style="left:0;width:108px">Al-Rashid · 3n</div>
+          </div>
+        </div>
+        <!-- Row 102 -->
+        <div class="tape-row">
+          <div class="tape-room-lbl">102 · STD</div>
+          <div class="tape-cells">
+            <div class="tape-cell today"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div>
+            <div class="tape-span ts-blue" style="left:72px;width:72px">Johnson</div>
+          </div>
+        </div>
+        <!-- Row 103 -->
+        <div class="tape-row">
+          <div class="tape-room-lbl">103 · SUP</div>
+          <div class="tape-cells">
+            <div class="tape-cell today"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div>
+          </div>
+        </div>
+        <div style="font-size:9px;font-weight:600;color:#94a3b8;padding:4px 10px;background:#f8fafc;border-bottom:1px solid #f1f5f9">Floor 2</div>
+        <!-- Row 201 -->
+        <div class="tape-row">
+          <div class="tape-room-lbl">201 · DLX</div>
+          <div class="tape-cells">
+            <div class="tape-cell today"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div>
+            <div class="tape-span ts-green" style="left:0;width:144px">Fischer · 4n</div>
+          </div>
+        </div>
+        <!-- Row 202 -->
+        <div class="tape-row">
+          <div class="tape-room-lbl">202 · STD</div>
+          <div class="tape-cells">
+            <div class="tape-cell today"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div><div class="tape-cell"></div>
+            <div class="tape-span ts-blue" style="left:36px;width:108px">Yamamoto · 3n</div>
+          </div>
+        </div>
+        <div style="padding:6px 10px;font-size:9px;color:#94a3b8;background:#fafafa;display:flex;gap:12px">
+          <span style="color:#3b82f6">■ Confirmed</span>
+          <span style="color:#22c55e">■ In house</span>
+          <span>□ Free — click to book</span>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">See all rooms at a glance</div>
+            <div class="step-desc">Each row is a room, each column is a day. Colour-coded spans show confirmed and checked-in guests instantly.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Click any free cell to book</div>
+            <div class="step-desc">Tap an empty slot and a new reservation dialog opens with the room and date pre-filled. Walk-in to confirmed in under 30 seconds.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Click a booking to manage</div>
+            <div class="step-desc">Tap an existing booking to check in, check out, or cancel — right from the chart. No navigating to separate pages.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Zoom, scroll, filter by floor</div>
+            <div class="step-desc">Zoom from 7 to 28 days, scroll room by room, grouped by floor. Works the same whether you have 10 rooms or 500.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Offline + LAN ── -->
+<section id="offline" class="offline-section">
+  <div class="container" style="text-align:center">
+    <div class="section-label" style="color:rgba(255,255,255,.5)">Offline First</div>
+    <h2 class="section-title">No internet? No problem.</h2>
+    <p class="section-sub">NEXORA OS stores all data locally. Your hotel keeps running even when the internet goes down — and syncs automatically when you have multiple computers on the same network.</p>
+    <div class="offline-grid" style="text-align:left">
+      <div class="network-diagram">
+        <div class="nd-server">🖥 PocketBase Server<br><span style="font-size:11px;opacity:.7">192.168.1.10 · Port 8090</span></div>
+        <div style="display:flex;justify-content:center;gap:40px;margin-bottom:12px">
+          <div style="width:1px;height:28px;background:rgba(255,255,255,.2)"></div>
+          <div style="width:1px;height:28px;background:rgba(255,255,255,.2)"></div>
+          <div style="width:1px;height:28px;background:rgba(255,255,255,.2)"></div>
+        </div>
+        <div class="nd-devices">
+          <div class="nd-device"><strong>Front Desk</strong>NEXORA OS</div>
+          <div class="nd-device"><strong>Manager</strong>NEXORA OS</div>
+          <div class="nd-device"><strong>Housekeeping</strong>NEXORA OS</div>
+        </div>
+        <div style="text-align:center;margin-top:20px;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.1);padding-top:16px">
+          Local WiFi / LAN — No internet required
+        </div>
+      </div>
+
+      <div class="offline-points">
+        <div class="op-item">
+          <div class="op-icon">📴</div>
+          <div>
+            <div class="op-title">100% offline — always</div>
+            <div class="op-desc">Data is stored in the browser's local storage. The system works with zero internet connection from the moment you install it.</div>
+          </div>
+        </div>
+        <div class="op-item">
+          <div class="op-icon">🔄</div>
+          <div>
+            <div class="op-title">LAN sync between computers</div>
+            <div class="op-desc">Install PocketBase (free, ~30MB) on one computer. All other hotel PCs connect to it over your local network for real-time sync.</div>
+          </div>
+        </div>
+        <div class="op-item">
+          <div class="op-icon">📦</div>
+          <div>
+            <div class="op-title">Offline queue — no data lost</div>
+            <div class="op-desc">Changes made while the sync server is unreachable are queued and automatically flushed when the connection is restored.</div>
+          </div>
+        </div>
+        <div class="op-item">
+          <div class="op-icon">💾</div>
+          <div>
+            <div class="op-title">Automatic daily backups</div>
+            <div class="op-desc">The system keeps 7 days of automatic backups locally. One-click export for off-site storage. Full restore from any backup point.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ── -->
+<section id="pricing">
+  <div class="container" style="text-align:center">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Simple, transparent pricing.</h2>
+    <p class="section-sub">All plans include unlimited rooms. No per-room fees. No hidden charges.</p>
+    <div class="pricing-grid" style="text-align:left">
+
+      <div class="price-card">
+        <div class="price-name">Starter</div>
+        <div class="price-amount"><span>$</span>299</div>
+        <div class="price-period">one-time licence · 1 property</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Unlimited rooms</li>
+          <li>All 52 modules included</li>
+          <li>Offline operation</li>
+          <li>Arabic &amp; English</li>
+          <li>1 year of updates</li>
+          <li class="no">LAN multi-device sync</li>
+          <li class="no">Priority support</li>
+        </ul>
+        <div class="price-cta"><a href="#" class="btn btn-outline" style="width:100%;justify-content:center">Get Starter</a></div>
+      </div>
+
+      <div class="price-card popular">
+        <div class="pop-badge">Most popular</div>
+        <div class="price-name">Professional</div>
+        <div class="price-amount"><span>$</span>699</div>
+        <div class="price-period">one-time licence · 1 property</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Everything in Starter</li>
+          <li>LAN sync — unlimited devices</li>
+          <li>PocketBase setup script</li>
+          <li>Priority email support</li>
+          <li>Lifetime updates</li>
+          <li>White-label (your hotel logo)</li>
+          <li class="no">Multi-property</li>
+        </ul>
+        <div class="price-cta"><a href="#" class="btn btn-primary" style="width:100%;justify-content:center">Get Professional</a></div>
+      </div>
+
+      <div class="price-card">
+        <div class="price-name">Enterprise</div>
+        <div class="price-amount" style="font-size:32px">Custom</div>
+        <div class="price-period">multi-property · chain</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Everything in Professional</li>
+          <li>Unlimited properties</li>
+          <li>Custom branding &amp; domain</li>
+          <li>Dedicated support</li>
+          <li>Staff training sessions</li>
+          <li>Custom feature development</li>
+          <li>SLA guarantee</li>
+        </ul>
+        <div class="price-cta"><a href="mailto:sales@nexoraos.com" class="btn btn-outline" style="width:100%;justify-content:center">Contact sales</a></div>
+      </div>
+
+    </div>
+    <p style="margin-top:24px;font-size:13px;color:var(--text-3)">All prices are one-time licence fees. No recurring charges. VAT may apply depending on your region.</p>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section id="faq" style="background:var(--surface-2)">
+  <div class="container" style="max-width:720px">
+    <div style="text-align:center">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+    <div class="faq-grid">
+      <details>
+        <summary>Does it really work without internet?</summary>
+        <div class="faq-body">Yes — 100%. All data is stored in the browser's local storage using an offline-first architecture. The system runs identically whether or not you have an internet connection. Internet is only needed for the initial download.</div>
+      </details>
+      <details>
+        <summary>How does LAN sync work? What do I need?</summary>
+        <div class="faq-body">You need to install PocketBase (a free, ~30MB binary) on one computer in your hotel. NEXORA OS connects to it over your local WiFi or LAN. All hotel computers then share data in real time. We include a one-click setup script for Windows, Mac, and Linux.</div>
+      </details>
+      <details>
+        <summary>Is there a room limit?</summary>
+        <div class="faq-body">No. NEXORA OS supports unlimited rooms. You can configure any number of room types, floors, and price categories. The tape chart and room grid scale automatically.</div>
+      </details>
+      <details>
+        <summary>Can I customise the invoice with my hotel's logo?</summary>
+        <div class="faq-body">Yes. In Settings you can upload your hotel logo, set invoice header/footer text, VAT registration number, and choose currency. Invoices are generated as PDF and as a printable A4 page. An 80mm thermal receipt format is also available.</div>
+      </details>
+      <details>
+        <summary>What languages does it support?</summary>
+        <div class="faq-body">NEXORA OS includes a full Arabic (right-to-left) interface and English (left-to-right). You can switch languages from any screen. Invoices and reports are generated in whichever language is active.</div>
+      </details>
+      <details>
+        <summary>Can multiple staff log in at the same time?</summary>
+        <div class="faq-body">Yes. You can create unlimited staff accounts, each with their own login and permissions. The system supports admin and staff roles with 34 granular permission controls. Shift management tracks which employee is on duty.</div>
+      </details>
+      <details>
+        <summary>What happens to my data if I reinstall the browser?</summary>
+        <div class="faq-body">The system keeps automatic daily backups for 7 days in local storage. You can also export a full backup file at any time. When LAN sync is active, your data is also stored on the PocketBase server and can be fully restored.</div>
+      </details>
+      <details>
+        <summary>Is this a subscription or a one-time purchase?</summary>
+        <div class="faq-body">NEXORA OS is sold as a one-time licence. You own the software and can use it indefinitely. Lifetime updates are included in the Professional plan. The Starter plan includes 1 year of updates.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to run your hotel better?</h2>
+    <p>Set up in under 5 minutes. Works offline from day one. No technical expertise needed.</p>
+    <div class="cta-buttons">
+      <a href="#pricing" class="btn btn-white btn-lg">Start free trial</a>
+      <a href="mailto:sales@nexoraos.com" class="btn btn-ghost btn-lg">Talk to sales</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-icon">NXR</div>
+          NEXORA OS
+        </div>
+        <p>Professional hotel management system. Works offline, syncs over LAN, supports unlimited rooms.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#offline">Offline & LAN</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <a href="#faq">FAQ</a>
+        <a href="mailto:support@nexoraos.com">Email support</a>
+        <a href="#">Documentation</a>
+        <a href="#">Setup guide</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Licence terms</a>
+        <a href="#">Privacy policy</a>
+        <a href="#">Refund policy</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 NEXORA OS. All rights reserved.</span>
+      <span>Built for hotel professionals.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
