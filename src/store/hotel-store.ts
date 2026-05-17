@@ -778,6 +778,8 @@ export const useHotelStore = create<HotelState>()(
       };
 
       return {
+        setupComplete: false,
+        completeSetup: () => set({ setupComplete: true }),
         rooms: [],
         reservations: [],
         guests: [],
