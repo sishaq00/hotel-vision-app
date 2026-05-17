@@ -1,0 +1,416 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { Save, Upload, Download, Trash2, RotateCcw, Image as ImageIcon, FileSpreadsheet } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { syncEngine, useSyncState } from "@/lib/sync/sync-engine";
+import { Wifi, WifiOff } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useHotelStore } from "@/store/hotel-store";
+import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
+import {
+  downloadBackup,
+  restoreFromFile,
+  listAutoBackups,
+  restoreAutoBackup,
+} from "@/lib/backup";
+import { exportAllToExcel } from "@/lib/full-export";
+import { formatDateTime } from "@/lib/format";
+
+export const Route = createFileRoute("/settings")({
+  head: () => ({
+    meta: [
+      { title: "Settings — NEXORA OS" },
+      { name: "description", content: "Configure your hotel preferences." },
+    ],
+  }),
+  component: SettingsPage,
+});
+
+function SettingsPage() {
+  const settings = useHotelStore((s) => s.settings);
+  const update = useHotelStore((s) => s.updateSettings);
+  const { t } = useT();
+
+  const [form, setForm] = useState(settings);
+  const [autoList, setAutoList] = useState(listAutoBackups());
+  const syncStatus = useSyncState();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    update(form);
+    toast.success(t("toast.saved"));
+  };
+
+  const onLogo = (file: File) => {
+    if (file.size > 512 * 1024) {
+      toast.error("Logo must be under 512 KB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () =>
+      setForm((f) => ({ ...f, logoDataUrl: String(reader.result) }));
+    reader.readAsDataURL(file);
+  };
+
+  const onRestoreFile = async (file: File) => {
+    const ok = await restoreFromFile(file);
+    if (!ok) return toast.error(t("backup.invalid"));
+    toast.success(t("backup.restored"));
+    setTimeout(() => window.location.reload(), 800);
+  };
+
+  return (
+    <AppLayout title={t("settings.title")} subtitle={t("sub.settings")}>
+      <form onSubmit={handleSave} className="max-w-3xl space-y-6">
+        {/* Hotel info */}
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <div className="border-b border-border/60 bg-muted/30 px-6 py-4">
+            <h3 className="text-sm font-semibold text-foreground">Hotel Information</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">Name, code, contact details, and logo</p>
+          </div>
+          <div className="p-6">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="hotelName">Hotel name</Label>
+              <Input id="hotelName" value={form.hotelName}
+                onChange={(e) => setForm({ ...form, hotelName: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="hotelCode">Hotel code</Label>
+              <Input id="hotelCode" value={form.hotelCode}
+                onChange={(e) => setForm({ ...form, hotelCode: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="taxId">Tax ID / VAT #</Label>
+              <Input id="taxId" value={form.taxId ?? ""}
+                onChange={(e) => setForm({ ...form, taxId: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Contact email</Label>
+              <Input id="email" type="email" value={form.contactEmail}
+                onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Contact phone</Label>
+              <Input id="phone" value={form.contactPhone}
+                onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <Input id="address" value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            </div>
+
+            {/* Logo */}
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Logo (PNG/JPG, ≤ 512 KB)</Label>
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                  {form.logoDataUrl ? (
+                    <img src={form.logoDataUrl} alt="logo" className="h-full w-full object-contain" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </div>
+                <input ref={logoRef} type="file" accept="image/png,image/jpeg" hidden
+                  onChange={(e) => e.target.files?.[0] && onLogo(e.target.files[0])} />
+                <Button type="button" variant="outline" size="sm"
+                  onClick={() => logoRef.current?.click()}>
+                  <Upload className="me-1 h-4 w-4" /> Upload
+                </Button>
+                {form.logoDataUrl && (
+                  <Button type="button" variant="ghost" size="sm"
+                    onClick={() => setForm({ ...form, logoDataUrl: undefined })}>
+                    <Trash2 className="me-1 h-4 w-4" /> Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          </div>
+        </Card>
+
+        {/* Localization */}
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <div className="border-b border-border/60 bg-muted/30 px-6 py-4">
+            <h3 className="text-sm font-semibold text-foreground">Localization</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">Language, currency, and timezone</p>
+          </div>
+          <div className="p-6">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label>Language</Label>
+              <Select value={form.language}
+                onValueChange={(v) => setForm({ ...form, language: v as "en" | "ar" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="ar">العربية</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="currency">Currency</Label>
+              <Input id="currency" value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="timezone">Timezone</Label>
+              <Input id="timezone" value={form.timezone}
+                onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
+            </div>
+          </div>
+          </div>
+        </Card>
+
+        {/* Billing */}
+        <Card className="border-border/60 p-6 shadow-card">
+          <h3 className="text-sm font-semibold text-foreground">{t("settings.billing")}</h3>
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="vat">VAT rate (%)</Label>
+              <Input id="vat" type="number" step="0.1" min={0} max={100}
+                value={(form.taxRate * 100).toFixed(2)}
+                onChange={(e) => setForm({ ...form, taxRate: Math.max(0, Number(e.target.value) / 100) })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="svc">Service fee (%)</Label>
+              <Input id="svc" type="number" step="0.1" min={0} max={100}
+                value={(form.serviceFeeRate * 100).toFixed(2)}
+                onChange={(e) => setForm({ ...form, serviceFeeRate: Math.max(0, Number(e.target.value) / 100) })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="prefix">Invoice prefix</Label>
+              <Input id="prefix" value={form.invoicePrefix}
+                onChange={(e) => setForm({ ...form, invoicePrefix: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="counter">Next invoice #</Label>
+              <Input id="counter" type="number" value={form.invoiceCounter + 1}
+                onChange={(e) => setForm({ ...form, invoiceCounter: Math.max(0, Number(e.target.value) - 1) })} />
+            </div>
+          </div>
+        </Card>
+
+        {/* Invoice template */}
+        <Card className="border-border/60 p-6 shadow-card">
+          <h3 className="text-sm font-semibold text-foreground">{t("settings.invoice")}</h3>
+          <p className="text-xs text-muted-foreground">Notes and footer text printed on every invoice PDF.</p>
+          <div className="mt-5 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="notes">Invoice notes / payment terms</Label>
+              <Textarea id="notes" rows={2} value={form.invoiceNotes ?? ""}
+                onChange={(e) => setForm({ ...form, invoiceNotes: e.target.value })}
+                placeholder="e.g. Payment due upon receipt." />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="footer">Invoice footer</Label>
+              <Input id="footer" value={form.invoiceFooter ?? ""}
+                onChange={(e) => setForm({ ...form, invoiceFooter: e.target.value })}
+                placeholder="Thank you for staying with us." />
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button type="submit" className="gap-2 shadow-md">
+            <Save className="h-4 w-4" /> {t("common.save")}
+          </Button>
+        </div>
+      </form>
+
+      {/* LAN Sync */}
+      <Card className="mt-6 max-w-3xl overflow-hidden border-border/60 shadow-sm">
+        <div className="border-b border-border/60 bg-muted/30 px-6 py-4">
+          <h3 className="text-sm font-semibold text-foreground">LAN Sync — Multi-Device</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Sync data between hotel computers over your local network. No internet required.
+            One computer must run PocketBase as the local server.
+          </p>
+        </div>
+        <div className="space-y-4 p-6">
+          {/* Enable toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card p-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Enable LAN Sync</p>
+              <p className="text-xs text-muted-foreground">
+                Connect to your PocketBase server on the local network
+              </p>
+            </div>
+            <Switch
+              checked={form.syncEnabled ?? false}
+              onCheckedChange={(v) => setForm({ ...form, syncEnabled: v })}
+            />
+          </div>
+
+          {/* Server URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="syncUrl">PocketBase server URL</Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Wifi className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="syncUrl"
+                  value={form.syncServerUrl ?? ""}
+                  onChange={(e) => setForm({ ...form, syncServerUrl: e.target.value })}
+                  className="pl-9 font-mono text-xs"
+                  placeholder="http://192.168.1.10:8090"
+                  disabled={!(form.syncEnabled ?? false)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!form.syncServerUrl || !(form.syncEnabled ?? false)}
+                onClick={async () => {
+                  if (form.syncServerUrl) {
+                    const ok = await syncEngine.connect(form.syncServerUrl);
+                    if (ok) toast.success("Connected to sync server");
+                    else toast.error("Cannot reach server — check the URL and make sure PocketBase is running");
+                  }
+                }}
+              >
+                Test
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Enter the IP address of the computer running PocketBase. Example: http://192.168.1.10:8090
+            </p>
+          </div>
+
+          {/* Status */}
+          <div className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
+            syncStatus.status === "connected" ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+            : syncStatus.status === "error"   ? "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30"
+            : "border-border bg-muted/30"
+          }`}>
+            {syncStatus.status === "connected"
+              ? <Wifi className="h-4 w-4 text-emerald-600" />
+              : <WifiOff className="h-4 w-4 text-muted-foreground" />}
+            <div>
+              <p className="font-medium text-foreground capitalize">{syncStatus.status}</p>
+              {syncStatus.error && <p className="text-xs text-rose-600">{syncStatus.error}</p>}
+              {syncStatus.lastSyncAt && (
+                <p className="text-xs text-muted-foreground">
+                  Last sync: {new Date(syncStatus.lastSyncAt).toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* How to set up PocketBase instructions */}
+          <details className="rounded-xl border border-border/60">
+            <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground">
+              How to set up PocketBase (server computer) ▾
+            </summary>
+            <div className="space-y-2 border-t border-border/60 p-4 text-xs text-muted-foreground">
+              <p className="font-semibold text-foreground">On the server computer (front desk / main PC):</p>
+              <ol className="list-decimal space-y-1.5 pl-4">
+                <li>Download PocketBase from <strong className="font-mono text-[11px]">pocketbase.io</strong> (free, ~30MB)</li>
+                <li>Extract and run: <code className="rounded bg-muted px-1.5 py-0.5 font-mono">./pocketbase serve --http=0.0.0.0:8090</code></li>
+                <li>Open <code className="rounded bg-muted px-1.5 py-0.5 font-mono">http://127.0.0.1:8090/_/</code> and create an admin account</li>
+                <li>Create a collection named <code className="rounded bg-muted px-1.5 py-0.5 font-mono">hotel_sync</code> with fields: <code className="rounded bg-muted px-1.5 py-0.5 font-mono">table (text), payload (json), device_id (text), ts (number)</code></li>
+                <li>Set collection permissions to allow create/update/read for all</li>
+              </ol>
+              <p className="font-semibold text-foreground">On each other computer:</p>
+              <ol className="list-decimal space-y-1.5 pl-4">
+                <li>Find the server PC's IP address (e.g. <code className="rounded bg-muted px-1.5 py-0.5 font-mono">ipconfig</code> on Windows)</li>
+                <li>Enter it here as <code className="rounded bg-muted px-1.5 py-0.5 font-mono">http://192.168.1.X:8090</code></li>
+                <li>Enable sync and click Save</li>
+              </ol>
+            </div>
+          </details>
+        </div>
+      </Card>
+
+      {/* Backup & Restore */}
+      <Card className="mt-6 max-w-3xl border-border/60 p-6 shadow-card">
+        <h3 className="text-sm font-semibold text-foreground">{t("settings.backup")}</h3>
+        <p className="text-xs text-muted-foreground">
+          Everything is stored locally. Export a JSON file regularly to be safe.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm"
+            onClick={() => { downloadBackup(); toast.success(t("backup.exported")); }}>
+            <Download className="me-1 h-4 w-4" /> {t("backup.export")}
+          </Button>
+          <input ref={fileRef} type="file" accept="application/json" hidden
+            onChange={(e) => e.target.files?.[0] && onRestoreFile(e.target.files[0])} />
+          <Button type="button" variant="outline" size="sm"
+            onClick={() => fileRef.current?.click()}>
+            <Upload className="me-1 h-4 w-4" /> {t("backup.import")}
+          </Button>
+          <Button type="button" variant="outline" size="sm"
+            onClick={() => { exportAllToExcel(); toast.success("Full Excel workbook exported"); }}>
+            <FileSpreadsheet className="me-1 h-4 w-4" /> Full Excel Export
+          </Button>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-medium text-foreground">{t("backup.auto")}</p>
+          {autoList.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No automatic backups yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Saved at</TableHead>
+                  <TableHead className="text-right">{t("common.actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {autoList.map((b) => (
+                  <TableRow key={b.key}>
+                    <TableCell className="font-mono text-xs">{b.date}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDateTime(b.savedAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button type="button" variant="ghost" size="sm"
+                        onClick={() => {
+                          if (restoreAutoBackup(b.key)) {
+                            toast.success(t("backup.restored"));
+                            setTimeout(() => window.location.reload(), 800);
+                          }
+                        }}>
+                        <RotateCcw className="me-1 h-3.5 w-3.5" /> {t("backup.restore")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <Button type="button" variant="ghost" size="sm" className="mt-2"
+            onClick={() => setAutoList(listAutoBackups())}>
+            Refresh list
+          </Button>
+        </div>
+      </Card>
+    </AppLayout>
+  );
+}
