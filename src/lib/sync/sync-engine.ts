@@ -33,6 +33,7 @@ const DEVICE_ID  = _getOrCreateDeviceId();
 const DEBOUNCE_MS = 800;
 
 function _getOrCreateDeviceId(): string {
+  if (typeof localStorage === "undefined") return "ssr";
   const key = "nexora-device-id";
   let id = localStorage.getItem(key);
   if (!id) {
