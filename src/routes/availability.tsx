@@ -473,14 +473,15 @@ function AvailabilityPage() {
 
   useEffect(() => setMounted(true), []);
 
-  // Stats
-  const rooms        = useHotelStore((s) => s.rooms.filter((r) => !r.archived));
-  const reservations = useHotelStore((s) => s.reservations);
-  const todayIso     = isoDate(new Date());
-  const available    = rooms.filter((r) => r.status === "available").length;
-  const occupied     = reservations.filter((r) => r.status === "checked-in").length;
-  const arriving     = reservations.filter((r) => r.checkIn === todayIso && r.status === "confirmed").length;
-  const departing    = reservations.filter((r) => r.checkOut === todayIso && r.status === "checked-in").length;
+  // Stats — select raw arrays, derive with useMemo to keep stable references
+  const rawRooms        = useHotelStore((s) => s.rooms);
+  const reservations    = useHotelStore((s) => s.reservations);
+  const rooms           = useMemo(() => rawRooms.filter((r) => !r.archived), [rawRooms]);
+  const todayIso        = isoDate(new Date());
+  const available       = useMemo(() => rooms.filter((r) => r.status === "available").length, [rooms]);
+  const occupied        = useMemo(() => reservations.filter((r) => r.status === "checked-in").length, [reservations]);
+  const arriving        = useMemo(() => reservations.filter((r) => r.checkIn === todayIso && r.status === "confirmed").length, [reservations, todayIso]);
+  const departing       = useMemo(() => reservations.filter((r) => r.checkOut === todayIso && r.status === "checked-in").length, [reservations, todayIso]);
 
   return (
     <AppLayout
