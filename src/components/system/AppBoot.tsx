@@ -13,9 +13,38 @@ export function AppBoot() {
   const lang = useHotelStore((s) => s.settings.language) ?? "en";
   const navigate = useNavigate();
   const touchActivity = useAuthStore((s) => s.touchActivity);
+  const postNightlyRoomCharges = useHotelStore((s) => s.postNightlyRoomCharges);
 
   // LAN sync — connects to PocketBase server when configured in settings
   useStoreSync();
+
+  // Auto night audit catch-up: for each missed night (incl. overstays),
+  // post the nightly room charge so totals stay accurate even without
+  // manually running Night Audit. Runs on boot then hourly.
+  useEffect(() => {
+    const runCatchUp = () => {
+      try {
+        const today = new Date();
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const iso = d.toISOString().slice(0, 10);
+          const res = postNightlyRoomCharges(iso);
+          if (res.overstayCount > 0) {
+            const isAr = lang === "ar";
+            toast.info(
+              isAr
+                ? `تم احتساب ${res.overstayCount} ليلة تجاوز`
+                : `Posted ${res.overstayCount} overstay night charge(s)`,
+            );
+          }
+        }
+      } catch { /* ignore */ }
+    };
+    runCatchUp();
+    const interval = setInterval(runCatchUp, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [postNightlyRoomCharges, lang]);
 
   // Apply language + direction to <html>
   useEffect(() => {

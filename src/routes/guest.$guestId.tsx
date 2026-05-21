@@ -11,8 +11,10 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useHotelStore } from "@/store/hotel-store";
+import { useHotelStore, type Reservation } from "@/store/hotel-store";
 import { EditGuestDialog } from "@/components/guests/EditGuestDialog";
+import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
+import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 
 export const Route = createFileRoute("/guest/$guestId")({
   component: GuestProfile,
@@ -21,6 +23,8 @@ export const Route = createFileRoute("/guest/$guestId")({
 function GuestProfile() {
   const { guestId } = Route.useParams();
   const [editOpen, setEditOpen] = useState(false);
+  const [extendRes, setExtendRes] = useState<Reservation | null>(null);
+  const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
   const reservations = useHotelStore((s) =>
     s.reservations.filter((r) => r.guestId === guestId)
@@ -206,6 +210,7 @@ function GuestProfile() {
                   <TableHead>Check-out</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -213,14 +218,33 @@ function GuestProfile() {
                   .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
                   .map((r) => {
                     const rm = rooms.find((x) => x.id === r.roomId);
+                    const isActive = r.status === "checked-in" || r.status === "confirmed";
+                    const todayIso = new Date().toISOString().slice(0, 10);
+                    const isOverstay = r.status === "checked-in" && r.checkOut < todayIso;
                     return (
-                      <TableRow key={r.id}>
+                      <TableRow key={r.id} className={isOverstay ? "bg-destructive/5" : undefined}>
                         <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.checkOut}</TableCell>
+                        <TableCell className={isOverstay ? "text-destructive font-medium" : "text-muted-foreground"}>
+                          {r.checkOut}{isOverstay && " (overstay)"}
+                        </TableCell>
                         <TableCell><StatusBadge status={r.status} /></TableCell>
                         <TableCell className="text-right font-semibold">
                           {settings.currency} {r.totalAmount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isActive && (
+                            <div className="flex justify-end gap-1">
+                              <Button size="sm" variant="outline" onClick={() => setExtendRes(r)}>
+                                Extend
+                              </Button>
+                              {r.status === "checked-in" && (
+                                <Button size="sm" onClick={() => setCheckoutRes(r)}>
+                                  Check out
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -264,6 +288,14 @@ function GuestProfile() {
         </Card>
       </div>
       <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
+      <ExtendStayDialog reservation={extendRes} onClose={() => setExtendRes(null)} />
+      {checkoutRes && (
+        <CheckoutDialog
+          reservation={checkoutRes}
+          open={!!checkoutRes}
+          onOpenChange={(o) => !o && setCheckoutRes(null)}
+        />
+      )}
     </AppLayout>
   );
 }
