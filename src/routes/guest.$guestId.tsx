@@ -288,6 +288,12 @@ function GuestProfile() {
         </Card>
       </div>
       <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
+      <ExtendStayDialog reservation={extendRes} onClose={() => setExtendRes(null)} />
+      <CheckoutDialog
+        reservation={checkoutRes}
+        open={!!checkoutRes}
+        onOpenChange={(o) => !o && setCheckoutRes(null)}
+      />
     </AppLayout>
   );
 }
