@@ -23,6 +23,8 @@ export const Route = createFileRoute("/guest/$guestId")({
 function GuestProfile() {
   const { guestId } = Route.useParams();
   const [editOpen, setEditOpen] = useState(false);
+  const [extendRes, setExtendRes] = useState<Reservation | null>(null);
+  const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
   const reservations = useHotelStore((s) =>
     s.reservations.filter((r) => r.guestId === guestId)
