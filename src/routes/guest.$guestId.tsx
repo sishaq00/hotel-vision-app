@@ -210,6 +210,7 @@ function GuestProfile() {
                   <TableHead>Check-out</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -217,14 +218,33 @@ function GuestProfile() {
                   .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
                   .map((r) => {
                     const rm = rooms.find((x) => x.id === r.roomId);
+                    const isActive = r.status === "checked-in" || r.status === "confirmed";
+                    const todayIso = new Date().toISOString().slice(0, 10);
+                    const isOverstay = r.status === "checked-in" && r.checkOut < todayIso;
                     return (
-                      <TableRow key={r.id}>
+                      <TableRow key={r.id} className={isOverstay ? "bg-destructive/5" : undefined}>
                         <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.checkOut}</TableCell>
+                        <TableCell className={isOverstay ? "text-destructive font-medium" : "text-muted-foreground"}>
+                          {r.checkOut}{isOverstay && " (overstay)"}
+                        </TableCell>
                         <TableCell><StatusBadge status={r.status} /></TableCell>
                         <TableCell className="text-right font-semibold">
                           {settings.currency} {r.totalAmount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isActive && (
+                            <div className="flex justify-end gap-1">
+                              <Button size="sm" variant="outline" onClick={() => setExtendRes(r)}>
+                                Extend
+                              </Button>
+                              {r.status === "checked-in" && (
+                                <Button size="sm" onClick={() => setCheckoutRes(r)}>
+                                  Check out
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
