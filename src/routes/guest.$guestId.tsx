@@ -11,8 +11,10 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useHotelStore } from "@/store/hotel-store";
+import { useHotelStore, type Reservation } from "@/store/hotel-store";
 import { EditGuestDialog } from "@/components/guests/EditGuestDialog";
+import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
+import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 
 export const Route = createFileRoute("/guest/$guestId")({
   component: GuestProfile,
