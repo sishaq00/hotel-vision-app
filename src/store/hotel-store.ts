@@ -2261,46 +2261,44 @@ export const useHotelStore = create<HotelState>()(
           let overstayCount = 0;
           let total = 0;
           const nowIso = new Date().toISOString();
-          const nextDay = (d: string) => {
-            const dt = new Date(d + "T00:00:00");
-            dt.setDate(dt.getDate() + 1);
-            return dt.toISOString().slice(0, 10);
-          };
-          set((s) => ({
-            reservations: s.reservations.map((res) => {
-              if (res.status !== "checked-in") return res;
-              if (auditDate < res.checkIn) return res; // before stay
-              if (res.lastNightlyChargeDate === auditDate) return res; // already posted today
-              const room = rooms.find((r) => r.id === res.roomId);
-              if (!room) return res;
 
-              // Normal nightly charge: checkIn <= auditDate < checkOut
-              if (auditDate < res.checkOut) {
-                count++;
-                total += room.price;
-                return {
-                  ...res,
-                  totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
-                  lastNightlyChargeDate: auditDate,
-                  // Night audit charges are recorded in the audit log only — not in guest notes
-                };
-              }
+          // Pre-compute changes WITHOUT writing to the store, so we can skip
+          // the `set()` entirely when nothing changed. Writing every call
+          // creates a new reservations array reference and triggers
+          // re-renders across the whole app for no reason.
+          let mutated = false;
+          const nextReservations = state.reservations.map((res) => {
+            if (res.status !== "checked-in") return res;
+            if (auditDate < res.checkIn) return res;
+            if (res.lastNightlyChargeDate === auditDate) return res;
+            const room = rooms.find((r) => r.id === res.roomId);
+            if (!room) return res;
 
-              // Overstay: auditDate >= checkOut and still checked-in.
-              // Charge one extra night but DO NOT auto-extend checkOut.
-              // Row stays red (departing/overdue) until guest extends or checks out.
-              overstayCount++;
+            if (auditDate < res.checkOut) {
+              mutated = true;
               count++;
               total += room.price;
               return {
                 ...res,
                 totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
                 lastNightlyChargeDate: auditDate,
-                // Overstay charges are in the audit log; notes field is for guest requests only
               };
-            }),
-          }));
-          if (count > 0) {
+            }
+
+            // Overstay
+            mutated = true;
+            overstayCount++;
+            count++;
+            total += room.price;
+            return {
+              ...res,
+              totalAmount: Math.round((res.totalAmount + room.price) * 100) / 100,
+              lastNightlyChargeDate: auditDate,
+            };
+          });
+
+          if (mutated) {
+            set({ reservations: nextReservations });
             log({
               entity: "reservation",
               entityId: "night-audit",
