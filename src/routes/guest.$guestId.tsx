@@ -289,8 +289,12 @@ function GuestProfile() {
           )}
         </Card>
       </div>
-      <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
-      <ExtendStayDialog reservation={extendRes} onClose={() => setExtendRes(null)} />
+      {editOpen && (
+        <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
+      )}
+      {extendRes && (
+        <ExtendStayDialog reservation={extendRes} onClose={() => setExtendRes(null)} />
+      )}
       {checkoutRes && (
         <CheckoutDialog
           reservation={checkoutRes}
