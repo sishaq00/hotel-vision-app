@@ -26,8 +26,10 @@ function GuestProfile() {
   const [extendRes, setExtendRes] = useState<Reservation | null>(null);
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
-  const reservations = useHotelStore((s) =>
-    s.reservations.filter((r) => r.guestId === guestId)
+  const allReservations = useHotelStore((s) => s.reservations);
+  const reservations = useMemo(
+    () => allReservations.filter((r) => r.guestId === guestId),
+    [allReservations, guestId],
   );
   const rooms = useHotelStore((s) => s.rooms);
   const payments = useHotelStore((s) => s.payments);
