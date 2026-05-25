@@ -365,6 +365,13 @@ function GuestProfile() {
           onOpenChange={(o) => !o && setCheckoutRes(null)}
         />
       )}
+      {payRes && (
+        <RecordPaymentDialog
+          reservation={payRes}
+          open={!!payRes}
+          onOpenChange={(o) => !o && setPayRes(null)}
+        />
+      )}
     </AppLayout>
   );
 }
