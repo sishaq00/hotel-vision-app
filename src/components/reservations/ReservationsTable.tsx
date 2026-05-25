@@ -108,6 +108,7 @@ export function ReservationsTable({
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [extendId,   setExtendId]   = useState<string | null>(null);
+  const [payId,      setPayId]      = useState<string | null>(null);
 
   const curr = settings.currency ?? "$";
 
