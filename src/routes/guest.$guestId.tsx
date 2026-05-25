@@ -215,6 +215,35 @@ function GuestProfile() {
           </div>
         )}
 
+        {/* Balance summary */}
+        {balanceSummary.total > 0 && (
+          <Card className="border-border/60 p-4 shadow-card">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <Wallet className="h-4 w-4 text-primary" /> Active Balance
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs text-muted-foreground">Total billed</p>
+                <p className="mt-1 text-base font-bold tabular-nums">{settings.currency} {balanceSummary.total.toFixed(2)}</p>
+              </div>
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <TrendingUp className="h-3 w-3" /> Paid
+                </p>
+                <p className="mt-1 text-base font-bold text-emerald-600 tabular-nums">{settings.currency} {balanceSummary.paid.toFixed(2)}</p>
+              </div>
+              <div className={`rounded-lg border p-3 ${balanceSummary.balance > 0 ? "border-rose-500/30 bg-rose-500/5" : "border-emerald-500/30 bg-emerald-500/5"}`}>
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <TrendingDown className="h-3 w-3" /> Outstanding
+                </p>
+                <p className={`mt-1 text-base font-bold tabular-nums ${balanceSummary.balance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                  {settings.currency} {balanceSummary.balance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Reservations */}
         <Card className="border-border/60 shadow-card">
           <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
@@ -231,6 +260,7 @@ function GuestProfile() {
                   <TableHead>Check-out</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -242,6 +272,7 @@ function GuestProfile() {
                     const isActive = r.status === "checked-in" || r.status === "confirmed";
                     const todayIso = new Date().toISOString().slice(0, 10);
                     const isOverstay = r.status === "checked-in" && r.checkOut < todayIso;
+                    const bal = isActive ? getBalance(r.id) : null;
                     return (
                       <TableRow key={r.id} className={isOverstay ? "bg-destructive/5" : undefined}>
                         <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
@@ -250,12 +281,24 @@ function GuestProfile() {
                           {r.checkOut}{isOverstay && " (overstay)"}
                         </TableCell>
                         <TableCell><StatusBadge status={r.status} /></TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right font-semibold tabular-nums">
                           {settings.currency} {r.totalAmount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {bal ? (
+                            <span className={bal.balance > 0 ? "font-semibold text-rose-600" : "text-emerald-600"}>
+                              {settings.currency} {bal.balance.toFixed(2)}
+                            </span>
+                          ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-right">
                           {isActive && (
                             <div className="flex justify-end gap-1">
+                              {bal && bal.balance > 0 && (
+                                <Button size="sm" variant="default" className="gap-1" onClick={() => setPayRes(r)}>
+                                  <Wallet className="h-3.5 w-3.5" /> Pay
+                                </Button>
+                              )}
                               <Button size="sm" variant="outline" onClick={() => setExtendRes(r)}>
                                 Extend
                               </Button>
@@ -274,6 +317,7 @@ function GuestProfile() {
             </Table>
           )}
         </Card>
+
 
         {/* Payments */}
         <Card className="border-border/60 shadow-card">
