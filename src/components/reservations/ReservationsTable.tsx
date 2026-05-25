@@ -3,11 +3,12 @@
 import { useState } from "react";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
-  MoreHorizontal, Eye, AlertTriangle,
+  MoreHorizontal, Eye, AlertTriangle, Wallet,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
+import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { GuestFlagBadges } from "@/components/guests/GuestFlagBadges";
