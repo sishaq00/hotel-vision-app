@@ -63,6 +63,20 @@ function GuestProfile() {
     };
   }, [reservations, guestPayments]);
 
+  // Outstanding balance across all active reservations
+  const balanceSummary = useMemo(() => {
+    let total = 0, paid = 0, balance = 0;
+    reservations
+      .filter((r) => r.status === "checked-in" || r.status === "confirmed")
+      .forEach((r) => {
+        const b = getBalance(r.id);
+        total += b.total;
+        paid += b.paid;
+        balance += b.balance;
+      });
+    return { total, paid, balance };
+  }, [reservations, getBalance, payments]);
+
   if (!guest) {
     return (
       <AppLayout title="Guest not found">
