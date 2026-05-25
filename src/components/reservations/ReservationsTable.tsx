@@ -314,6 +314,13 @@ export function ReservationsTable({
                             </DropdownMenuItem>
                           )}
 
+                          {/* Record payment */}
+                          {(r.status === "confirmed" || r.status === "checked-in") && (
+                            <DropdownMenuItem onClick={() => setPayId(r.id)} className="text-xs">
+                              <Wallet className="mr-2 h-3.5 w-3.5" /> Record payment
+                            </DropdownMenuItem>
+                          )}
+
                           {/* Extend stay */}
                           {actions.checkOut && r.status === "checked-in" && (
                             <DropdownMenuItem onClick={() => setExtendId(r.id)} className="text-xs">
