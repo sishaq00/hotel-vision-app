@@ -3,11 +3,12 @@
 import { useState } from "react";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
-  MoreHorizontal, Eye, AlertTriangle,
+  MoreHorizontal, Eye, AlertTriangle, Wallet,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
+import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { GuestFlagBadges } from "@/components/guests/GuestFlagBadges";
@@ -107,6 +108,7 @@ export function ReservationsTable({
 
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [extendId,   setExtendId]   = useState<string | null>(null);
+  const [payId,      setPayId]      = useState<string | null>(null);
 
   const curr = settings.currency ?? "$";
 
@@ -312,6 +314,13 @@ export function ReservationsTable({
                             </DropdownMenuItem>
                           )}
 
+                          {/* Record payment */}
+                          {(r.status === "confirmed" || r.status === "checked-in") && (
+                            <DropdownMenuItem onClick={() => setPayId(r.id)} className="text-xs">
+                              <Wallet className="mr-2 h-3.5 w-3.5" /> Record payment
+                            </DropdownMenuItem>
+                          )}
+
                           {/* Extend stay */}
                           {actions.checkOut && r.status === "checked-in" && (
                             <DropdownMenuItem onClick={() => setExtendId(r.id)} className="text-xs">
@@ -395,6 +404,17 @@ export function ReservationsTable({
         reservation={extendId ? reservations.find((x) => x.id === extendId) ?? null : null}
         onClose={() => setExtendId(null)}
       />
+      {payId && (() => {
+        const r = reservations.find((x) => x.id === payId);
+        if (!r) return null;
+        return (
+          <RecordPaymentDialog
+            reservation={r}
+            open
+            onOpenChange={(o) => !o && setPayId(null)}
+          />
+        );
+      })()}
     </>
   );
 }
