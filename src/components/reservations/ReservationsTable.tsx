@@ -404,6 +404,17 @@ export function ReservationsTable({
         reservation={extendId ? reservations.find((x) => x.id === extendId) ?? null : null}
         onClose={() => setExtendId(null)}
       />
+      {payId && (() => {
+        const r = reservations.find((x) => x.id === payId);
+        if (!r) return null;
+        return (
+          <RecordPaymentDialog
+            reservation={r}
+            open
+            onOpenChange={(o) => !o && setPayId(null)}
+          />
+        );
+      })()}
     </>
   );
 }
