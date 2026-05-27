@@ -1,21 +1,25 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useHotelStore, type Reservation } from "@/store/hotel-store";
+import { useHotelStore, type Reservation, type Payment, type ProductSale } from "@/store/hotel-store";
 import { EditGuestDialog } from "@/components/guests/EditGuestDialog";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
+import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
+import { ConfirmDialog } from "@/components/system/ConfirmDialog";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/guest/$guestId")({
