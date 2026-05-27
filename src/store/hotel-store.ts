@@ -552,6 +552,13 @@ interface HotelState {
   // Payments
   addPayment: (p: Omit<Payment, "id">) => string;
   updatePaymentStatus: (id: string, status: PaymentStatus) => void;
+  updatePayment: (id: string, patch: Partial<Omit<Payment, "id" | "reservationId">>) => void;
+  deletePayment: (id: string) => void;
+  deleteProductSale: (id: string) => void;
+  updateProductSale: (
+    id: string,
+    patch: { quantity?: number; unitPrice?: number },
+  ) => { ok: true } | { ok: false; error: string };
 
   // Shifts
   startShift: (userName: string, openingCash?: number) => string;
