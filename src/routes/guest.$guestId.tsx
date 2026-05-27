@@ -54,6 +54,48 @@ function GuestProfile() {
     return payments.filter((p) => resIds.has(p.reservationId));
   }, [payments, reservations]);
 
+  const guestSales = useMemo(() => {
+    const resIds = new Set(reservations.map((r) => r.id));
+    return productSalesAll.filter((s) => s.reservationId && resIds.has(s.reservationId));
+  }, [productSalesAll, reservations]);
+
+  // Unified activity timeline (payments + product sales) sorted newest first
+  type TimelineItem =
+    | { kind: "payment"; id: string; ts: string; payment: Payment }
+    | { kind: "sale"; id: string; ts: string; sale: ProductSale };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [
+      ...guestPayments.map((p) => ({ kind: "payment" as const, id: p.id, ts: p.date, payment: p })),
+      ...guestSales.map((s) => ({ kind: "sale" as const, id: s.id, ts: s.soldAt, sale: s })),
+    ];
+    return items.sort((a, b) => (b.ts > a.ts ? 1 : -1));
+  }, [guestPayments, guestSales]);
+
+  const handleDeletePayment = async (p: Payment) => {
+    const ok = await confirm({
+      title: "Delete payment?",
+      description: `Remove ${settings.currency} ${p.amount.toFixed(2)} (${p.method}) from this guest's account?`,
+      confirmText: "Delete",
+      variant: "destructive",
+    });
+    if (ok) {
+      deletePayment(p.id);
+      toast.success("Payment deleted");
+    }
+  };
+  const handleDeleteSale = async (s: ProductSale) => {
+    const ok = await confirm({
+      title: "Remove purchase?",
+      description: `Remove ${s.quantity}× ${s.productName} (${settings.currency} ${s.total.toFixed(2)})? Stock will be restored.`,
+      confirmText: "Remove",
+      variant: "destructive",
+    });
+    if (ok) {
+      deleteProductSale(s.id);
+      toast.success("Purchase removed");
+    }
+  };
+
   const stats = useMemo(() => {
     const totalSpent = guestPayments
       .filter((p) => p.status === "paid")
