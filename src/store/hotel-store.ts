@@ -1339,6 +1339,100 @@ export const useHotelStore = create<HotelState>()(
             metadata: { from: p.status, to: status },
           });
         },
+        updatePayment: (id, patch) => {
+          const p = get().payments.find((x) => x.id === id);
+          if (!p) return;
+          set((s) => ({
+            payments: s.payments.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+          }));
+          log({
+            entity: "payment",
+            entityId: id,
+            action: "update",
+            description: `Payment edited (was $${p.amount} ${p.method})`,
+            metadata: { patch },
+          });
+          logActivity({
+            action: "payment.record",
+            entityType: "payment",
+            entityId: id,
+            amount: patch.amount ?? p.amount,
+            description: `Edited payment (was $${p.amount.toFixed(2)} ${p.method})`,
+            details: { patch },
+          });
+        },
+        deletePayment: (id) => {
+          const p = get().payments.find((x) => x.id === id);
+          if (!p) return;
+          set((s) => ({ payments: s.payments.filter((x) => x.id !== id) }));
+          log({
+            entity: "payment",
+            entityId: id,
+            action: "delete",
+            description: `Deleted payment $${p.amount} (${p.method})`,
+          });
+          logActivity({
+            action: "payment.refund",
+            entityType: "payment",
+            entityId: id,
+            amount: p.amount,
+            description: `Deleted ${p.method} payment $${p.amount.toFixed(2)}`,
+            details: { reservationId: p.reservationId },
+          });
+        },
+        deleteProductSale: (id) => {
+          const sale = get().productSales.find((x) => x.id === id);
+          if (!sale) return;
+          set((s) => ({
+            productSales: s.productSales.filter((x) => x.id !== id),
+            productItems: s.productItems.map((p) =>
+              p.id === sale.productId ? { ...p, stock: p.stock + sale.quantity } : p,
+            ),
+          }));
+          log({
+            entity: "product",
+            entityId: id,
+            action: "delete",
+            description: `Removed sale ${sale.quantity}× ${sale.productName} ($${sale.total})`,
+          });
+          logActivity({
+            action: "payment.refund",
+            entityType: "payment",
+            entityId: id,
+            amount: sale.total,
+            description: `Removed purchase: ${sale.quantity}× ${sale.productName}`,
+            details: { kind: "product-sale", reservationId: sale.reservationId },
+          });
+        },
+        updateProductSale: (id, patch) => {
+          const sale = get().productSales.find((x) => x.id === id);
+          if (!sale) return { ok: false as const, error: "Sale not found" };
+          const quantity = patch.quantity ?? sale.quantity;
+          const unitPrice = patch.unitPrice ?? sale.unitPrice;
+          if (quantity <= 0) return { ok: false as const, error: "Quantity must be positive" };
+          if (unitPrice < 0) return { ok: false as const, error: "Price cannot be negative" };
+          const stockDelta = quantity - sale.quantity; // positive = need more stock
+          const product = get().productItems.find((p) => p.id === sale.productId);
+          if (product && stockDelta > 0 && product.stock < stockDelta) {
+            return { ok: false as const, error: "Insufficient stock" };
+          }
+          const total = round2(unitPrice * quantity);
+          set((s) => ({
+            productSales: s.productSales.map((x) =>
+              x.id === id ? { ...x, quantity, unitPrice, total } : x,
+            ),
+            productItems: s.productItems.map((p) =>
+              p.id === sale.productId ? { ...p, stock: p.stock - stockDelta } : p,
+            ),
+          }));
+          log({
+            entity: "product",
+            entityId: id,
+            action: "update",
+            description: `Edited sale of ${sale.productName} (qty ${sale.quantity}→${quantity})`,
+          });
+          return { ok: true as const };
+        },
 
         // -------------------- Reservation extras --------------------
         markNoShow: (id) => {
