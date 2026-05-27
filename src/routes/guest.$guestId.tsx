@@ -1,21 +1,25 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useHotelStore, type Reservation } from "@/store/hotel-store";
+import { useHotelStore, type Reservation, type Payment, type ProductSale } from "@/store/hotel-store";
 import { EditGuestDialog } from "@/components/guests/EditGuestDialog";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
+import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
+import { useConfirm } from "@/components/system/ConfirmDialog";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/guest/$guestId")({
@@ -28,6 +32,11 @@ function GuestProfile() {
   const [extendRes, setExtendRes] = useState<Reservation | null>(null);
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [payRes, setPayRes] = useState<Reservation | null>(null);
+  const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const confirm = useConfirm();
+  const deletePayment = useHotelStore((s) => s.deletePayment);
+  const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
+  const productSalesAll = useHotelStore((s) => s.productSales);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
   const allReservations = useHotelStore((s) => s.reservations);
   const getBalance = useHotelStore((s) => s.getReservationBalance);
@@ -44,6 +53,48 @@ function GuestProfile() {
     const resIds = new Set(reservations.map((r) => r.id));
     return payments.filter((p) => resIds.has(p.reservationId));
   }, [payments, reservations]);
+
+  const guestSales = useMemo(() => {
+    const resIds = new Set(reservations.map((r) => r.id));
+    return productSalesAll.filter((s) => s.reservationId && resIds.has(s.reservationId));
+  }, [productSalesAll, reservations]);
+
+  // Unified activity timeline (payments + product sales) sorted newest first
+  type TimelineItem =
+    | { kind: "payment"; id: string; ts: string; payment: Payment }
+    | { kind: "sale"; id: string; ts: string; sale: ProductSale };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [
+      ...guestPayments.map((p) => ({ kind: "payment" as const, id: p.id, ts: p.date, payment: p })),
+      ...guestSales.map((s) => ({ kind: "sale" as const, id: s.id, ts: s.soldAt, sale: s })),
+    ];
+    return items.sort((a, b) => (b.ts > a.ts ? 1 : -1));
+  }, [guestPayments, guestSales]);
+
+  const handleDeletePayment = async (p: Payment) => {
+    const ok = await confirm({
+      title: "Delete payment?",
+      description: `Remove ${settings.currency} ${p.amount.toFixed(2)} (${p.method}) from this guest's account?`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (ok) {
+      deletePayment(p.id);
+      toast.success("Payment deleted");
+    }
+  };
+  const handleDeleteSale = async (s: ProductSale) => {
+    const ok = await confirm({
+      title: "Remove purchase?",
+      description: `Remove ${s.quantity}× ${s.productName} (${settings.currency} ${s.total.toFixed(2)})? Stock will be restored.`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (ok) {
+      deleteProductSale(s.id);
+      toast.success("Purchase removed");
+    }
+  };
 
   const stats = useMemo(() => {
     const totalSpent = guestPayments
@@ -244,113 +295,220 @@ function GuestProfile() {
           </Card>
         )}
 
-        {/* Reservations */}
-        <Card className="border-border/60 shadow-card">
-          <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
-            <BedDouble className="h-4 w-4 text-primary" /> Reservations · {reservations.length}
-          </div>
-          {reservations.length === 0 ? (
-            <p className="p-8 text-center text-sm text-muted-foreground">No reservations yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Room</TableHead>
-                  <TableHead>Check-in</TableHead>
-                  <TableHead>Check-out</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...reservations]
-                  .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
-                  .map((r) => {
-                    const rm = rooms.find((x) => x.id === r.roomId);
-                    const isActive = r.status === "checked-in" || r.status === "confirmed";
-                    const todayIso = new Date().toISOString().slice(0, 10);
-                    const isOverstay = r.status === "checked-in" && r.checkOut < todayIso;
-                    const bal = isActive ? getBalance(r.id) : null;
-                    return (
-                      <TableRow key={r.id} className={isOverstay ? "bg-destructive/5" : undefined}>
-                        <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
-                        <TableCell className={isOverstay ? "text-destructive font-medium" : "text-muted-foreground"}>
-                          {r.checkOut}{isOverstay && " (overstay)"}
-                        </TableCell>
-                        <TableCell><StatusBadge status={r.status} /></TableCell>
-                        <TableCell className="text-right font-semibold tabular-nums">
-                          {settings.currency} {r.totalAmount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {bal ? (
-                            <span className={bal.balance > 0 ? "font-semibold text-rose-600" : "text-emerald-600"}>
-                              {settings.currency} {bal.balance.toFixed(2)}
-                            </span>
-                          ) : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {isActive && (
-                            <div className="flex justify-end gap-1">
-                              {bal && bal.balance > 0 && (
-                                <Button size="sm" variant="default" className="gap-1" onClick={() => setPayRes(r)}>
-                                  <Wallet className="h-3.5 w-3.5" /> Pay
-                                </Button>
+        {/* Tabs: Reservations / Activity / Payments */}
+        <Tabs defaultValue="reservations" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="reservations" className="gap-1.5">
+              <BedDouble className="h-3.5 w-3.5" /> Reservations
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1.5">
+              <ActivityIcon className="h-3.5 w-3.5" /> Activity
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="gap-1.5">
+              <Receipt className="h-3.5 w-3.5" /> Payments
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Reservations tab */}
+          <TabsContent value="reservations">
+            <Card className="border-border/60 shadow-card">
+              <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
+                <BedDouble className="h-4 w-4 text-primary" /> Reservations · {reservations.length}
+              </div>
+              {reservations.length === 0 ? (
+                <p className="p-8 text-center text-sm text-muted-foreground">No reservations yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Room</TableHead>
+                      <TableHead>Check-in</TableHead>
+                      <TableHead>Check-out</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">Balance</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[...reservations]
+                      .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
+                      .map((r) => {
+                        const rm = rooms.find((x) => x.id === r.roomId);
+                        const isActive = r.status === "checked-in" || r.status === "confirmed";
+                        const todayIso = new Date().toISOString().slice(0, 10);
+                        const isOverstay = r.status === "checked-in" && r.checkOut < todayIso;
+                        const bal = isActive ? getBalance(r.id) : null;
+                        return (
+                          <TableRow key={r.id} className={isOverstay ? "bg-destructive/5" : undefined}>
+                            <TableCell>{rm ? `Room ${rm.number}` : "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{r.checkIn}</TableCell>
+                            <TableCell className={isOverstay ? "text-destructive font-medium" : "text-muted-foreground"}>
+                              {r.checkOut}{isOverstay && " (overstay)"}
+                            </TableCell>
+                            <TableCell><StatusBadge status={r.status} /></TableCell>
+                            <TableCell className="text-right font-semibold tabular-nums">
+                              {settings.currency} {r.totalAmount.toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {bal ? (
+                                <span className={bal.balance > 0 ? "font-semibold text-rose-600" : "text-emerald-600"}>
+                                  {settings.currency} {bal.balance.toFixed(2)}
+                                </span>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {isActive && (
+                                <div className="flex justify-end gap-1">
+                                  {bal && bal.balance > 0 && (
+                                    <Button size="sm" variant="default" className="gap-1" onClick={() => setPayRes(r)}>
+                                      <Wallet className="h-3.5 w-3.5" /> Pay
+                                    </Button>
+                                  )}
+                                  <Button size="sm" variant="outline" onClick={() => setExtendRes(r)}>
+                                    Extend
+                                  </Button>
+                                  {r.status === "checked-in" && (
+                                    <Button size="sm" onClick={() => setCheckoutRes(r)}>
+                                      Check out
+                                    </Button>
+                                  )}
+                                </div>
                               )}
-                              <Button size="sm" variant="outline" onClick={() => setExtendRes(r)}>
-                                Extend
-                              </Button>
-                              {r.status === "checked-in" && (
-                                <Button size="sm" onClick={() => setCheckoutRes(r)}>
-                                  Check out
-                                </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          </TabsContent>
+
+          {/* Activity timeline tab */}
+          <TabsContent value="activity">
+            <Card className="border-border/60 shadow-card">
+              <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
+                <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+              </div>
+              {timeline.length === 0 ? (
+                <p className="p-8 text-center text-sm text-muted-foreground">
+                  No activity yet. Payments and purchases will show here.
+                </p>
+              ) : (
+                <ol className="relative space-y-3 p-4">
+                  {timeline.map((it) => {
+                    const isPay = it.kind === "payment";
+                    const Icon = isPay ? CreditCard : ShoppingBag;
+                    const tone = isPay
+                      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-700"
+                      : "border-indigo-500/30 bg-indigo-500/5 text-indigo-700";
+                    const dt = new Date(it.ts);
+                    const when = isNaN(dt.getTime()) ? it.ts : dt.toLocaleString();
+                    return (
+                      <li
+                        key={`${it.kind}-${it.id}`}
+                        className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
+                      >
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${tone}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold">
+                                {isPay
+                                  ? `${it.payment.method.charAt(0).toUpperCase()}${it.payment.method.slice(1)} payment`
+                                  : `${it.sale.quantity}× ${it.sale.productName}`}
+                              </span>
+                              {isPay ? (
+                                <StatusBadge status={it.payment.status} />
+                              ) : (
+                                <Badge variant="secondary" className="text-[10px] capitalize">{it.sale.category}</Badge>
                               )}
                             </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                            <span className="text-sm font-bold tabular-nums">
+                              {isPay ? "+" : "−"}{settings.currency} {(isPay ? it.payment.amount : it.sale.total).toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {when}
+                            {!isPay && it.sale.roomNumber && ` · Room ${it.sale.roomNumber}`}
+                            {!isPay && it.sale.userName && ` · by ${it.sale.userName}`}
+                          </p>
+                          <div className="mt-2 flex gap-1">
+                            {isPay ? (
+                              <>
+                                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setEditPayment(it.payment)}>
+                                  <Pencil className="h-3 w-3" /> Edit
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeletePayment(it.payment)}>
+                                  <Trash2 className="h-3 w-3" /> Delete
+                                </Button>
+                              </>
+                            ) : (
+                              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeleteSale(it.sale)}>
+                                <Trash2 className="h-3 w-3" /> Remove
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </li>
                     );
                   })}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
+                </ol>
+              )}
+            </Card>
+          </TabsContent>
 
-
-        {/* Payments */}
-        <Card className="border-border/60 shadow-card">
-          <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
-            <Receipt className="h-4 w-4 text-primary" /> Payments · {guestPayments.length}
-          </div>
-          {guestPayments.length === 0 ? (
-            <p className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {guestPayments.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="text-muted-foreground">{p.date}</TableCell>
-                    <TableCell className="capitalize">{p.method}</TableCell>
-                    <TableCell><StatusBadge status={p.status} /></TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {settings.currency} {p.amount.toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
+          {/* Payments tab */}
+          <TabsContent value="payments">
+            <Card className="border-border/60 shadow-card">
+              <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
+                <Receipt className="h-4 w-4 text-primary" /> Payments · {guestPayments.length}
+              </div>
+              {guestPayments.length === 0 ? (
+                <p className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[...guestPayments]
+                      .sort((a, b) => (b.date > a.date ? 1 : -1))
+                      .map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-muted-foreground">{p.date}</TableCell>
+                          <TableCell className="capitalize">{p.method}</TableCell>
+                          <TableCell><StatusBadge status={p.status} /></TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {settings.currency} {p.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button size="sm" variant="outline" className="h-7 gap-1" onClick={() => setEditPayment(p)}>
+                                <Pencil className="h-3 w-3" /> Edit
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 gap-1 text-destructive hover:text-destructive" onClick={() => handleDeletePayment(p)}>
+                                <Trash2 className="h-3 w-3" /> Delete
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       {editOpen && (
         <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
@@ -370,6 +528,13 @@ function GuestProfile() {
           reservation={payRes}
           open={!!payRes}
           onOpenChange={(o) => !o && setPayRes(null)}
+        />
+      )}
+      {editPayment && (
+        <EditPaymentDialog
+          payment={editPayment}
+          open={!!editPayment}
+          onOpenChange={(o) => !o && setEditPayment(null)}
         />
       )}
     </AppLayout>
