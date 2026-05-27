@@ -32,6 +32,11 @@ function GuestProfile() {
   const [extendRes, setExtendRes] = useState<Reservation | null>(null);
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [payRes, setPayRes] = useState<Reservation | null>(null);
+  const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const confirm = useConfirm();
+  const deletePayment = useHotelStore((s) => s.deletePayment);
+  const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
+  const productSalesAll = useHotelStore((s) => s.productSales);
   const guest = useHotelStore((s) => s.guests.find((g) => g.id === guestId));
   const allReservations = useHotelStore((s) => s.reservations);
   const getBalance = useHotelStore((s) => s.getReservationBalance);
