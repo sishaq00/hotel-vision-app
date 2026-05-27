@@ -452,7 +452,8 @@ export type AuditAction =
   | "restore"
   | "rename"
   | "price-change"
-  | "credit-note";
+  | "credit-note"
+  | "delete";
 
 export interface AuditEntry {
   id: string;
