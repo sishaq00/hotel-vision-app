@@ -75,8 +75,8 @@ function GuestProfile() {
     const ok = await confirm({
       title: "Delete payment?",
       description: `Remove ${settings.currency} ${p.amount.toFixed(2)} (${p.method}) from this guest's account?`,
-      confirmText: "Delete",
-      variant: "destructive",
+      confirmLabel: "Delete",
+      destructive: true,
     });
     if (ok) {
       deletePayment(p.id);
@@ -87,8 +87,8 @@ function GuestProfile() {
     const ok = await confirm({
       title: "Remove purchase?",
       description: `Remove ${s.quantity}× ${s.productName} (${settings.currency} ${s.total.toFixed(2)})? Stock will be restored.`,
-      confirmText: "Remove",
-      variant: "destructive",
+      confirmLabel: "Remove",
+      destructive: true,
     });
     if (ok) {
       deleteProductSale(s.id);
