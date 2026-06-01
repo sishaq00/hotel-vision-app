@@ -548,6 +548,7 @@ function GuestProfile() {
           open={!!editPayment}
           onOpenChange={(o) => !o && setEditPayment(null)}
         />
+      )}
       {addPurchaseOpen && (
         <AddGuestPurchaseDialog
           guestId={guestId}
