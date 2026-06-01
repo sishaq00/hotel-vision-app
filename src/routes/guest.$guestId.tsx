@@ -618,8 +618,14 @@ function GuestProfile() {
               )}
             </Card>
           </TabsContent>
+
+          {/* Documents tab */}
+          <TabsContent value="documents">
+            <GuestDocumentsTab guestId={guestId} />
+          </TabsContent>
         </Tabs>
       </div>
+
       {editOpen && (
         <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
       )}
