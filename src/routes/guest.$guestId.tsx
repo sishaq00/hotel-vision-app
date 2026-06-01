@@ -360,7 +360,7 @@ function GuestProfile() {
 
         {/* Tabs: Reservations / Activity / Payments */}
         <Tabs defaultValue="reservations" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="reservations" className="gap-1.5">
               <BedDouble className="h-3.5 w-3.5" /> Reservations
             </TabsTrigger>
@@ -370,7 +370,11 @@ function GuestProfile() {
             <TabsTrigger value="payments" className="gap-1.5">
               <Receipt className="h-3.5 w-3.5" /> Payments
             </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-1.5">
+              <IdCard className="h-3.5 w-3.5" /> Documents
+            </TabsTrigger>
           </TabsList>
+
 
           {/* Reservations tab */}
           <TabsContent value="reservations">
