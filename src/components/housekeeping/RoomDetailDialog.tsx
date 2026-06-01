@@ -1,10 +1,13 @@
 // Detail view for a single room: status, assignment, notes, and quick actions.
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useHotelStore, type HousekeepingStatus, type Room } from "@/store/hotel-store";
-import { Wrench, BanIcon, AlertOctagon, UserMinus } from "lucide-react";
+import { Wrench, BanIcon, AlertOctagon, UserMinus, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { uploadFile } from "@/integrations/storage/hotel-storage";
+import { StoragePhoto } from "@/components/system/StoragePhoto";
 
 const ALL: HousekeepingStatus[] = ["dirty", "clean", "inspected", "out-of-order", "departure", "stayover"];
 
