@@ -66,12 +66,31 @@ export function SupabaseAuthGate({ children }: { children: ReactNode }) {
 async function bridgeLocalSession() {
   const store = useAuthStore.getState();
   await store.ensureSeed();
+
+  // Fetch cloud role for the signed-in Supabase user (admin/manager/receptionist/housekeeper).
+  const { data: { user } } = await supabase.auth.getUser();
+  let cloudRole: "admin" | "manager" | "receptionist" | "housekeeper" | null = null;
+  if (user) {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+    if (roles && roles.length) {
+      const order = ["admin", "manager", "receptionist", "housekeeper"] as const;
+      cloudRole = order.find((r) => roles.some((x) => x.role === r)) ?? null;
+    }
+  }
+  const localRole: "admin" | "staff" =
+    cloudRole === "admin" || cloudRole === "manager" ? "admin" : "staff";
+
   const fresh = useAuthStore.getState();
   if (!fresh.currentUserId) {
-    const admin = fresh.users.find((u) => u.role === "admin" && u.active);
-    if (admin) {
+    const candidate =
+      fresh.users.find((u) => u.role === localRole && u.active) ??
+      fresh.users.find((u) => u.role === "admin" && u.active);
+    if (candidate) {
       useAuthStore.setState({
-        currentUserId: admin.id,
+        currentUserId: candidate.id,
         lastActivityAt: Date.now(),
       });
     }
