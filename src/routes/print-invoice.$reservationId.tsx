@@ -133,8 +133,8 @@ function PrintInvoice() {
 
         <div className="header" style={{ position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            {settings.logoDataUrl ? (
-              <img src={settings.logoDataUrl} alt="" style={{ height: 56, width: 56, objectFit: "contain" }} />
+            {(settings.logoDataUrl || settings.logoUrl) ? (
+              <img src={settings.logoDataUrl || settings.logoUrl} alt="" style={{ height: 56, width: 56, objectFit: "contain" }} />
             ) : (
               <div style={{ height: 56, width: 56, background: "#1a1a1a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, borderRadius: 6 }}>
                 {(settings.hotelCode || "NXR").slice(0, 3)}
