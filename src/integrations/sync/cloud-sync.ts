@@ -111,8 +111,10 @@ function rowToGuest(r: any): Guest {
     tags: x.tags,
     company: x.company,
     loyaltyNumber: x.loyaltyNumber,
+    documents: Array.isArray(x.documents) ? x.documents : [],
   };
 }
+
 
 // ---------- Mapping: Room ---------------------------------------------------
 
