@@ -187,7 +187,8 @@ export interface HotelSettings {
   invoiceCounter: number; // monotonically increasing
   language: "en" | "ar";
   // Branding & invoice template (offline)
-  logoDataUrl?: string;        // base64 logo for header / invoices
+  logoDataUrl?: string;        // base64 logo for header / invoices (used for PDFs offline)
+  logoUrl?: string;            // public cloud URL (syncs across devices)
   taxId?: string;              // tax / VAT registration number
   invoiceFooter?: string;      // free text printed at the bottom of invoices
   invoiceNotes?: string;       // optional notes / payment terms
