@@ -26,6 +26,15 @@ import {
 let suspended = false;
 let started = false;
 let unsubscribe: (() => void) | null = null;
+let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+let pullDebounce: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRemotePull() {
+  if (pullDebounce) clearTimeout(pullDebounce);
+  pullDebounce = setTimeout(() => {
+    void pullFromCloud();
+  }, 600);
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
