@@ -534,6 +534,28 @@ const M = {
     }),
     valid: (c: any) => isUuid(c.reservationId),
   } as Mapping<any>,
+
+  auditLog: {
+    table: "audit_log",
+    jsonField: "extra" as const,
+    toRow: (e: any) => ({
+      id: e.id,
+      entity: e.entity,
+      entity_id: e.entityId ? String(e.entityId) : null,
+      action: e.action,
+      details: { description: e.description ?? "", metadata: e.metadata ?? {} },
+      created_at: e.timestamp,
+    }),
+    fromRow: (r: any) => ({
+      id: r.id,
+      timestamp: r.created_at,
+      entity: r.entity,
+      entityId: r.entity_id ?? "",
+      action: r.action,
+      description: r.details?.description ?? "",
+      metadata: r.details?.metadata ?? undefined,
+    }),
+  } as Mapping<any>,
 };
 
 // Maps store array key → mapping
@@ -556,6 +578,7 @@ const COLLECTIONS: Record<string, Mapping<any>> = {
   housekeepingTeams: M.housekeepingTeams,
   housekeeperReports: M.housekeeperReports,
   creditNotes: M.creditNotes,
+  auditLog: M.auditLog,
 };
 
 // ---------- Pull from cloud (initial hydrate) -------------------------------

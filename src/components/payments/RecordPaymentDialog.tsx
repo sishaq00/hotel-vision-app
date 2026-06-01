@@ -1,7 +1,7 @@
 // Record a payment against a reservation (cash / card / transfer).
-// Reduces outstanding balance immediately.
-import { useMemo, useState } from "react";
-import { Banknote, CreditCard, ArrowRightLeft, Wallet } from "lucide-react";
+// Reduces outstanding balance immediately. Optionally attach proof file.
+import { useMemo, useRef, useState } from "react";
+import { Banknote, CreditCard, ArrowRightLeft, Wallet, Paperclip, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useHotelStore, type PaymentMethod, type Reservation } from "@/store/hotel-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/integrations/storage/hotel-storage";
 
 interface Props {
   reservation: Reservation;
@@ -36,6 +37,9 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
 
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [amount, setAmount] = useState<string>(balance.balance.toFixed(2));
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const fmt = (n: number) =>
     `${settings.currency} ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -43,10 +47,27 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
   const num = Number(amount);
   const valid = !isNaN(num) && num > 0;
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!valid) {
       toast.error("Enter a valid amount");
       return;
+    }
+    let proofPath: string | undefined;
+    let proofName: string | undefined;
+    if (proofFile) {
+      setUploading(true);
+      const res = await uploadFile(
+        "payment-proofs",
+        proofFile,
+        `${reservation.id}/${Date.now()}-${proofFile.name}`,
+      );
+      setUploading(false);
+      if (!res.ok) {
+        toast.error(`Proof upload failed: ${res.error}`);
+        return;
+      }
+      proofPath = res.path;
+      proofName = proofFile.name;
     }
     addPayment({
       reservationId: reservation.id,
@@ -54,6 +75,8 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
       method,
       status: "paid",
       date: new Date().toISOString().slice(0, 10),
+      proofPath,
+      proofName,
     });
     toast.success(`Payment of ${fmt(num)} recorded`);
     onOpenChange(false);
@@ -139,12 +162,55 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
           </div>
         </div>
 
+        {/* Proof attachment */}
+        <div className="space-y-2">
+          <Label className="text-xs">Proof (optional)</Label>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+          />
+          {proofFile ? (
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="flex-1 truncate">{proofFile.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setProofFile(null);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Remove proof"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-1"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Paperclip className="h-3.5 w-3.5" /> Attach receipt or screenshot
+            </Button>
+          )}
+        </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleRecord} disabled={!valid}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
+            Cancel
+          </Button>
+          <Button onClick={handleRecord} disabled={!valid || uploading}>
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Record {valid ? fmt(num) : "payment"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
