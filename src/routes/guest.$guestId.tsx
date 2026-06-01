@@ -564,6 +564,13 @@ function GuestProfile() {
           onOpenChange={setAddPurchaseOpen}
         />
       )}
+      {editSale && (
+        <EditSaleDialog
+          sale={editSale}
+          open={!!editSale}
+          onOpenChange={(o) => !o && setEditSale(null)}
+        />
+      )}
     </AppLayout>
   );
 }
