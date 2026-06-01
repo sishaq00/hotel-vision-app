@@ -1,11 +1,13 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus, Printer, Search, AlertCircle, Award } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -21,6 +23,7 @@ import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
 import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
+import { printGuestFolio } from "@/lib/print-folio";
 import { toast } from "sonner";
 
 
