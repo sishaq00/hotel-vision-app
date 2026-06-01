@@ -11,6 +11,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/auth-store";
+import { pullFromCloud, startCloudSync, stopCloudSync } from "@/integrations/sync/cloud-sync";
 import { SupabaseAuthScreen } from "./SupabaseAuthScreen";
 import { AuthGate } from "./AuthGate";
 
