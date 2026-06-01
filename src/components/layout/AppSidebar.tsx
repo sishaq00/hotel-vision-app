@@ -5,7 +5,7 @@ import {
   Wallet, PackageSearch, Clock, CreditCard, BarChart3, History,
   Printer, Settings as SettingsIcon, Tag, MessageSquareText,
   ShieldCheck, UserCog, FileMinus, Percent, ChevronRight, Hotel,
-  ListChecks, Inbox,
+  ListChecks, Inbox, Award,
 } from "lucide-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
