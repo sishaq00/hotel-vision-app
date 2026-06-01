@@ -215,6 +215,15 @@ function GuestProfile() {
                       <Crown className="h-3 w-3" /> VIP
                     </Badge>
                   )}
+                  <Badge variant="outline" className={`gap-1 ${tier.cls}`}>
+                    <Award className="h-3 w-3" /> {tier.name}
+                  </Badge>
+                  {balanceSummary.balance > 0 && (
+                    <Badge className="bg-rose-500/15 text-rose-700 border border-rose-500/40 gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Due {settings.currency} {balanceSummary.balance.toFixed(2)}
+                    </Badge>
+                  )}
                   {guest.doNotRent && (
                     <Badge variant="outline" className="border-destructive/40 text-destructive gap-1">
                       <Ban className="h-3 w-3" /> Do Not Rent
