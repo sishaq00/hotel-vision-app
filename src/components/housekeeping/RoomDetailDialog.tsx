@@ -26,9 +26,35 @@ export function RoomDetailDialog({
   const unassign = useHotelStore((s) => s.unassignRooms);
   const housekeepers = useHotelStore((s) => s.housekeepers);
   const addMaintenance = useHotelStore((s) => s.addMaintenanceTicket);
+  const updateRoom = useHotelStore((s) => s.updateRoom);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   if (!room) return null;
   const assignee = housekeepers.find((h) => h.id === room.assignedHousekeeperId);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length || !room) return;
+    setUploading(true);
+    try {
+      const paths: string[] = [];
+      for (const f of files) {
+        const res = await uploadFile("housekeeping-photos", f, `${room.id}/${Date.now()}-${f.name}`);
+        if (res.ok) paths.push(res.path);
+      }
+      updateRoom(room.id, {
+        housekeepingPhotos: [...(room.housekeepingPhotos ?? []), ...paths],
+      });
+      toast.success(`${paths.length} photo(s) uploaded`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -36,6 +62,7 @@ export function RoomDetailDialog({
         <DialogHeader>
           <DialogTitle>Room {room.number} — {room.type}</DialogTitle>
         </DialogHeader>
+
 
         <div className="space-y-3 text-xs">
           <Row k="Floor" v={String(room.floor)} />
