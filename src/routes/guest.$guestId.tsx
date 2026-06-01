@@ -1,11 +1,13 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus, Printer, Search, AlertCircle, Award } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -21,6 +23,7 @@ import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
 import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
+import { printGuestFolio } from "@/lib/print-folio";
 import { toast } from "sonner";
 
 
@@ -37,6 +40,8 @@ function GuestProfile() {
   const [editPayment, setEditPayment] = useState<Payment | null>(null);
   const [editSale, setEditSale] = useState<ProductSale | null>(null);
   const [addPurchaseOpen, setAddPurchaseOpen] = useState(false);
+  const [activityType, setActivityType] = useState<"all" | "payment" | "sale">("all");
+  const [activitySearch, setActivitySearch] = useState("");
   const confirm = useConfirm();
   const deletePayment = useHotelStore((s) => s.deletePayment);
   const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
@@ -118,6 +123,15 @@ function GuestProfile() {
     };
   }, [reservations, guestPayments]);
 
+  // Guest tier based on lifetime spend
+  const tier = useMemo(() => {
+    const s = stats.totalSpent;
+    if (s >= 5000) return { name: "Platinum", cls: "bg-slate-200 text-slate-900 border-slate-400" };
+    if (s >= 2000) return { name: "Gold", cls: "bg-amber-500/15 text-amber-700 border-amber-500/40" };
+    if (s >= 500) return { name: "Silver", cls: "bg-zinc-300/40 text-zinc-700 border-zinc-400/60" };
+    return { name: "Bronze", cls: "bg-orange-500/10 text-orange-700 border-orange-500/30" };
+  }, [stats.totalSpent]);
+
   // Outstanding balance across all active reservations
   const balanceSummary = useMemo(() => {
     let total = 0, paid = 0, balance = 0;
@@ -131,6 +145,35 @@ function GuestProfile() {
       });
     return { total, paid, balance };
   }, [reservations, getBalance, payments]);
+
+  // Filtered activity timeline
+  const filteredTimeline = useMemo(() => {
+    const q = activitySearch.trim().toLowerCase();
+    return timeline.filter((it) => {
+      if (activityType !== "all" && it.kind !== activityType) return false;
+      if (!q) return true;
+      if (it.kind === "payment") {
+        return it.payment.method.toLowerCase().includes(q)
+          || it.payment.status.toLowerCase().includes(q)
+          || String(it.payment.amount).includes(q);
+      }
+      return it.sale.productName.toLowerCase().includes(q)
+        || it.sale.category.toLowerCase().includes(q);
+    });
+  }, [timeline, activityType, activitySearch]);
+
+  const handlePrintFolio = () => {
+    const ok = printGuestFolio({
+      guest: guest!,
+      reservations,
+      payments: guestPayments,
+      sales: guestSales,
+      rooms,
+      currency: settings.currency,
+      hotelName: settings.hotelName,
+    });
+    if (!ok) toast.error("Allow pop-ups to print the folio.");
+  };
 
   if (!guest) {
     return (
@@ -170,6 +213,15 @@ function GuestProfile() {
                   {guest.vip && (
                     <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
                       <Crown className="h-3 w-3" /> VIP
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className={`gap-1 ${tier.cls}`}>
+                    <Award className="h-3 w-3" /> {tier.name}
+                  </Badge>
+                  {balanceSummary.balance > 0 && (
+                    <Badge className="bg-rose-500/15 text-rose-700 border border-rose-500/40 gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Due {settings.currency} {balanceSummary.balance.toFixed(2)}
                     </Badge>
                   )}
                   {guest.doNotRent && (
@@ -218,9 +270,14 @@ function GuestProfile() {
             </div>
 
             <div className="flex flex-col items-end gap-3">
-              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handlePrintFolio} className="gap-1">
+                  <Printer className="h-3.5 w-3.5" /> Print folio
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                 <Stat label="Total stays" value={stats.totalStays} />
                 <Stat label="Active" value={stats.activeStays} />
@@ -392,9 +449,12 @@ function GuestProfile() {
           {/* Activity timeline tab */}
           <TabsContent value="activity">
             <Card className="border-border/60 shadow-card">
-              <div className="flex items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {filteredTimeline.length}
+                  {filteredTimeline.length !== timeline.length && (
+                    <span className="text-xs font-normal text-muted-foreground">of {timeline.length}</span>
+                  )}
                 </div>
                 <Button
                   size="sm"
@@ -405,13 +465,38 @@ function GuestProfile() {
                   <Plus className="h-3.5 w-3.5" /> Add purchase
                 </Button>
               </div>
-              {timeline.length === 0 ? (
+              {timeline.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
+                  <div className="relative flex-1 min-w-[160px]">
+                    <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={activitySearch}
+                      onChange={(e) => setActivitySearch(e.target.value)}
+                      placeholder="Search activity…"
+                      className="h-8 pl-7 text-xs"
+                    />
+                  </div>
+                  <Select value={activityType} onValueChange={(v) => setActivityType(v as typeof activityType)}>
+                    <SelectTrigger className="h-8 w-[140px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All activity</SelectItem>
+                      <SelectItem value="payment">Payments only</SelectItem>
+                      <SelectItem value="sale">Purchases only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {filteredTimeline.length === 0 ? (
                 <p className="p-8 text-center text-sm text-muted-foreground">
-                  No activity yet. Payments and purchases will show here.
+                  {timeline.length === 0
+                    ? "No activity yet. Payments and purchases will show here."
+                    : "No activity matches your filters."}
                 </p>
               ) : (
                 <ol className="relative space-y-3 p-4">
-                  {timeline.map((it) => {
+                  {filteredTimeline.map((it) => {
                     const isPay = it.kind === "payment";
                     const Icon = isPay ? CreditCard : ShoppingBag;
                     const tone = isPay
