@@ -623,6 +623,11 @@ function GuestProfile() {
             </Card>
           </TabsContent>
 
+          {/* Loyalty tab */}
+          <TabsContent value="loyalty">
+            <LoyaltyTab guestId={guestId} guestName={guest?.name ?? "Guest"} />
+          </TabsContent>
+
           {/* Documents tab */}
           <TabsContent value="documents">
             <GuestDocumentsTab guestId={guestId} />

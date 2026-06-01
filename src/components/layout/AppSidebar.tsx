@@ -195,6 +195,7 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.rooms"),      url: "/rooms",       icon: BedDouble,      permission: "rooms.manage" },
         { label: "Room Types",        url: "/room-types",  icon: BedDouble,      permission: "rooms.manage" },
         { label: t("nav.rate-plans"), url: "/rate-plans",  icon: Tag,            permission: "rooms.manage" },
+        { label: "Loyalty Program",   url: "/loyalty",     icon: Award,          permission: "rooms.manage" },
         { label: t("nav.templates"),  url: "/templates",   icon: MessageSquareText },
         { label: "Users",             url: "/users",       icon: ShieldCheck,    permission: "users.manage" },
         { label: "Settings",          url: "/settings",    icon: SettingsIcon },
