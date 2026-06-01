@@ -129,6 +129,17 @@ export interface GuestPreferences {
   other?: string;           // free-form
 }
 
+export interface GuestDocument {
+  id: string;
+  name: string;          // original filename
+  path: string;          // storage path in 'guest-documents' bucket
+  contentType?: string;
+  size?: number;
+  uploadedAt: string;    // ISO
+  uploadedBy?: string;
+  note?: string;
+}
+
 export interface Guest {
   id: string;
   name: string;
@@ -159,7 +170,10 @@ export interface Guest {
   tags?: string[];               // e.g. ["VIP","Returning","Corporate"]
   company?: string;
   loyaltyNumber?: string;
+  // v8: cloud-stored documents (passport scans, contracts, etc.)
+  documents?: GuestDocument[];
 }
+
 
 export type PaymentStatus = "paid" | "pending" | "refunded";
 export type PaymentMethod = "card" | "cash" | "transfer";
