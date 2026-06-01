@@ -1,13 +1,18 @@
 // Cloud sync layer: keeps the local Zustand hotel-store in sync with Supabase.
 //
 // Strategy:
-//   1. On login: pullAll() loads guests/rooms/reservations from the cloud
-//      and replaces the local arrays (cloud is source of truth).
-//   2. After pull: startSync() subscribes to store changes; on every mutation,
-//      it diffs vs the previous snapshot and pushes upserts/deletes.
+//   1. On login: pullFromCloud() loads all collections from the cloud and
+//      replaces local arrays (cloud is source of truth).
+//   2. After pull: startCloudSync() subscribes to store changes; on every
+//      mutation, it diffs vs the previous snapshot and pushes upserts/deletes.
 //   3. Sync is suspended while we apply remote data (avoids feedback loops).
 //
-// Scope: guests + rooms + reservations only. Other domains stay local for now.
+// Design notes:
+//   - Guests / rooms / reservations have full column mapping (queried directly).
+//   - Other domains use a hybrid: a few required scalar columns + an `extra`
+//     (or `meta`) JSONB column carrying the rest of the local object.
+//     This lets us persist the entire app without 600 lines of per-field
+//     mapping while keeping rows queryable.
 import { supabase } from "@/integrations/supabase/client";
 import {
   useHotelStore,
@@ -26,6 +31,8 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (s: string | undefined | null): s is string =>
   !!s && UUID_RE.test(s);
+const uuidOrNull = (s: string | undefined | null): string | null =>
+  isUuid(s) ? s : null;
 
 // ---------- Mapping: Guest --------------------------------------------------
 
@@ -116,11 +123,9 @@ function roomToRow(r: Room) {
     building: r.building ?? null,
     bed_code: r.bedCode ?? null,
     task_type: r.taskType ?? null,
-    assigned_housekeeper_id: isUuid(r.assignedHousekeeperId)
-      ? r.assignedHousekeeperId
-      : null,
+    assigned_housekeeper_id: uuidOrNull(r.assignedHousekeeperId),
     assigned_at: r.assignedAt ?? null,
-    assigned_by: isUuid(r.assignedBy) ? r.assignedBy : null,
+    assigned_by: uuidOrNull(r.assignedBy),
     cleaning_started_at: r.cleaningStartedAt ?? null,
     cleaning_finished_at: r.cleaningFinishedAt ?? null,
     cleaning_value: r.cleaningValue ?? null,
@@ -180,7 +185,7 @@ function reservationToRow(r: Reservation) {
     invoice: r.invoice ?? null,
     source: r.source ?? null,
     no_show: !!r.noShow,
-    group_master_id: isUuid(r.groupMasterId) ? r.groupMasterId : null,
+    group_master_id: uuidOrNull(r.groupMasterId),
     confirmation_number: r.confirmationNumber ?? null,
     notes: r.notes ?? null,
     last_nightly_charge_date: r.lastNightlyChargeDate ?? null,
@@ -210,10 +215,341 @@ function rowToReservation(r: any): Reservation {
   };
 }
 
+// ---------- Generic hybrid mappers ------------------------------------------
+// For tables where we don't need per-field queryability, we store a few
+// required scalar columns + the entire local object inside `extra` JSONB.
+
+type Mapping<T extends { id: string }> = {
+  table: string;
+  jsonField: "extra" | "meta";
+  toRow: (item: T) => any;
+  fromRow: (row: any) => T;
+  valid?: (item: T) => boolean; // skip rows that can't satisfy NOT NULL/FK
+};
+
+const M = {
+  payments: {
+    table: "payments",
+    jsonField: "meta",
+    toRow: (p: any) => ({
+      id: p.id,
+      reservation_id: uuidOrNull(p.reservationId),
+      amount: p.amount ?? 0,
+      method: p.method ?? "cash",
+      status: p.status ?? "paid",
+      notes: p.notes ?? null,
+      meta: p,
+    }),
+    fromRow: (r: any) => r.meta ?? { id: r.id, reservationId: r.reservation_id, amount: r.amount, method: r.method, status: r.status },
+  } as Mapping<any>,
+
+  advanceDeposits: {
+    table: "advance_deposits",
+    jsonField: "extra" as const,
+    toRow: (d: any) => ({
+      id: d.id,
+      reservation_id: uuidOrNull(d.reservationId),
+      guest_id: uuidOrNull(d.guestId),
+      amount: d.amount ?? 0,
+      status: d.status ?? "held",
+      notes: d.notes ?? null,
+      extra: d,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, amount: r.amount, status: r.status },
+  } as Mapping<any>,
+
+  shifts: {
+    table: "shifts",
+    jsonField: "extra" as const,
+    toRow: (s: any) => ({
+      id: s.id,
+      status: s.status ?? "open",
+      opened_at: s.startedAt ?? new Date().toISOString(),
+      closed_at: s.endedAt ?? null,
+      opening_balance: s.openingCash ?? 0,
+      closing_balance: s.closingCash ?? null,
+      notes: s.notes ?? null,
+      extra: s,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, status: r.status, startedAt: r.opened_at, endedAt: r.closed_at, openingCash: r.opening_balance, closingCash: r.closing_balance },
+  } as Mapping<any>,
+
+  reminders: {
+    table: "reminders",
+    jsonField: "extra" as const,
+    toRow: (r: any) => ({
+      id: r.id,
+      title: r.title ?? "(untitled)",
+      body: r.description ?? null,
+      due_at: r.dueAt ?? null,
+      priority: r.priority ?? "medium",
+      completed: !!r.done,
+    }),
+    fromRow: (r: any) => ({
+      id: r.id,
+      title: r.title,
+      description: r.body ?? undefined,
+      dueAt: r.due_at,
+      priority: r.priority,
+      done: !!r.completed,
+      createdAt: r.created_at,
+    }),
+  } as Mapping<any>,
+
+  maintenanceTickets: {
+    table: "maintenance_tickets",
+    jsonField: "extra" as const,
+    toRow: (t: any) => ({
+      id: t.id,
+      title: t.area ?? "Maintenance",
+      description: t.description ?? null,
+      priority: t.priority ?? "medium",
+      status: t.status ?? "open",
+      room_id: uuidOrNull(t.roomId),
+      resolved_at: t.resolvedAt ?? null,
+    }),
+    fromRow: (r: any) => ({
+      id: r.id,
+      area: r.title,
+      description: r.description ?? "",
+      priority: r.priority,
+      status: r.status,
+      roomId: r.room_id ?? undefined,
+      reportedAt: r.created_at,
+      resolvedAt: r.resolved_at ?? undefined,
+    }),
+  } as Mapping<any>,
+
+  housekeepingTasks: {
+    table: "housekeeping_tasks",
+    jsonField: "extra" as const,
+    toRow: (t: any) => ({
+      id: t.id,
+      task_type: t.taskType ?? "departure",
+      status: t.status ?? "pending",
+      room_id: uuidOrNull(t.roomId),
+      notes: t.notes ?? null,
+      extra: t,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, status: r.status, roomId: r.room_id, createdAt: r.created_at },
+  } as Mapping<any>,
+
+  lostFoundItems: {
+    table: "lost_found",
+    jsonField: "extra" as const,
+    toRow: (i: any) => ({
+      id: i.id,
+      description: i.description ?? "(item)",
+      status: i.status === "claimed" ? "claimed" : i.status === "discarded" ? "discarded" : "storage",
+      claimed_at: i.claimedAt ?? null,
+      extra: i,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, description: r.description, status: r.status === "storage" ? "stored" : r.status, foundAt: r.created_at, location: "" },
+  } as Mapping<any>,
+
+  groupMasters: {
+    table: "group_masters",
+    jsonField: "extra" as const,
+    toRow: (g: any) => ({
+      id: g.id,
+      name: g.name ?? "(group)",
+      contact_name: g.contactName ?? null,
+      contact_phone: g.contactPhone ?? null,
+      notes: g.notes ?? null,
+      rate: g.rateOverride ?? null,
+      extra: g,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, contactName: r.contact_name, contactPhone: r.contact_phone, arrivalDate: "", departureDate: "", createdAt: r.created_at },
+  } as Mapping<any>,
+
+  folios: {
+    table: "folios",
+    jsonField: "extra" as const,
+    toRow: (f: any) => ({
+      id: f.id,
+      reservation_id: uuidOrNull(f.reservationId),
+      guest_id: uuidOrNull(f.guestId),
+      status: f.status ?? "open",
+      balance: 0,
+      extra: f,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, status: r.status, charges: [], createdAt: r.created_at, guestId: r.guest_id },
+  } as Mapping<any>,
+
+  houseAccounts: {
+    table: "house_accounts",
+    jsonField: "extra" as const,
+    toRow: (h: any) => ({
+      id: h.id,
+      name: h.name ?? "(account)",
+      balance: h.balance ?? 0,
+      notes: h.notes ?? null,
+      extra: h,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, balance: Number(r.balance ?? 0), notes: r.notes, createdAt: r.created_at },
+  } as Mapping<any>,
+
+  inventoryItems: {
+    table: "inventory_items",
+    jsonField: "extra" as const,
+    toRow: (i: any) => ({
+      id: i.id,
+      name: i.name ?? "(item)",
+      category: i.category ?? null,
+      quantity: i.quantity ?? 0,
+      unit: i.unit ?? null,
+      reorder_level: i.reorderLevel ?? null,
+      extra: i,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, category: r.category ?? "other", quantity: Number(r.quantity ?? 0), reorderLevel: Number(r.reorder_level ?? 0), unit: r.unit ?? "pcs" },
+  } as Mapping<any>,
+
+  productItems: {
+    table: "product_items",
+    jsonField: "extra" as const,
+    toRow: (p: any) => ({
+      id: p.id,
+      name: p.name ?? "(product)",
+      category: p.category ?? null,
+      price: p.price ?? 0,
+      quantity: p.stock ?? 0,
+      extra: p,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, category: r.category ?? "other", price: Number(r.price ?? 0), stock: Number(r.quantity ?? 0) },
+  } as Mapping<any>,
+
+  productSales: {
+    table: "product_sales",
+    jsonField: "extra" as const,
+    toRow: (s: any) => ({
+      id: s.id,
+      product_id: uuidOrNull(s.productId),
+      reservation_id: uuidOrNull(s.reservationId),
+      quantity: s.quantity ?? 1,
+      unit_price: s.unitPrice ?? 0,
+      total: s.total ?? 0,
+      extra: s,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, productId: r.product_id, productName: "", category: "other", quantity: Number(r.quantity), unitPrice: Number(r.unit_price), total: Number(r.total), soldAt: r.created_at, userId: "", userName: "" },
+  } as Mapping<any>,
+
+  routingRules: {
+    table: "routing_rules",
+    jsonField: "extra" as const,
+    toRow: (r: any) => ({
+      id: r.id,
+      name: r.name ?? "(rule)",
+      active: r.active ?? true,
+      action: { toFolioId: r.toFolioId, fromGuestId: r.fromGuestId },
+      conditions: { categories: r.categories ?? [] },
+    }),
+    fromRow: (r: any) => ({
+      id: r.id,
+      name: r.name,
+      active: !!r.active,
+      toFolioId: r.action?.toFolioId ?? "",
+      fromGuestId: r.action?.fromGuestId,
+      categories: r.conditions?.categories ?? [],
+    }),
+  } as Mapping<any>,
+
+  housekeepers: {
+    table: "housekeepers",
+    jsonField: "extra" as const,
+    toRow: (h: any) => ({
+      id: h.id,
+      name: h.name ?? "(staff)",
+      phone: h.phone ?? null,
+      source: h.source ?? "external",
+      user_id: uuidOrNull(h.systemUserId),
+      active: h.active ?? true,
+      extra: h,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, phone: r.phone, source: r.source, systemUserId: r.user_id, active: !!r.active, capacity: 12, createdAt: r.created_at },
+  } as Mapping<any>,
+
+  housekeepingTeams: {
+    table: "housekeeping_teams",
+    jsonField: "extra" as const,
+    toRow: (t: any) => ({
+      id: t.id,
+      name: t.name ?? "(team)",
+      member_ids: t.memberIds ?? [],
+      extra: t,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, name: r.name, memberIds: r.member_ids ?? [], createdAt: r.created_at },
+  } as Mapping<any>,
+
+  housekeeperReports: {
+    table: "housekeeper_reports",
+    jsonField: "extra" as const,
+    toRow: (r: any) => ({
+      id: r.id,
+      housekeeper_id: uuidOrNull(r.housekeeperId),
+      report_date: r.date ?? new Date().toISOString().slice(0, 10),
+      rooms: r.rooms ?? [],
+      total_value: r.totalValue ?? 0,
+      notes: null,
+      extra: r,
+    }),
+    fromRow: (r: any) => r.extra ?? { id: r.id, housekeeperId: r.housekeeper_id, housekeeperName: "", date: r.report_date, rooms: r.rooms ?? [], status: "submitted", submittedAt: r.created_at },
+  } as Mapping<any>,
+
+  creditNotes: {
+    table: "credit_notes",
+    jsonField: "extra" as const,
+    toRow: (c: any) => ({
+      id: c.id,
+      number: c.number ?? "",
+      reservation_id: uuidOrNull(c.reservationId),
+      invoice_number: c.invoiceNumber ?? "",
+      amount: c.amount ?? 0,
+      reason: c.reason ?? null,
+      issued_at: c.issuedAt ?? new Date().toISOString(),
+      cancel_invoice: !!c.cancelInvoice,
+    }),
+    fromRow: (r: any) => ({
+      id: r.id,
+      number: r.number,
+      reservationId: r.reservation_id,
+      invoiceNumber: r.invoice_number,
+      amount: Number(r.amount ?? 0),
+      reason: r.reason ?? "",
+      issuedAt: r.issued_at,
+      issuedBy: r.issued_by ?? undefined,
+      cancelInvoice: !!r.cancel_invoice,
+    }),
+    valid: (c: any) => isUuid(c.reservationId),
+  } as Mapping<any>,
+};
+
+// Maps store array key → mapping
+const COLLECTIONS: Record<string, Mapping<any>> = {
+  payments: M.payments,
+  advanceDeposits: M.advanceDeposits,
+  shifts: M.shifts,
+  reminders: M.reminders,
+  maintenanceTickets: M.maintenanceTickets,
+  housekeepingTasks: M.housekeepingTasks,
+  lostFoundItems: M.lostFoundItems,
+  groupMasters: M.groupMasters,
+  folios: M.folios,
+  houseAccounts: M.houseAccounts,
+  inventoryItems: M.inventoryItems,
+  productItems: M.productItems,
+  productSales: M.productSales,
+  routingRules: M.routingRules,
+  housekeepers: M.housekeepers,
+  housekeepingTeams: M.housekeepingTeams,
+  housekeeperReports: M.housekeeperReports,
+  creditNotes: M.creditNotes,
+};
+
 // ---------- Pull from cloud (initial hydrate) -------------------------------
 
 export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> {
   try {
+    // Core 3 with full mapping
     const [guestsRes, roomsRes, reservationsRes] = await Promise.all([
       supabase.from("guests").select("*"),
       supabase.from("rooms").select("*"),
@@ -227,10 +563,31 @@ export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> 
     const rooms = (roomsRes.data ?? []).map(rowToRoom);
     const reservations = (reservationsRes.data ?? []).map(rowToReservation);
 
-    // If cloud is empty but local has data → push local up (one-time seeding).
+    // Generic collections
+    const generic: Record<string, any[]> = {};
+    for (const [key, map] of Object.entries(COLLECTIONS)) {
+      const res = await supabase.from(map.table as any).select("*");
+      if (res.error) {
+        console.warn(`[cloud-sync] pull ${map.table}:`, res.error.message);
+        generic[key] = [];
+      } else {
+        generic[key] = (res.data ?? []).map(map.fromRow);
+      }
+    }
+
+    // Hotel settings (single row, id=1)
+    const settingsRes = await supabase
+      .from("hotel_settings")
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle();
+
     const local = useHotelStore.getState();
     const cloudEmpty =
-      guests.length === 0 && rooms.length === 0 && reservations.length === 0;
+      guests.length === 0 &&
+      rooms.length === 0 &&
+      reservations.length === 0 &&
+      Object.values(generic).every((a) => a.length === 0);
     const localHasData =
       local.guests.length > 0 ||
       local.rooms.length > 0 ||
@@ -241,9 +598,12 @@ export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> 
       return { ok: true };
     }
 
-    // Otherwise: replace local with cloud (suspend sync to avoid feedback).
     suspended = true;
-    useHotelStore.setState({ guests, rooms, reservations });
+    const patch: any = { guests, rooms, reservations, ...generic };
+    if (settingsRes.data) {
+      patch.settings = { ...local.settings, ...((settingsRes.data as any).extra ?? {}) };
+    }
+    useHotelStore.setState(patch);
     suspended = false;
     return { ok: true };
   } catch (e: any) {
@@ -254,107 +614,79 @@ export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> 
 }
 
 async function pushLocalToCloud() {
-  const { guests, rooms, reservations } = useHotelStore.getState();
-  const validGuests = guests.filter((g) => isUuid(g.id));
-  const validRooms = rooms.filter((r) => isUuid(r.id));
-  const validReservations = reservations.filter(
+  const state = useHotelStore.getState();
+  const upserts: Array<PromiseLike<any>> = [];
+
+  const vG = state.guests.filter((g) => isUuid(g.id));
+  if (vG.length)
+    upserts.push(supabase.from("guests").upsert(vG.map(guestToRow) as any));
+  const vR = state.rooms.filter((r) => isUuid(r.id));
+  if (vR.length)
+    upserts.push(supabase.from("rooms").upsert(vR.map(roomToRow) as any));
+  const vRes = state.reservations.filter(
     (r) => isUuid(r.id) && isUuid(r.guestId) && isUuid(r.roomId),
   );
-  if (validGuests.length)
-    await supabase.from("guests").upsert(validGuests.map(guestToRow) as any);
-  if (validRooms.length)
-    await supabase.from("rooms").upsert(validRooms.map(roomToRow) as any);
-  if (validReservations.length)
-    await supabase
-      .from("reservations")
-      .upsert(validReservations.map(reservationToRow) as any);
+  if (vRes.length)
+    upserts.push(
+      supabase.from("reservations").upsert(vRes.map(reservationToRow) as any),
+    );
+
+  for (const [key, map] of Object.entries(COLLECTIONS)) {
+    const arr: any[] = (state as any)[key] ?? [];
+    const valid = arr.filter(
+      (x) => isUuid(x.id) && (!map.valid || map.valid(x)),
+    );
+    if (valid.length)
+      upserts.push(
+        supabase.from(map.table as any).upsert(valid.map(map.toRow) as any),
+      );
+  }
+
+  // Settings (single row)
+  upserts.push(
+    supabase
+      .from("hotel_settings")
+      .upsert({ id: 1, extra: state.settings as any } as any),
+  );
+
+  await Promise.all(upserts);
 }
 
 // ---------- Diff + push (per-mutation) --------------------------------------
 
-type Indexed<T> = Map<string, T>;
-const indexBy = <T extends { id: string }>(arr: T[]): Indexed<T> => {
+const indexBy = <T extends { id: string }>(arr: T[]) => {
   const m = new Map<string, T>();
   for (const x of arr) m.set(x.id, x);
   return m;
 };
 
-async function syncGuests(prev: Guest[], next: Guest[]) {
+async function syncCollection<T extends { id: string }>(
+  prev: T[],
+  next: T[],
+  table: string,
+  toRow: (item: T) => any,
+  valid?: (item: T) => boolean,
+) {
   const a = indexBy(prev);
   const b = indexBy(next);
-  const upserts: Guest[] = [];
+  const upserts: T[] = [];
   const deletes: string[] = [];
-  for (const g of next) {
-    const old = a.get(g.id);
-    if (!old || old !== g) upserts.push(g);
+  for (const x of next) {
+    const old = a.get(x.id);
+    if (!old || old !== x) upserts.push(x);
   }
   for (const id of a.keys()) if (!b.has(id)) deletes.push(id);
-  const valid = upserts.filter((g) => isUuid(g.id));
-  if (valid.length) {
+  const v = upserts.filter((x) => isUuid(x.id) && (!valid || valid(x)));
+  if (v.length) {
     const { error } = await supabase
-      .from("guests")
-      .upsert(valid.map(guestToRow) as any);
-    if (error) console.error("[cloud-sync] guests upsert:", error.message);
+      .from(table as any)
+      .upsert(v.map(toRow) as any);
+    if (error) console.error(`[cloud-sync] ${table} upsert:`, error.message);
   }
-  const validDel = deletes.filter(isUuid);
-  if (validDel.length) {
-    const { error } = await supabase.from("guests").delete().in("id", validDel);
-    if (error) console.error("[cloud-sync] guests delete:", error.message);
-  }
-}
-
-async function syncRooms(prev: Room[], next: Room[]) {
-  const a = indexBy(prev);
-  const b = indexBy(next);
-  const upserts: Room[] = [];
-  const deletes: string[] = [];
-  for (const r of next) {
-    const old = a.get(r.id);
-    if (!old || old !== r) upserts.push(r);
-  }
-  for (const id of a.keys()) if (!b.has(id)) deletes.push(id);
-  const valid = upserts.filter((r) => isUuid(r.id));
-  if (valid.length) {
-    const { error } = await supabase
-      .from("rooms")
-      .upsert(valid.map(roomToRow) as any);
-    if (error) console.error("[cloud-sync] rooms upsert:", error.message);
-  }
-  const validDel = deletes.filter(isUuid);
-  if (validDel.length) {
-    const { error } = await supabase.from("rooms").delete().in("id", validDel);
-    if (error) console.error("[cloud-sync] rooms delete:", error.message);
-  }
-}
-
-async function syncReservations(prev: Reservation[], next: Reservation[]) {
-  const a = indexBy(prev);
-  const b = indexBy(next);
-  const upserts: Reservation[] = [];
-  const deletes: string[] = [];
-  for (const r of next) {
-    const old = a.get(r.id);
-    if (!old || old !== r) upserts.push(r);
-  }
-  for (const id of a.keys()) if (!b.has(id)) deletes.push(id);
-  const valid = upserts.filter(
-    (r) => isUuid(r.id) && isUuid(r.guestId) && isUuid(r.roomId),
-  );
-  if (valid.length) {
-    const { error } = await supabase
-      .from("reservations")
-      .upsert(valid.map(reservationToRow) as any);
-    if (error)
-      console.error("[cloud-sync] reservations upsert:", error.message);
-  }
-  const validDel = deletes.filter(isUuid);
-  if (validDel.length) {
-    const { error } = await supabase
-      .from("reservations")
-      .delete()
-      .in("id", validDel);
-    if (error)
-      console.error("[cloud-sync] reservations delete:", error.message);
+  const d = deletes.filter(isUuid);
+  if (d.length) {
+    const { error } = await supabase.from(table as any).delete().in("id", d);
+    if (error) console.error(`[cloud-sync] ${table} delete:`, error.message);
   }
 }
 
@@ -369,16 +701,42 @@ export function startCloudSync() {
       prev = state;
       return;
     }
-    const prevSnap = prev;
+    const p = prev;
     prev = state;
-    if (prevSnap.guests !== state.guests) {
-      void syncGuests(prevSnap.guests, state.guests);
+
+    if (p.guests !== state.guests)
+      void syncCollection(
+        p.guests,
+        state.guests,
+        "guests",
+        guestToRow as any,
+      );
+    if (p.rooms !== state.rooms)
+      void syncCollection(p.rooms, state.rooms, "rooms", roomToRow as any);
+    if (p.reservations !== state.reservations)
+      void syncCollection(
+        p.reservations,
+        state.reservations,
+        "reservations",
+        reservationToRow as any,
+        (r: Reservation) =>
+          isUuid(r.guestId) && isUuid(r.roomId),
+      );
+
+    for (const [key, m] of Object.entries(COLLECTIONS)) {
+      const pa: any[] = (p as any)[key] ?? [];
+      const na: any[] = (state as any)[key] ?? [];
+      if (pa !== na) void syncCollection(pa, na, m.table, m.toRow, m.valid);
     }
-    if (prevSnap.rooms !== state.rooms) {
-      void syncRooms(prevSnap.rooms, state.rooms);
-    }
-    if (prevSnap.reservations !== state.reservations) {
-      void syncReservations(prevSnap.reservations, state.reservations);
+
+    if (p.settings !== state.settings) {
+      void supabase
+        .from("hotel_settings")
+        .upsert({ id: 1, extra: state.settings as any } as any)
+        .then(({ error }: any) => {
+          if (error)
+            console.error("[cloud-sync] hotel_settings:", error.message);
+        });
     }
   });
 }
