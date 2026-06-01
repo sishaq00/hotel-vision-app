@@ -601,7 +601,7 @@ export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> 
     suspended = true;
     const patch: any = { guests, rooms, reservations, ...generic };
     if (settingsRes.data) {
-      patch.settings = { ...local.settings, ...(settingsRes.data.extra ?? {}) };
+      patch.settings = { ...local.settings, ...((settingsRes.data as any).extra ?? {}) };
     }
     useHotelStore.setState(patch);
     suspended = false;
