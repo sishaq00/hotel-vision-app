@@ -33,6 +33,7 @@ import { Route as OpenFoliosRouteImport } from './routes/open-folios'
 import { Route as NightAuditRouteImport } from './routes/night-audit'
 import { Route as MyHousekeepingRouteImport } from './routes/my-housekeeping'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
+import { Route as LoyaltyRouteImport } from './routes/loyalty'
 import { Route as LostFoundRouteImport } from './routes/lost-found'
 import { Route as InHouseRouteImport } from './routes/in-house'
 import { Route as HousekeepingRouteImport } from './routes/housekeeping'
@@ -181,6 +182,11 @@ const MyHousekeepingRoute = MyHousekeepingRouteImport.update({
 const MaintenanceRoute = MaintenanceRouteImport.update({
   id: '/maintenance',
   path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoyaltyRoute = LoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LostFoundRoute = LostFoundRouteImport.update({
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/housekeeping': typeof HousekeepingRoute
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
+  '/loyalty': typeof LoyaltyRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/housekeeping': typeof HousekeepingRoute
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
+  '/loyalty': typeof LoyaltyRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/housekeeping': typeof HousekeepingRoute
   '/in-house': typeof InHouseRoute
   '/lost-found': typeof LostFoundRoute
+  '/loyalty': typeof LoyaltyRoute
   '/maintenance': typeof MaintenanceRoute
   '/my-housekeeping': typeof MyHousekeepingRoute
   '/night-audit': typeof NightAuditRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/housekeeping'
     | '/in-house'
     | '/lost-found'
+    | '/loyalty'
     | '/maintenance'
     | '/my-housekeeping'
     | '/night-audit'
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/housekeeping'
     | '/in-house'
     | '/lost-found'
+    | '/loyalty'
     | '/maintenance'
     | '/my-housekeeping'
     | '/night-audit'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/housekeeping'
     | '/in-house'
     | '/lost-found'
+    | '/loyalty'
     | '/maintenance'
     | '/my-housekeeping'
     | '/night-audit'
@@ -686,6 +698,7 @@ export interface RootRouteChildren {
   HousekeepingRoute: typeof HousekeepingRoute
   InHouseRoute: typeof InHouseRoute
   LostFoundRoute: typeof LostFoundRoute
+  LoyaltyRoute: typeof LoyaltyRoute
   MaintenanceRoute: typeof MaintenanceRoute
   MyHousekeepingRoute: typeof MyHousekeepingRoute
   NightAuditRoute: typeof NightAuditRoute
@@ -891,6 +904,13 @@ declare module '@tanstack/react-router' {
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loyalty': {
+      id: '/loyalty'
+      path: '/loyalty'
+      fullPath: '/loyalty'
+      preLoaderRoute: typeof LoyaltyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lost-found': {
@@ -1128,6 +1148,7 @@ const rootRouteChildren: RootRouteChildren = {
   HousekeepingRoute: HousekeepingRoute,
   InHouseRoute: InHouseRoute,
   LostFoundRoute: LostFoundRoute,
+  LoyaltyRoute: LoyaltyRoute,
   MaintenanceRoute: MaintenanceRoute,
   MyHousekeepingRoute: MyHousekeepingRoute,
   NightAuditRoute: NightAuditRoute,

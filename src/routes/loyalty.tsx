@@ -48,7 +48,7 @@ function LoyaltyPage() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout title="Loyalty">
       <div className="mx-auto max-w-3xl space-y-4 p-4">
         <div className="flex items-center gap-2">
           <Award className="h-6 w-6 text-primary" />
