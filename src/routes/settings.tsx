@@ -143,8 +143,8 @@ function SettingsPage() {
               <Label>Logo (PNG/JPG, ≤ 512 KB)</Label>
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                  {form.logoDataUrl ? (
-                    <img src={form.logoDataUrl} alt="logo" className="h-full w-full object-contain" />
+                  {form.logoDataUrl || form.logoUrl ? (
+                    <img src={form.logoDataUrl || form.logoUrl} alt="logo" className="h-full w-full object-contain" />
                   ) : (
                     <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   )}
@@ -155,9 +155,9 @@ function SettingsPage() {
                   onClick={() => logoRef.current?.click()}>
                   <Upload className="me-1 h-4 w-4" /> Upload
                 </Button>
-                {form.logoDataUrl && (
+                {(form.logoDataUrl || form.logoUrl) && (
                   <Button type="button" variant="ghost" size="sm"
-                    onClick={() => setForm({ ...form, logoDataUrl: undefined })}>
+                    onClick={() => setForm({ ...form, logoDataUrl: undefined, logoUrl: undefined })}>
                     <Trash2 className="me-1 h-4 w-4" /> Remove
                   </Button>
                 )}
