@@ -53,8 +53,8 @@ function PrintShiftPage() {
       {/* Header */}
       <div className="flex items-start justify-between border-b-2 border-black pb-3">
         <div className="flex items-start gap-3">
-          {settings.logoDataUrl && (
-            <img src={settings.logoDataUrl} alt="" className="h-12 w-12 object-contain" />
+          {(settings.logoDataUrl || settings.logoUrl) && (
+            <img src={settings.logoDataUrl || settings.logoUrl} alt="" className="h-12 w-12 object-contain" />
           )}
           <div>
             <div className="text-xl font-bold">{settings.hotelName}</div>
