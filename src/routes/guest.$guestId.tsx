@@ -18,6 +18,7 @@ import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
+import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { toast } from "sonner";
 
