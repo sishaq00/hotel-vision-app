@@ -461,9 +461,14 @@ function GuestProfile() {
                                 </Button>
                               </>
                             ) : (
-                              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeleteSale(it.sale)}>
-                                <Trash2 className="h-3 w-3" /> Remove
-                              </Button>
+                              <>
+                                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setEditSale(it.sale)}>
+                                  <Pencil className="h-3 w-3" /> Edit
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeleteSale(it.sale)}>
+                                  <Trash2 className="h-3 w-3" /> Remove
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
