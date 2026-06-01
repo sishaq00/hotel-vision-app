@@ -773,4 +773,12 @@ export function stopCloudSync() {
   if (unsubscribe) unsubscribe();
   unsubscribe = null;
   started = false;
+  if (realtimeChannel) {
+    void supabase.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  if (pullDebounce) {
+    clearTimeout(pullDebounce);
+    pullDebounce = null;
+  }
 }
