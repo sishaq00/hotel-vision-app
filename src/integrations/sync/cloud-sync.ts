@@ -705,6 +705,25 @@ export function startCloudSync() {
   if (started) return;
   started = true;
   let prev = useHotelStore.getState();
+
+  // --- Realtime: react to remote changes by pulling fresh data ---
+  if (!realtimeChannel) {
+    const tables = [
+      "reservations","rooms","guests","payments","housekeeping_tasks",
+      "maintenance_tickets","shifts","folios","folio_charges","reminders",
+    ];
+    const ch = supabase.channel("hotel-sync");
+    for (const t of tables) {
+      ch.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: t },
+        () => scheduleRemotePull(),
+      );
+    }
+    ch.subscribe();
+    realtimeChannel = ch;
+  }
+
   unsubscribe = useHotelStore.subscribe((state) => {
     if (suspended) {
       prev = state;
