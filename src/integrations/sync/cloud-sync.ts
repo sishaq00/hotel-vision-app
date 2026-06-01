@@ -578,6 +578,7 @@ const COLLECTIONS: Record<string, Mapping<any>> = {
   housekeepingTeams: M.housekeepingTeams,
   housekeeperReports: M.housekeeperReports,
   creditNotes: M.creditNotes,
+  auditLog: M.auditLog,
 };
 
 // ---------- Pull from cloud (initial hydrate) -------------------------------
