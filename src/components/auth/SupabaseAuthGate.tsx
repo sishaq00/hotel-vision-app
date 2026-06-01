@@ -11,6 +11,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/auth-store";
+import { pullFromCloud, startCloudSync, stopCloudSync } from "@/integrations/sync/cloud-sync";
 import { SupabaseAuthScreen } from "./SupabaseAuthScreen";
 import { AuthGate } from "./AuthGate";
 
@@ -24,13 +25,11 @@ export function SupabaseAuthGate({ children }: { children: ReactNode }) {
       (_event, session) => {
         setHasSession(!!session);
         if (session) {
-          // Bridge into local store so existing pages keep working.
-          // Defer to avoid running inside the auth callback.
           setTimeout(() => {
             void bridgeLocalSession();
           }, 0);
         } else {
-          // Local logout when Supabase session ends.
+          stopCloudSync();
           useAuthStore.getState().logout();
         }
       },
@@ -68,12 +67,16 @@ async function bridgeLocalSession() {
   const store = useAuthStore.getState();
   await store.ensureSeed();
   const fresh = useAuthStore.getState();
-  if (fresh.currentUserId) return;
-  const admin = fresh.users.find((u) => u.role === "admin" && u.active);
-  if (admin) {
-    useAuthStore.setState({
-      currentUserId: admin.id,
-      lastActivityAt: Date.now(),
-    });
+  if (!fresh.currentUserId) {
+    const admin = fresh.users.find((u) => u.role === "admin" && u.active);
+    if (admin) {
+      useAuthStore.setState({
+        currentUserId: admin.id,
+        lastActivityAt: Date.now(),
+      });
+    }
   }
+  // Pull cloud data into local store, then start two-way sync.
+  await pullFromCloud();
+  startCloudSync();
 }
