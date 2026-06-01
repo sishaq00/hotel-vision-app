@@ -270,9 +270,14 @@ function GuestProfile() {
             </div>
 
             <div className="flex flex-col items-end gap-3">
-              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handlePrintFolio} className="gap-1">
+                  <Printer className="h-3.5 w-3.5" /> Print folio
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                 <Stat label="Total stays" value={stats.totalStays} />
                 <Stat label="Active" value={stats.activeStays} />
