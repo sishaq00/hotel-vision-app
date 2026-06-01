@@ -162,12 +162,55 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
           </div>
         </div>
 
+        {/* Proof attachment */}
+        <div className="space-y-2">
+          <Label className="text-xs">Proof (optional)</Label>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+          />
+          {proofFile ? (
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="flex-1 truncate">{proofFile.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setProofFile(null);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Remove proof"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-1"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Paperclip className="h-3.5 w-3.5" /> Attach receipt or screenshot
+            </Button>
+          )}
+        </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleRecord} disabled={!valid}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
+            Cancel
+          </Button>
+          <Button onClick={handleRecord} disabled={!valid || uploading}>
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Record {valid ? fmt(num) : "payment"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
