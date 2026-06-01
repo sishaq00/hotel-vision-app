@@ -449,9 +449,12 @@ function GuestProfile() {
           {/* Activity timeline tab */}
           <TabsContent value="activity">
             <Card className="border-border/60 shadow-card">
-              <div className="flex items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {filteredTimeline.length}
+                  {filteredTimeline.length !== timeline.length && (
+                    <span className="text-xs font-normal text-muted-foreground">of {timeline.length}</span>
+                  )}
                 </div>
                 <Button
                   size="sm"
@@ -462,13 +465,38 @@ function GuestProfile() {
                   <Plus className="h-3.5 w-3.5" /> Add purchase
                 </Button>
               </div>
-              {timeline.length === 0 ? (
+              {timeline.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
+                  <div className="relative flex-1 min-w-[160px]">
+                    <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={activitySearch}
+                      onChange={(e) => setActivitySearch(e.target.value)}
+                      placeholder="Search activity…"
+                      className="h-8 pl-7 text-xs"
+                    />
+                  </div>
+                  <Select value={activityType} onValueChange={(v) => setActivityType(v as typeof activityType)}>
+                    <SelectTrigger className="h-8 w-[140px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All activity</SelectItem>
+                      <SelectItem value="payment">Payments only</SelectItem>
+                      <SelectItem value="sale">Purchases only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {filteredTimeline.length === 0 ? (
                 <p className="p-8 text-center text-sm text-muted-foreground">
-                  No activity yet. Payments and purchases will show here.
+                  {timeline.length === 0
+                    ? "No activity yet. Payments and purchases will show here."
+                    : "No activity matches your filters."}
                 </p>
               ) : (
                 <ol className="relative space-y-3 p-4">
-                  {timeline.map((it) => {
+                  {filteredTimeline.map((it) => {
                     const isPay = it.kind === "payment";
                     const Icon = isPay ? CreditCard : ShoppingBag;
                     const tone = isPay
