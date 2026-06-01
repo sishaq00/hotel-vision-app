@@ -37,6 +37,9 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
 
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [amount, setAmount] = useState<string>(balance.balance.toFixed(2));
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const fmt = (n: number) =>
     `${settings.currency} ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -44,10 +47,27 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
   const num = Number(amount);
   const valid = !isNaN(num) && num > 0;
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!valid) {
       toast.error("Enter a valid amount");
       return;
+    }
+    let proofPath: string | undefined;
+    let proofName: string | undefined;
+    if (proofFile) {
+      setUploading(true);
+      const res = await uploadFile(
+        "payment-proofs",
+        proofFile,
+        `${reservation.id}/${Date.now()}-${proofFile.name}`,
+      );
+      setUploading(false);
+      if (!res.ok) {
+        toast.error(`Proof upload failed: ${res.error}`);
+        return;
+      }
+      proofPath = res.path;
+      proofName = proofFile.name;
     }
     addPayment({
       reservationId: reservation.id,
@@ -55,6 +75,8 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
       method,
       status: "paid",
       date: new Date().toISOString().slice(0, 10),
+      proofPath,
+      proofName,
     });
     toast.success(`Payment of ${fmt(num)} recorded`);
     onOpenChange(false);
