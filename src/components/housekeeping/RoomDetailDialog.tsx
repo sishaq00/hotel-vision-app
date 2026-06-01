@@ -26,7 +26,7 @@ export function RoomDetailDialog({
   const unassign = useHotelStore((s) => s.unassignRooms);
   const housekeepers = useHotelStore((s) => s.housekeepers);
   const addMaintenance = useHotelStore((s) => s.addMaintenanceTicket);
-  const updateRoom = useHotelStore((s) => s.updateRoom);
+  const setState = useHotelStore.setState;
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
