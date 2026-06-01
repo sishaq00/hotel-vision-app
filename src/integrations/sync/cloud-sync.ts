@@ -26,6 +26,15 @@ import {
 let suspended = false;
 let started = false;
 let unsubscribe: (() => void) | null = null;
+let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+let pullDebounce: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRemotePull() {
+  if (pullDebounce) clearTimeout(pullDebounce);
+  pullDebounce = setTimeout(() => {
+    void pullFromCloud();
+  }, 600);
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -696,6 +705,25 @@ export function startCloudSync() {
   if (started) return;
   started = true;
   let prev = useHotelStore.getState();
+
+  // --- Realtime: react to remote changes by pulling fresh data ---
+  if (!realtimeChannel) {
+    const tables = [
+      "reservations","rooms","guests","payments","housekeeping_tasks",
+      "maintenance_tickets","shifts","folios","folio_charges","reminders",
+    ];
+    const ch = supabase.channel("hotel-sync");
+    for (const t of tables) {
+      ch.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: t },
+        () => scheduleRemotePull(),
+      );
+    }
+    ch.subscribe();
+    realtimeChannel = ch;
+  }
+
   unsubscribe = useHotelStore.subscribe((state) => {
     if (suspended) {
       prev = state;
@@ -745,4 +773,12 @@ export function stopCloudSync() {
   if (unsubscribe) unsubscribe();
   unsubscribe = null;
   started = false;
+  if (realtimeChannel) {
+    void supabase.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  if (pullDebounce) {
+    clearTimeout(pullDebounce);
+    pullDebounce = null;
+  }
 }
