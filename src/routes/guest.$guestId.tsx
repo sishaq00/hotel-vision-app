@@ -40,6 +40,8 @@ function GuestProfile() {
   const [editPayment, setEditPayment] = useState<Payment | null>(null);
   const [editSale, setEditSale] = useState<ProductSale | null>(null);
   const [addPurchaseOpen, setAddPurchaseOpen] = useState(false);
+  const [activityType, setActivityType] = useState<"all" | "payment" | "sale">("all");
+  const [activitySearch, setActivitySearch] = useState("");
   const confirm = useConfirm();
   const deletePayment = useHotelStore((s) => s.deletePayment);
   const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
