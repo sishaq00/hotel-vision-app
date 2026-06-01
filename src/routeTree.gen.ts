@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as ShiftManagementRouteImport } from './routes/shift-management'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchReservationsRouteImport } from './routes/search-reservations'
@@ -70,6 +71,11 @@ const UsersRoute = UsersRouteImport.update({
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShiftManagementRoute = ShiftManagementRouteImport.update({
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
+  '/staff': typeof StaffRoute
   '/templates': typeof TemplatesRoute
   '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
+  '/staff': typeof StaffRoute
   '/templates': typeof TemplatesRoute
   '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/search-reservations': typeof SearchReservationsRoute
   '/settings': typeof SettingsRoute
   '/shift-management': typeof ShiftManagementRoute
+  '/staff': typeof StaffRoute
   '/templates': typeof TemplatesRoute
   '/users': typeof UsersRoute
   '/bulk-routing/fast-posting': typeof BulkRoutingFastPostingRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
     | '/search-reservations'
     | '/settings'
     | '/shift-management'
+    | '/staff'
     | '/templates'
     | '/users'
     | '/bulk-routing/fast-posting'
@@ -586,6 +596,7 @@ export interface FileRouteTypes {
     | '/search-reservations'
     | '/settings'
     | '/shift-management'
+    | '/staff'
     | '/templates'
     | '/users'
     | '/bulk-routing/fast-posting'
@@ -640,6 +651,7 @@ export interface FileRouteTypes {
     | '/search-reservations'
     | '/settings'
     | '/shift-management'
+    | '/staff'
     | '/templates'
     | '/users'
     | '/bulk-routing/fast-posting'
@@ -695,6 +707,7 @@ export interface RootRouteChildren {
   SearchReservationsRoute: typeof SearchReservationsRoute
   SettingsRoute: typeof SettingsRoute
   ShiftManagementRoute: typeof ShiftManagementRoute
+  StaffRoute: typeof StaffRoute
   TemplatesRoute: typeof TemplatesRoute
   UsersRoute: typeof UsersRoute
   BulkRoutingFastPostingRoute: typeof BulkRoutingFastPostingRoute
@@ -724,6 +737,13 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/templates'
       preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shift-management': {
@@ -1129,6 +1149,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchReservationsRoute: SearchReservationsRoute,
   SettingsRoute: SettingsRoute,
   ShiftManagementRoute: ShiftManagementRoute,
+  StaffRoute: StaffRoute,
   TemplatesRoute: TemplatesRoute,
   UsersRoute: UsersRoute,
   BulkRoutingFastPostingRoute: BulkRoutingFastPostingRoute,
