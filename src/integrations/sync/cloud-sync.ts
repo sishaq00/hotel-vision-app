@@ -75,7 +75,9 @@ function guestToRow(g: Guest) {
       tags: g.tags,
       company: g.company,
       loyaltyNumber: g.loyaltyNumber,
+      documents: g.documents ?? [],
     },
+
   };
 }
 
