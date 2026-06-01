@@ -34,6 +34,7 @@ function GuestProfile() {
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [payRes, setPayRes] = useState<Reservation | null>(null);
   const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const [addPurchaseOpen, setAddPurchaseOpen] = useState(false);
   const confirm = useConfirm();
   const deletePayment = useHotelStore((s) => s.deletePayment);
   const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
