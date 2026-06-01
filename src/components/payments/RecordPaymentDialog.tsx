@@ -1,7 +1,7 @@
 // Record a payment against a reservation (cash / card / transfer).
-// Reduces outstanding balance immediately.
-import { useMemo, useState } from "react";
-import { Banknote, CreditCard, ArrowRightLeft, Wallet } from "lucide-react";
+// Reduces outstanding balance immediately. Optionally attach proof file.
+import { useMemo, useRef, useState } from "react";
+import { Banknote, CreditCard, ArrowRightLeft, Wallet, Paperclip, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useHotelStore, type PaymentMethod, type Reservation } from "@/store/hotel-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/integrations/storage/hotel-storage";
 
 interface Props {
   reservation: Reservation;
