@@ -390,8 +390,18 @@ function GuestProfile() {
           {/* Activity timeline tab */}
           <TabsContent value="activity">
             <Card className="border-border/60 shadow-card">
-              <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
-                <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+              <div className="flex items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
+                <div className="flex items-center gap-2">
+                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={() => setAddPurchaseOpen(true)}
+                  disabled={reservations.length === 0}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add purchase
+                </Button>
               </div>
               {timeline.length === 0 ? (
                 <p className="p-8 text-center text-sm text-muted-foreground">
