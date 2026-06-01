@@ -23,7 +23,9 @@ import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
 import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
+import { GuestDocumentsTab } from "@/components/guests/GuestDocumentsTab";
 import { printGuestFolio } from "@/lib/print-folio";
+
 import { toast } from "sonner";
 
 
