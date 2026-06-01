@@ -123,6 +123,15 @@ function GuestProfile() {
     };
   }, [reservations, guestPayments]);
 
+  // Guest tier based on lifetime spend
+  const tier = useMemo(() => {
+    const s = stats.totalSpent;
+    if (s >= 5000) return { name: "Platinum", cls: "bg-slate-200 text-slate-900 border-slate-400" };
+    if (s >= 2000) return { name: "Gold", cls: "bg-amber-500/15 text-amber-700 border-amber-500/40" };
+    if (s >= 500) return { name: "Silver", cls: "bg-zinc-300/40 text-zinc-700 border-zinc-400/60" };
+    return { name: "Bronze", cls: "bg-orange-500/10 text-orange-700 border-orange-500/30" };
+  }, [stats.totalSpent]);
+
   // Outstanding balance across all active reservations
   const balanceSummary = useMemo(() => {
     let total = 0, paid = 0, balance = 0;
@@ -136,6 +145,35 @@ function GuestProfile() {
       });
     return { total, paid, balance };
   }, [reservations, getBalance, payments]);
+
+  // Filtered activity timeline
+  const filteredTimeline = useMemo(() => {
+    const q = activitySearch.trim().toLowerCase();
+    return timeline.filter((it) => {
+      if (activityType !== "all" && it.kind !== activityType) return false;
+      if (!q) return true;
+      if (it.kind === "payment") {
+        return it.payment.method.toLowerCase().includes(q)
+          || it.payment.status.toLowerCase().includes(q)
+          || String(it.payment.amount).includes(q);
+      }
+      return it.sale.productName.toLowerCase().includes(q)
+        || it.sale.category.toLowerCase().includes(q);
+    });
+  }, [timeline, activityType, activitySearch]);
+
+  const handlePrintFolio = () => {
+    const ok = printGuestFolio({
+      guest: guest!,
+      reservations,
+      payments: guestPayments,
+      sales: guestSales,
+      rooms,
+      currency: settings.currency,
+      hotelName: settings.hotelName,
+    });
+    if (!ok) toast.error("Allow pop-ups to print the folio.");
+  };
 
   if (!guest) {
     return (
