@@ -18,6 +18,7 @@ import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
+import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ function GuestProfile() {
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [payRes, setPayRes] = useState<Reservation | null>(null);
   const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const [editSale, setEditSale] = useState<ProductSale | null>(null);
   const [addPurchaseOpen, setAddPurchaseOpen] = useState(false);
   const confirm = useConfirm();
   const deletePayment = useHotelStore((s) => s.deletePayment);
@@ -459,9 +461,14 @@ function GuestProfile() {
                                 </Button>
                               </>
                             ) : (
-                              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeleteSale(it.sale)}>
-                                <Trash2 className="h-3 w-3" /> Remove
-                              </Button>
+                              <>
+                                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setEditSale(it.sale)}>
+                                  <Pencil className="h-3 w-3" /> Edit
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => handleDeleteSale(it.sale)}>
+                                  <Trash2 className="h-3 w-3" /> Remove
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -555,6 +562,13 @@ function GuestProfile() {
           reservations={reservations}
           open={addPurchaseOpen}
           onOpenChange={setAddPurchaseOpen}
+        />
+      )}
+      {editSale && (
+        <EditSaleDialog
+          sale={editSale}
+          open={!!editSale}
+          onOpenChange={(o) => !o && setEditSale(null)}
         />
       )}
     </AppLayout>
