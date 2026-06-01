@@ -1,7 +1,7 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
