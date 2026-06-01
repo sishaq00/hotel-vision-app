@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CreditCard, Plus, Search, FileMinus } from "lucide-react";
+import { CreditCard, Plus, Search, FileMinus, Paperclip } from "lucide-react";
+import { getSignedUrl } from "@/integrations/storage/hotel-storage";
 import { IssueCreditNoteDialog } from "@/components/invoicing/IssueCreditNoteDialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
