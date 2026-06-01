@@ -49,9 +49,11 @@ export function TopBar(_props: { title?: string; subtitle?: string } = {}) {
   const overdueOuts = reservations.filter((r) => r.checkOut < todayStr && r.status === "checked-in").length;
   const pendingCI   = reservations.filter((r) => r.checkIn === todayStr && r.status === "confirmed").length;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logActivity({ action: "logout", entityType: "system", description: `Signed out (${displayName})` });
     logout();
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.auth.signOut();
     navigate({ to: "/" });
   };
 

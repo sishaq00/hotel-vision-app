@@ -218,9 +218,11 @@ export function AppSidebar() {
   const displayName = me?.fullName || me?.username || "User";
   const initials = displayName.split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logActivity({ action: "logout", entityType: "system", description: `Signed out (${displayName})` });
     logout();
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.auth.signOut();
     navigate({ to: "/" });
   };
 
