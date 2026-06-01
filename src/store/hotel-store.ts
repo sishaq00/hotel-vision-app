@@ -185,6 +185,8 @@ export interface Payment {
   method: PaymentMethod;
   status: PaymentStatus;
   date: string;
+  proofPath?: string;   // storage path in payment-proofs bucket
+  proofName?: string;   // original filename for display
 }
 
 export interface HotelSettings {
