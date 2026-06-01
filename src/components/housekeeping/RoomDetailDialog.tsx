@@ -88,11 +88,39 @@ export function RoomDetailDialog({
           {room.housekeepingPhotos && room.housekeepingPhotos.length > 0 && (
             <div className="grid grid-cols-3 gap-1.5">
               {room.housekeepingPhotos.map((p, i) => (
-                <img key={i} src={p} alt="" className="aspect-square rounded border object-cover" />
+                <StoragePhoto
+                  key={i}
+                  src={p}
+                  bucket="housekeeping-photos"
+                  alt={`Room ${room.number} photo ${i + 1}`}
+                  className="aspect-square w-full rounded border object-cover"
+                />
               ))}
             </div>
           )}
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              capture="environment"
+              className="hidden"
+              onChange={handleUpload}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              {uploading ? "Uploading..." : "Add photo"}
+            </Button>
+          </div>
         </div>
+
 
         <div className="space-y-2 border-t border-border pt-3">
           <label className="text-[10px] font-semibold uppercase text-muted-foreground">Override status</label>
