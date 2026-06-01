@@ -98,4 +98,23 @@ async function bridgeLocalSession() {
   // Pull cloud data into local store, then start two-way sync.
   await pullFromCloud();
   startCloudSync();
+
+  // Cache cloud logo as data URL for offline PDF generation.
+  try {
+    const { useHotelStore } = await import("@/store/hotel-store");
+    const s = useHotelStore.getState().settings;
+    if (s.logoUrl && !s.logoDataUrl) {
+      const res = await fetch(s.logoUrl);
+      const blob = await res.blob();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      useHotelStore.getState().updateSettings({ logoDataUrl: dataUrl });
+    }
+  } catch {
+    /* non-fatal */
+  }
 }
