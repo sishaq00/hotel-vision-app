@@ -261,13 +261,13 @@ async function pushLocalToCloud() {
     (r) => isUuid(r.id) && isUuid(r.guestId) && isUuid(r.roomId),
   );
   if (validGuests.length)
-    await supabase.from("guests").upsert(validGuests.map(guestToRow));
+    await supabase.from("guests").upsert(validGuests.map(guestToRow) as any);
   if (validRooms.length)
-    await supabase.from("rooms").upsert(validRooms.map(roomToRow));
+    await supabase.from("rooms").upsert(validRooms.map(roomToRow) as any);
   if (validReservations.length)
     await supabase
       .from("reservations")
-      .upsert(validReservations.map(reservationToRow));
+      .upsert(validReservations.map(reservationToRow) as any);
 }
 
 // ---------- Diff + push (per-mutation) --------------------------------------
@@ -293,7 +293,7 @@ async function syncGuests(prev: Guest[], next: Guest[]) {
   if (valid.length) {
     const { error } = await supabase
       .from("guests")
-      .upsert(valid.map(guestToRow));
+      .upsert(valid.map(guestToRow) as any);
     if (error) console.error("[cloud-sync] guests upsert:", error.message);
   }
   const validDel = deletes.filter(isUuid);
@@ -317,7 +317,7 @@ async function syncRooms(prev: Room[], next: Room[]) {
   if (valid.length) {
     const { error } = await supabase
       .from("rooms")
-      .upsert(valid.map(roomToRow));
+      .upsert(valid.map(roomToRow) as any);
     if (error) console.error("[cloud-sync] rooms upsert:", error.message);
   }
   const validDel = deletes.filter(isUuid);
@@ -343,7 +343,7 @@ async function syncReservations(prev: Reservation[], next: Reservation[]) {
   if (valid.length) {
     const { error } = await supabase
       .from("reservations")
-      .upsert(valid.map(reservationToRow));
+      .upsert(valid.map(reservationToRow) as any);
     if (error)
       console.error("[cloud-sync] reservations upsert:", error.message);
   }
