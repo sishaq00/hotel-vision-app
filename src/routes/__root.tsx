@@ -5,7 +5,7 @@ import { ShortcutsDialog } from "@/components/system/ShortcutsDialog";
 import { GlobalSearch } from "@/components/system/GlobalSearch";
 import { PrintPicker } from "@/components/system/PrintPicker";
 import { ConfirmProvider } from "@/components/system/ConfirmDialog";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { SupabaseAuthGate } from "@/components/auth/SupabaseAuthGate";
 
 import appCss from "../styles.css?url";
 
@@ -85,13 +85,13 @@ function RootComponent() {
       {isPublic ? (
         <Outlet />
       ) : (
-        <AuthGate>
+        <SupabaseAuthGate>
           <AppBoot />
           <Outlet />
           <ShortcutsDialog />
           <GlobalSearch />
           <PrintPicker />
-        </AuthGate>
+        </SupabaseAuthGate>
       )}
       <Toaster />
     </ConfirmProvider>
