@@ -25,13 +25,11 @@ export function SupabaseAuthGate({ children }: { children: ReactNode }) {
       (_event, session) => {
         setHasSession(!!session);
         if (session) {
-          // Bridge into local store so existing pages keep working.
-          // Defer to avoid running inside the auth callback.
           setTimeout(() => {
             void bridgeLocalSession();
           }, 0);
         } else {
-          // Local logout when Supabase session ends.
+          stopCloudSync();
           useAuthStore.getState().logout();
         }
       },
