@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CreditCard, Plus, Search, FileMinus } from "lucide-react";
+import { CreditCard, Plus, Search, FileMinus, Paperclip } from "lucide-react";
+import { getSignedUrl } from "@/integrations/storage/hotel-storage";
 import { IssueCreditNoteDialog } from "@/components/invoicing/IssueCreditNoteDialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
@@ -252,19 +253,40 @@ function PaymentsPage() {
                           ${p.amount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          {hasInvoice && p.status === "paid" && r ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 gap-1.5 text-destructive hover:text-destructive"
-                              onClick={() => setCreditNoteResId(r.id)}
-                            >
-                              <FileMinus className="h-3.5 w-3.5" />
-                              Credit Note
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            {p.proofPath && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 gap-1.5"
+                                onClick={async () => {
+                                  try {
+                                    const url = await getSignedUrl("payment-proofs", p.proofPath!, 3600);
+                                    if (url) window.open(url, "_blank", "noopener,noreferrer");
+                                    else toast.error("Failed to load proof");
+                                  } catch {
+                                    toast.error("Failed to load proof");
+                                  }
+                                }}
+                              >
+                                <Paperclip className="h-3.5 w-3.5" />
+                                Proof
+                              </Button>
+                            )}
+                            {hasInvoice && p.status === "paid" && r ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 gap-1.5 text-destructive hover:text-destructive"
+                                onClick={() => setCreditNoteResId(r.id)}
+                              >
+                                <FileMinus className="h-3.5 w-3.5" />
+                                Credit Note
+                              </Button>
+                            ) : (
+                              !p.proofPath && <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
