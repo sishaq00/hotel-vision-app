@@ -262,7 +262,8 @@ function PaymentsPage() {
                                 onClick={async () => {
                                   try {
                                     const url = await getSignedUrl("payment-proofs", p.proofPath!, 3600);
-                                    window.open(url, "_blank", "noopener,noreferrer");
+                                    if (url) window.open(url, "_blank", "noopener,noreferrer");
+                                    else toast.error("Failed to load proof");
                                   } catch {
                                     toast.error("Failed to load proof");
                                   }
