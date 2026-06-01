@@ -64,15 +64,29 @@ function SettingsPage() {
     toast.success(t("toast.saved"));
   };
 
-  const onLogo = (file: File) => {
+  const onLogo = async (file: File) => {
     if (file.size > 512 * 1024) {
       toast.error("Logo must be under 512 KB");
       return;
     }
+    // 1) Keep local base64 for offline PDFs.
     const reader = new FileReader();
     reader.onload = () =>
       setForm((f) => ({ ...f, logoDataUrl: String(reader.result) }));
     reader.readAsDataURL(file);
+
+    // 2) Upload to public cloud bucket so other devices can see it.
+    const { uploadFile } = await import("@/integrations/storage/hotel-storage");
+    const res = await uploadFile("hotel-logo", file, `logo-${Date.now()}.${file.name.split(".").pop() ?? "png"}`);
+    if (res.ok) {
+      // For public buckets, derive the public URL (no expiry).
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = supabase.storage.from("hotel-logo").getPublicUrl(res.path);
+      setForm((f) => ({ ...f, logoUrl: data.publicUrl }));
+      toast.success("Logo synced to cloud");
+    } else {
+      toast.error("Cloud upload failed: " + res.error);
+    }
   };
 
   const onRestoreFile = async (file: File) => {
@@ -129,8 +143,8 @@ function SettingsPage() {
               <Label>Logo (PNG/JPG, ≤ 512 KB)</Label>
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                  {form.logoDataUrl ? (
-                    <img src={form.logoDataUrl} alt="logo" className="h-full w-full object-contain" />
+                  {form.logoDataUrl || form.logoUrl ? (
+                    <img src={form.logoDataUrl || form.logoUrl} alt="logo" className="h-full w-full object-contain" />
                   ) : (
                     <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   )}
@@ -141,9 +155,9 @@ function SettingsPage() {
                   onClick={() => logoRef.current?.click()}>
                   <Upload className="me-1 h-4 w-4" /> Upload
                 </Button>
-                {form.logoDataUrl && (
+                {(form.logoDataUrl || form.logoUrl) && (
                   <Button type="button" variant="ghost" size="sm"
-                    onClick={() => setForm({ ...form, logoDataUrl: undefined })}>
+                    onClick={() => setForm({ ...form, logoDataUrl: undefined, logoUrl: undefined })}>
                     <Trash2 className="me-1 h-4 w-4" /> Remove
                   </Button>
                 )}
