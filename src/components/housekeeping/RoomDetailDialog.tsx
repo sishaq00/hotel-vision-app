@@ -44,9 +44,13 @@ export function RoomDetailDialog({
         const res = await uploadFile("housekeeping-photos", f, `${room.id}/${Date.now()}-${f.name}`);
         if (res.ok) paths.push(res.path);
       }
-      updateRoom(room.id, {
-        housekeepingPhotos: [...(room.housekeepingPhotos ?? []), ...paths],
-      });
+      setState((s) => ({
+        rooms: s.rooms.map((r) =>
+          r.id === room.id
+            ? { ...r, housekeepingPhotos: [...(r.housekeepingPhotos ?? []), ...paths] }
+            : r,
+        ),
+      }));
       toast.success(`${paths.length} photo(s) uploaded`);
     } catch (err: any) {
       toast.error(err?.message ?? "Upload failed");
