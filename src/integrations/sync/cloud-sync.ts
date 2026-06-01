@@ -615,7 +615,7 @@ export async function pullFromCloud(): Promise<{ ok: boolean; error?: string }> 
 
 async function pushLocalToCloud() {
   const state = useHotelStore.getState();
-  const upserts: Array<Promise<any>> = [];
+  const upserts: Array<PromiseLike<any>> = [];
 
   const vG = state.guests.filter((g) => isUuid(g.id));
   if (vG.length)
