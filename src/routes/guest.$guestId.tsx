@@ -1,7 +1,7 @@
 // Guest profile: shows full reservation history, payments, totals.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard } from "lucide-react";
+import { ArrowLeft, Crown, Mail, Phone, MapPin, Ban, BedDouble, Receipt, Pencil, IdCard, Calendar, Tag, Wallet, TrendingUp, TrendingDown, ShoppingBag, Trash2, Activity as ActivityIcon, CreditCard, Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
 import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
+import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { toast } from "sonner";
 
@@ -33,6 +34,7 @@ function GuestProfile() {
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [payRes, setPayRes] = useState<Reservation | null>(null);
   const [editPayment, setEditPayment] = useState<Payment | null>(null);
+  const [addPurchaseOpen, setAddPurchaseOpen] = useState(false);
   const confirm = useConfirm();
   const deletePayment = useHotelStore((s) => s.deletePayment);
   const deleteProductSale = useHotelStore((s) => s.deleteProductSale);
@@ -388,8 +390,18 @@ function GuestProfile() {
           {/* Activity timeline tab */}
           <TabsContent value="activity">
             <Card className="border-border/60 shadow-card">
-              <div className="flex items-center gap-2 border-b border-border p-4 text-sm font-semibold">
-                <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+              <div className="flex items-center justify-between gap-2 border-b border-border p-4 text-sm font-semibold">
+                <div className="flex items-center gap-2">
+                  <ActivityIcon className="h-4 w-4 text-primary" /> Activity log · {timeline.length}
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={() => setAddPurchaseOpen(true)}
+                  disabled={reservations.length === 0}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add purchase
+                </Button>
               </div>
               {timeline.length === 0 ? (
                 <p className="p-8 text-center text-sm text-muted-foreground">
@@ -535,6 +547,14 @@ function GuestProfile() {
           payment={editPayment}
           open={!!editPayment}
           onOpenChange={(o) => !o && setEditPayment(null)}
+        />
+      )}
+      {addPurchaseOpen && (
+        <AddGuestPurchaseDialog
+          guestId={guestId}
+          reservations={reservations}
+          open={addPurchaseOpen}
+          onOpenChange={setAddPurchaseOpen}
         />
       )}
     </AppLayout>
