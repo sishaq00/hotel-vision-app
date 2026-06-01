@@ -175,7 +175,14 @@ export function TopBar(_props: { title?: string; subtitle?: string } = {}) {
             {isAdmin && (
               <DropdownMenuItem asChild>
                 <Link to="/users" className="text-xs">
-                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />Manage users
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />Manage users (local)
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/staff" className="text-xs">
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />Cloud staff
                 </Link>
               </DropdownMenuItem>
             )}
