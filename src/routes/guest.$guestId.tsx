@@ -23,7 +23,9 @@ import { EditPaymentDialog } from "@/components/payments/EditPaymentDialog";
 import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
+import { GuestDocumentsTab } from "@/components/guests/GuestDocumentsTab";
 import { printGuestFolio } from "@/lib/print-folio";
+
 import { toast } from "sonner";
 
 
@@ -358,7 +360,7 @@ function GuestProfile() {
 
         {/* Tabs: Reservations / Activity / Payments */}
         <Tabs defaultValue="reservations" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="reservations" className="gap-1.5">
               <BedDouble className="h-3.5 w-3.5" /> Reservations
             </TabsTrigger>
@@ -368,7 +370,11 @@ function GuestProfile() {
             <TabsTrigger value="payments" className="gap-1.5">
               <Receipt className="h-3.5 w-3.5" /> Payments
             </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-1.5">
+              <IdCard className="h-3.5 w-3.5" /> Documents
+            </TabsTrigger>
           </TabsList>
+
 
           {/* Reservations tab */}
           <TabsContent value="reservations">
@@ -612,8 +618,14 @@ function GuestProfile() {
               )}
             </Card>
           </TabsContent>
+
+          {/* Documents tab */}
+          <TabsContent value="documents">
+            <GuestDocumentsTab guestId={guestId} />
+          </TabsContent>
         </Tabs>
       </div>
+
       {editOpen && (
         <EditGuestDialog open={editOpen} onOpenChange={setEditOpen} guestId={guestId} />
       )}
