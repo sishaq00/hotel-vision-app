@@ -5,7 +5,7 @@ import {
   Wallet, PackageSearch, Clock, CreditCard, BarChart3, History,
   Printer, Settings as SettingsIcon, Tag, MessageSquareText,
   ShieldCheck, UserCog, FileMinus, Percent, ChevronRight, Hotel,
-  ListChecks, Inbox,
+  ListChecks, Inbox, Award,
 } from "lucide-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
@@ -195,6 +195,7 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.rooms"),      url: "/rooms",       icon: BedDouble,      permission: "rooms.manage" },
         { label: "Room Types",        url: "/room-types",  icon: BedDouble,      permission: "rooms.manage" },
         { label: t("nav.rate-plans"), url: "/rate-plans",  icon: Tag,            permission: "rooms.manage" },
+        { label: "Loyalty Program",   url: "/loyalty",     icon: Award,          permission: "rooms.manage" },
         { label: t("nav.templates"),  url: "/templates",   icon: MessageSquareText },
         { label: "Users",             url: "/users",       icon: ShieldCheck,    permission: "users.manage" },
         { label: "Settings",          url: "/settings",    icon: SettingsIcon },

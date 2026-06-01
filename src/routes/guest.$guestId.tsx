@@ -24,6 +24,7 @@ import { EditSaleDialog } from "@/components/payments/EditSaleDialog";
 import { AddGuestPurchaseDialog } from "@/components/payments/AddGuestPurchaseDialog";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { GuestDocumentsTab } from "@/components/guests/GuestDocumentsTab";
+import { LoyaltyTab } from "@/components/guests/LoyaltyTab";
 import { printGuestFolio } from "@/lib/print-folio";
 
 import { toast } from "sonner";
@@ -360,7 +361,7 @@ function GuestProfile() {
 
         {/* Tabs: Reservations / Activity / Payments */}
         <Tabs defaultValue="reservations" className="w-full">
-          <TabsList className="grid w-full max-w-xl grid-cols-4">
+          <TabsList className="grid w-full max-w-xl grid-cols-5">
             <TabsTrigger value="reservations" className="gap-1.5">
               <BedDouble className="h-3.5 w-3.5" /> Reservations
             </TabsTrigger>
@@ -369,6 +370,9 @@ function GuestProfile() {
             </TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">
               <Receipt className="h-3.5 w-3.5" /> Payments
+            </TabsTrigger>
+            <TabsTrigger value="loyalty" className="gap-1.5">
+              <Award className="h-3.5 w-3.5" /> Loyalty
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-1.5">
               <IdCard className="h-3.5 w-3.5" /> Documents
@@ -617,6 +621,11 @@ function GuestProfile() {
                 </Table>
               )}
             </Card>
+          </TabsContent>
+
+          {/* Loyalty tab */}
+          <TabsContent value="loyalty">
+            <LoyaltyTab guestId={guestId} guestName={guest?.name ?? "Guest"} />
           </TabsContent>
 
           {/* Documents tab */}

@@ -6,6 +6,7 @@ import { GlobalSearch } from "@/components/system/GlobalSearch";
 import { PrintPicker } from "@/components/system/PrintPicker";
 import { ConfirmProvider } from "@/components/system/ConfirmDialog";
 import { SupabaseAuthGate } from "@/components/auth/SupabaseAuthGate";
+import { LoyaltyAutoAward } from "@/components/system/LoyaltyAutoAward";
 
 import appCss from "../styles.css?url";
 
@@ -87,6 +88,7 @@ function RootComponent() {
       ) : (
         <SupabaseAuthGate>
           <AppBoot />
+          <LoyaltyAutoAward />
           <Outlet />
           <ShortcutsDialog />
           <GlobalSearch />
