@@ -334,6 +334,24 @@ export function ReservationsTable({
                             </DropdownMenuItem>
                           )}
 
+                          {/* Signature + registration card */}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setSignId(r.id)} className="text-xs">
+                            <PenLine className="mr-2 h-3.5 w-3.5" />
+                            {hasSignature(r.id) ? "Re-capture signature" : "Capture signature"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to="/print/registration-card/$reservationId"
+                              params={{ reservationId: r.id }}
+                              target="_blank"
+                              className="text-xs"
+                            >
+                              <Printer className="mr-2 h-3.5 w-3.5" /> Print registration card
+                            </Link>
+                          </DropdownMenuItem>
+
+
                           {/* Invoice actions */}
                           {actions.invoice && r.status === "checked-out" && r.invoice && (
                             <>
