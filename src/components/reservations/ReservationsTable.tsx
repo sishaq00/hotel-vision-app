@@ -111,6 +111,10 @@ export function ReservationsTable({
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [extendId,   setExtendId]   = useState<string | null>(null);
   const [payId,      setPayId]      = useState<string | null>(null);
+  const [signId,     setSignId]     = useState<string | null>(null);
+  const [sigVersion, setSigVersion] = useState(0);
+  // sigVersion is bumped after capturing/removing a signature so badges re-evaluate
+  void sigVersion;
 
   const curr = settings.currency ?? "$";
 
