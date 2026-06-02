@@ -439,6 +439,20 @@ export function ReservationsTable({
           />
         );
       })()}
+      {signId && (() => {
+        const r = reservations.find((x) => x.id === signId);
+        if (!r) return null;
+        const g = guests.find((x) => x.id === r.guestId);
+        return (
+          <SignatureDialog
+            open
+            onOpenChange={(o) => !o && setSignId(null)}
+            reservationId={r.id}
+            guestName={g?.name}
+            onSaved={() => setSigVersion((v) => v + 1)}
+          />
+        );
+      })()}
     </>
   );
 }
