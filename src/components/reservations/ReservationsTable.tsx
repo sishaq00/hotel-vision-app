@@ -3,12 +3,14 @@
 import { useState } from "react";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
-  MoreHorizontal, Eye, AlertTriangle, Wallet,
+  MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
 import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
+import { SignatureDialog } from "@/components/reservations/SignatureDialog";
 import { RecordPaymentDialog } from "@/components/payments/RecordPaymentDialog";
+import { hasSignature } from "@/lib/signatures";
 import { ExportButtons } from "@/components/system/ExportButtons";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { GuestFlagBadges } from "@/components/guests/GuestFlagBadges";
@@ -109,6 +111,10 @@ export function ReservationsTable({
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [extendId,   setExtendId]   = useState<string | null>(null);
   const [payId,      setPayId]      = useState<string | null>(null);
+  const [signId,     setSignId]     = useState<string | null>(null);
+  const [sigVersion, setSigVersion] = useState(0);
+  // sigVersion is bumped after capturing/removing a signature so badges re-evaluate
+  void sigVersion;
 
   const curr = settings.currency ?? "$";
 
@@ -328,6 +334,24 @@ export function ReservationsTable({
                             </DropdownMenuItem>
                           )}
 
+                          {/* Signature + registration card */}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setSignId(r.id)} className="text-xs">
+                            <PenLine className="mr-2 h-3.5 w-3.5" />
+                            {hasSignature(r.id) ? "Re-capture signature" : "Capture signature"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to="/print/registration-card/$reservationId"
+                              params={{ reservationId: r.id }}
+                              target="_blank"
+                              className="text-xs"
+                            >
+                              <Printer className="mr-2 h-3.5 w-3.5" /> Print registration card
+                            </Link>
+                          </DropdownMenuItem>
+
+
                           {/* Invoice actions */}
                           {actions.invoice && r.status === "checked-out" && r.invoice && (
                             <>
@@ -412,6 +436,20 @@ export function ReservationsTable({
             reservation={r}
             open
             onOpenChange={(o) => !o && setPayId(null)}
+          />
+        );
+      })()}
+      {signId && (() => {
+        const r = reservations.find((x) => x.id === signId);
+        if (!r) return null;
+        const g = guests.find((x) => x.id === r.guestId);
+        return (
+          <SignatureDialog
+            open
+            onOpenChange={(o) => !o && setSignId(null)}
+            reservationId={r.id}
+            guestName={g?.name}
+            onSaved={() => setSigVersion((v) => v + 1)}
           />
         );
       })()}
