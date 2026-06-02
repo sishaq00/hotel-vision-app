@@ -59,6 +59,7 @@ import { Route as PrintCreditNoteNoteIdRouteImport } from './routes/print-credit
 import { Route as GuestGuestIdRouteImport } from './routes/guest.$guestId'
 import { Route as BulkRoutingSetupRouteImport } from './routes/bulk-routing.setup'
 import { Route as BulkRoutingFastPostingRouteImport } from './routes/bulk-routing.fast-posting'
+import { Route as PrintRegistrationCardReservationIdRouteImport } from './routes/print.registration-card.$reservationId'
 import { Route as PrintHousekeepingSummaryRouteImport } from './routes/print.housekeeping.summary'
 import { Route as PrintHousekeepingByFloorRouteImport } from './routes/print.housekeeping.by-floor'
 import { Route as PrintHousekeepingAllRouteImport } from './routes/print.housekeeping.all'
@@ -316,6 +317,12 @@ const BulkRoutingFastPostingRoute = BulkRoutingFastPostingRouteImport.update({
   path: '/bulk-routing/fast-posting',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintRegistrationCardReservationIdRoute =
+  PrintRegistrationCardReservationIdRouteImport.update({
+    id: '/print/registration-card/$reservationId',
+    path: '/print/registration-card/$reservationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PrintHousekeepingSummaryRoute =
   PrintHousekeepingSummaryRouteImport.update({
     id: '/print/housekeeping/summary',
@@ -395,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
   '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
   '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
+  '/print/registration-card/$reservationId': typeof PrintRegistrationCardReservationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -451,6 +459,7 @@ export interface FileRoutesByTo {
   '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
   '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
   '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
+  '/print/registration-card/$reservationId': typeof PrintRegistrationCardReservationIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -508,6 +517,7 @@ export interface FileRoutesById {
   '/print/housekeeping/all': typeof PrintHousekeepingAllRoute
   '/print/housekeeping/by-floor': typeof PrintHousekeepingByFloorRoute
   '/print/housekeeping/summary': typeof PrintHousekeepingSummaryRoute
+  '/print/registration-card/$reservationId': typeof PrintRegistrationCardReservationIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -566,6 +576,7 @@ export interface FileRouteTypes {
     | '/print/housekeeping/all'
     | '/print/housekeeping/by-floor'
     | '/print/housekeeping/summary'
+    | '/print/registration-card/$reservationId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -622,6 +633,7 @@ export interface FileRouteTypes {
     | '/print/housekeeping/all'
     | '/print/housekeeping/by-floor'
     | '/print/housekeeping/summary'
+    | '/print/registration-card/$reservationId'
   id:
     | '__root__'
     | '/'
@@ -678,6 +690,7 @@ export interface FileRouteTypes {
     | '/print/housekeeping/all'
     | '/print/housekeeping/by-floor'
     | '/print/housekeeping/summary'
+    | '/print/registration-card/$reservationId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -734,6 +747,7 @@ export interface RootRouteChildren {
   PrintHousekeepingAllRoute: typeof PrintHousekeepingAllRoute
   PrintHousekeepingByFloorRoute: typeof PrintHousekeepingByFloorRoute
   PrintHousekeepingSummaryRoute: typeof PrintHousekeepingSummaryRoute
+  PrintRegistrationCardReservationIdRoute: typeof PrintRegistrationCardReservationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1088,6 +1102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BulkRoutingFastPostingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/print/registration-card/$reservationId': {
+      id: '/print/registration-card/$reservationId'
+      path: '/print/registration-card/$reservationId'
+      fullPath: '/print/registration-card/$reservationId'
+      preLoaderRoute: typeof PrintRegistrationCardReservationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print/housekeeping/summary': {
       id: '/print/housekeeping/summary'
       path: '/print/housekeeping/summary'
@@ -1184,17 +1205,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrintHousekeepingAllRoute: PrintHousekeepingAllRoute,
   PrintHousekeepingByFloorRoute: PrintHousekeepingByFloorRoute,
   PrintHousekeepingSummaryRoute: PrintHousekeepingSummaryRoute,
+  PrintRegistrationCardReservationIdRoute:
+    PrintRegistrationCardReservationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
