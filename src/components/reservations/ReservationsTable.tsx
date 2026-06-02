@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
-  MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine, FileSignature,
+  MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
