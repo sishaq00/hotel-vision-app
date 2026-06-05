@@ -47,20 +47,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "advance_deposits_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "advance_deposits_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_advance_deposits_guest_id"
             columns: ["guest_id"]
             isOneToOne: false
@@ -145,13 +131,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "credit_notes_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_credit_notes_reservation_id"
             columns: ["reservation_id"]
             isOneToOne: false
@@ -194,13 +173,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_folio_charges_folio_id"
-            columns: ["folio_id"]
-            isOneToOne: false
-            referencedRelation: "folios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "folio_charges_folio_id_fkey"
             columns: ["folio_id"]
             isOneToOne: false
             referencedRelation: "folios"
@@ -259,20 +231,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_folios_reservation_id"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "folios_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "folios_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
             referencedRelation: "reservations"
@@ -511,13 +469,6 @@ export type Database = {
             referencedRelation: "housekeepers"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "housekeeper_reports_housekeeper_id_fkey"
-            columns: ["housekeeper_id"]
-            isOneToOne: false
-            referencedRelation: "housekeepers"
-            referencedColumns: ["id"]
-          },
         ]
       }
       housekeepers: {
@@ -600,13 +551,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_housekeeping_tasks_room_id"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "housekeeping_tasks_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
@@ -735,20 +679,6 @@ export type Database = {
             referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "lost_found_claimed_by_guest_id_fkey"
-            columns: ["claimed_by_guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lost_found_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
         ]
       }
       maintenance_tickets: {
@@ -794,13 +724,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_maintenance_tickets_room_id"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_tickets_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
@@ -852,20 +775,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_payments_reservation_id"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
             referencedRelation: "reservations"
@@ -975,27 +884,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_product_sales_reservation_id"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_sales_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_sales_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_sales_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
             referencedRelation: "reservations"
@@ -1162,20 +1050,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_reservations_room_id"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
