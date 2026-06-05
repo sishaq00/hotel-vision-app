@@ -60,6 +60,20 @@ export type Database = {
             referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_advance_deposits_guest_id"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_advance_deposits_reservation_id"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       audit_log: {
@@ -137,6 +151,13 @@ export type Database = {
             referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_credit_notes_reservation_id"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       folio_charges: {
@@ -171,6 +192,13 @@ export type Database = {
           posted_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_folio_charges_folio_id"
+            columns: ["folio_id"]
+            isOneToOne: false
+            referencedRelation: "folios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "folio_charges_folio_id_fkey"
             columns: ["folio_id"]
@@ -215,6 +243,27 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_folios_guest_id"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_folios_house_account_id"
+            columns: ["house_account_id"]
+            isOneToOne: false
+            referencedRelation: "house_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_folios_reservation_id"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "folios_guest_id_fkey"
             columns: ["guest_id"]
@@ -456,6 +505,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_housekeeper_reports_housekeeper_id"
+            columns: ["housekeeper_id"]
+            isOneToOne: false
+            referencedRelation: "housekeepers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "housekeeper_reports_housekeeper_id_fkey"
             columns: ["housekeeper_id"]
             isOneToOne: false
@@ -535,6 +591,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_housekeeping_tasks_assigned_to"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "housekeepers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_housekeeping_tasks_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "housekeeping_tasks_room_id_fkey"
             columns: ["room_id"]
@@ -652,6 +722,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_lost_found_claimed_by_guest_id"
+            columns: ["claimed_by_guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_lost_found_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lost_found_claimed_by_guest_id_fkey"
             columns: ["claimed_by_guest_id"]
             isOneToOne: false
@@ -709,6 +793,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_maintenance_tickets_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_tickets_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -752,6 +843,20 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_payments_guest_id"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_payments_reservation_id"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_guest_id_fkey"
             columns: ["guest_id"]
@@ -854,6 +959,27 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_product_sales_guest_id"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_sales_product_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_product_sales_reservation_id"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_sales_guest_id_fkey"
             columns: ["guest_id"]
@@ -1021,6 +1147,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_reservations_group_master_id"
+            columns: ["group_master_id"]
+            isOneToOne: false
+            referencedRelation: "group_masters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_reservations_guest_id"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_reservations_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reservations_guest_id_fkey"
             columns: ["guest_id"]
             isOneToOne: false
@@ -1127,7 +1274,15 @@ export type Database = {
           updated_at?: string
           zone?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_rooms_assigned_housekeeper_id"
+            columns: ["assigned_housekeeper_id"]
+            isOneToOne: false
+            referencedRelation: "housekeepers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       routing_rules: {
         Row: {
@@ -1224,6 +1379,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_in_reservation: {
+        Args: { p_reservation_id: string }
+        Returns: string
+      }
+      check_out_reservation: {
+        Args: { p_final_amount?: number; p_reservation_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1232,6 +1395,17 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      record_payment_with_audit: {
+        Args: {
+          p_amount: number
+          p_guest_id: string
+          p_method?: string
+          p_notes?: string
+          p_reservation_id: string
+          p_status?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
