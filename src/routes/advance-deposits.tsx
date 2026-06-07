@@ -150,7 +150,7 @@ function NewDepositDialog({
 }) {
   const [guestId, setGuestId] = useState("");
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [notes, setNotes] = useState("");
   return (
     <DialogContent className="sm:max-w-[420px]">
@@ -175,8 +175,8 @@ function NewDepositDialog({
             <Select value={method} onValueChange={(v) => setMethod(v as PaymentMethod)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="card">Card</SelectItem>
                 <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="card">Card</SelectItem>
                 <SelectItem value="transfer">Transfer</SelectItem>
               </SelectContent>
             </Select>

@@ -116,7 +116,7 @@ export function CheckoutDialog({ reservation, open, onOpenChange }: CheckoutDial
   const { t } = useT();
   const confirm = useConfirm();
 
-  const [method, setMethod]         = useState<PaymentMethod>("card");
+  const [method, setMethod]         = useState<PaymentMethod>("cash");
   const [markPaid, setMarkPaid]     = useState(true);
   const [finalAdjust, setFinalAdjust] = useState<ManualRateValue | null>(null);
 

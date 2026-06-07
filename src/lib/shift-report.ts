@@ -63,14 +63,18 @@ export function buildShiftReport(
   const refunds = entries.filter((e) => e.action === "payment.refund");
   const roomChanges = entries.filter((e) => e.action === "room.status-change");
 
-  // payment.record covers both cash payments and product sales — separate them
+  // payment.record covers cash, card, transfer, and product sales — separate.
+  // Cash-only hotel: shift balancing counts ONLY method === 'cash' towards the drawer.
   const paymentEntries = entries.filter((e) => e.action === "payment.record");
   const productSaleEntries = paymentEntries.filter(
     (e) => (e.details as { kind?: string } | undefined)?.kind === "product-sale",
   );
-  const cashPayments = paymentEntries.filter(
-    (e) => (e.details as { kind?: string } | undefined)?.kind !== "product-sale",
-  );
+  const cashPayments = paymentEntries.filter((e) => {
+    const d = e.details as { kind?: string; method?: string } | undefined;
+    if (d?.kind === "product-sale") return false;
+    // Default to cash when method is missing (legacy entries)
+    return (d?.method ?? "cash") === "cash";
+  });
 
   // Pull full ProductSale rows (richer than activity entries)
   const productSales = state.productSales.filter(

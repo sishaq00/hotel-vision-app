@@ -59,7 +59,7 @@ function PaymentsPage() {
   const [open, setOpen] = useState(false);
   const [reservationId, setReservationId] = useState("");
   const [amount, setAmount] = useState(0);
-  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [query, setQuery] = useState("");
   const [creditNoteResId, setCreditNoteResId] = useState<string | null>(null);
 
@@ -101,7 +101,7 @@ function PaymentsPage() {
     toast.success("Payment recorded");
     setReservationId("");
     setAmount(0);
-    setMethod("card");
+    setMethod("cash");
     setOpen(false);
   };
 
