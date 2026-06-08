@@ -53,7 +53,7 @@ export async function completeMaintenanceTicket(
 ): Promise<void> {
   const { error } = await supabase.rpc("complete_maintenance_ticket", {
     p_ticket_id: ticketId,
-    p_resolution_notes: resolutionNotes ?? null,
+    p_resolution_notes: resolutionNotes,
   });
   if (error) throw error;
 }
