@@ -1253,12 +1253,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_housekeeping_task: {
+        Args: {
+          p_housekeeper_id: string
+          p_room_id: string
+          p_task_type?: string
+        }
+        Returns: string
+      }
+      assign_maintenance_ticket: {
+        Args: { p_technician_id: string; p_ticket_id: string }
+        Returns: undefined
+      }
       check_in_reservation: {
         Args: { p_reservation_id: string }
         Returns: string
       }
       check_out_reservation: {
         Args: { p_final_amount?: number; p_reservation_id: string }
+        Returns: undefined
+      }
+      complete_maintenance_ticket: {
+        Args: { p_resolution_notes?: string; p_ticket_id: string }
         Returns: undefined
       }
       has_role: {
@@ -1279,6 +1295,18 @@ export type Database = {
           p_status?: string
         }
         Returns: string
+      }
+      return_lost_found_item: {
+        Args: { p_guest_id: string; p_item_id: string }
+        Returns: undefined
+      }
+      set_lost_found_location: {
+        Args: { p_item_id: string; p_location: string }
+        Returns: undefined
+      }
+      update_room_housekeeping_status: {
+        Args: { p_room_id: string; p_status: string }
+        Returns: undefined
       }
     }
     Enums: {
