@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.run_full_hotel_simulation(uuid) TO authenticated, anon;

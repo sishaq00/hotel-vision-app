@@ -1300,6 +1300,7 @@ export type Database = {
         Args: { p_guest_id: string; p_item_id: string }
         Returns: undefined
       }
+      run_full_hotel_simulation: { Args: { p_actor: string }; Returns: Json }
       set_lost_found_location: {
         Args: { p_item_id: string; p_location: string }
         Returns: undefined
