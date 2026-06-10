@@ -554,7 +554,7 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean }) => InvoiceSnapshot | null;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean; invoiceNumber?: string }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
   markNoShow: (id: string) => void;
   markRecentlyViewed: (id: string) => void;
