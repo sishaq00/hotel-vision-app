@@ -54,9 +54,8 @@ export function SignatureDialog({
 
       // Load existing signature from DB if any
       void (async () => {
-        const existing = (await import("@/lib/signatures")).fetchSignature
-          ? await (await import("@/lib/signatures")).fetchSignature(reservationId)
-          : getSignature(reservationId);
+        const mod = await import("@/lib/signatures");
+        const existing = await mod.fetchSignature(reservationId);
         if (existing) {
           const img = new Image();
           img.onload = () => {
