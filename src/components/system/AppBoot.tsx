@@ -19,6 +19,14 @@ export function AppBoot() {
   // LAN sync — connects to PocketBase server when configured in settings
   useStoreSync();
 
+  // Prime DB-backed signatures cache + live-update on remote changes
+  useEffect(() => {
+    void primeSignatures();
+    const unsub = subscribeSignatures();
+    return () => unsub();
+  }, []);
+
+
   // Auto night audit catch-up: for each missed night (incl. overstays),
   // post the nightly room charge so totals stay accurate even without
   // manually running Night Audit. Runs on boot then hourly.
