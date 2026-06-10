@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { saveSignature, getSignature, clearSignature } from "@/lib/signatures";
+import { saveSignature, clearSignature } from "@/lib/signatures";
 
 interface Props {
   open: boolean;
