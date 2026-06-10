@@ -8,6 +8,7 @@ import { useHotelStore } from "@/store/hotel-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useStoreSync } from "@/lib/sync/use-store-sync";
 import { runDailyAutoBackup, daysSinceLastDownload, downloadBackup } from "@/lib/backup";
+import { primeSignatures, subscribeSignatures } from "@/lib/signatures";
 
 export function AppBoot() {
   const lang = useHotelStore((s) => s.settings.language) ?? "en";
