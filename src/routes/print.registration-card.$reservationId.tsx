@@ -1,8 +1,8 @@
 // A4 Registration Card — printable, with guest details + digital signature.
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHotelStore } from "@/store/hotel-store";
-import { getSignature } from "@/lib/signatures";
+import { fetchSignature, type SignatureRecord } from "@/lib/signatures";
 
 export const Route = createFileRoute("/print/registration-card/$reservationId")({
   component: PrintRegistrationCard,
@@ -18,15 +18,19 @@ function PrintRegistrationCard() {
     reservation ? s.rooms.find((r) => r.id === reservation.roomId) : undefined,
   );
   const settings = useHotelStore((s) => s.settings);
+  const [sig, setSig] = useState<SignatureRecord | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => window.print(), 400);
+    void fetchSignature(reservationId).then(setSig);
+  }, [reservationId]);
+
+  useEffect(() => {
+    const t = setTimeout(() => window.print(), 600);
     return () => clearTimeout(t);
   }, []);
 
   if (!reservation) return <div style={{ padding: 24 }}>Reservation not found.</div>;
 
-  const sig = getSignature(reservationId);
   const nights = Math.max(
     1,
     Math.round((new Date(reservation.checkOut).getTime() - new Date(reservation.checkIn).getTime()) / 86400000),
