@@ -92,6 +92,36 @@ export type Database = {
         }
         Relationships: []
       }
+      backups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          label: string
+          payload: Json
+          size_bytes: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          label: string
+          payload: Json
+          size_bytes?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          label?: string
+          payload?: Json
+          size_bytes?: number
+        }
+        Relationships: []
+      }
       credit_notes: {
         Row: {
           amount: number
@@ -1227,6 +1257,50 @@ export type Database = {
         }
         Relationships: []
       }
+      signatures: {
+        Row: {
+          created_at: string
+          data_url: string
+          guest_name: string | null
+          id: string
+          reservation_id: string
+          signed_at: string
+          signed_by_name: string | null
+          signed_by_user: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_url: string
+          guest_name?: string | null
+          id?: string
+          reservation_id: string
+          signed_at?: string
+          signed_by_name?: string | null
+          signed_by_user?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_url?: string
+          guest_name?: string | null
+          id?: string
+          reservation_id?: string
+          signed_at?: string
+          signed_by_name?: string | null
+          signed_by_user?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signatures_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: true
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1285,6 +1359,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      issue_invoice_number: { Args: { p_prefix?: string }; Returns: string }
       record_payment_with_audit: {
         Args: {
           p_amount: number
