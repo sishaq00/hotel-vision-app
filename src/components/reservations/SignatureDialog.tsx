@@ -117,28 +117,36 @@ export function SignatureDialog({
     setIsEmpty(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (isEmpty) { toast.error("Signature is empty"); return; }
     const dataUrl = canvas.toDataURL("image/png");
-    saveSignature({
-      reservationId,
-      dataUrl,
-      signedAt: new Date().toISOString(),
-      signedByName,
-      guestName,
-    });
-    toast.success("Signature saved");
-    onSaved?.();
-    onOpenChange(false);
+    try {
+      await saveSignature({
+        reservationId,
+        dataUrl,
+        signedAt: new Date().toISOString(),
+        signedByName,
+        guestName,
+      });
+      toast.success("Signature saved");
+      onSaved?.();
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error("Failed to save signature: " + (e?.message ?? "unknown"));
+    }
   }
 
-  function handleRemove() {
-    clearSignature(reservationId);
-    handleClear();
-    toast("Signature removed");
-    onSaved?.();
+  async function handleRemove() {
+    try {
+      await clearSignature(reservationId);
+      handleClear();
+      toast("Signature removed");
+      onSaved?.();
+    } catch (e: any) {
+      toast.error("Failed to remove: " + (e?.message ?? "unknown"));
+    }
   }
 
   return (
