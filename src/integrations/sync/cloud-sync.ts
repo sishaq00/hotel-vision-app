@@ -741,7 +741,7 @@ export function startCloudSync() {
       "credit_notes","advance_deposits","product_sales","audit_log",
       "house_accounts","inventory_items","product_items","lost_found",
       "group_masters","routing_rules","housekeepers","housekeeping_teams",
-      "housekeeper_reports",
+      "housekeeper_reports","hotel_settings","signatures",
     ];
     const ch = supabase.channel("hotel-sync");
     for (const t of tables) {

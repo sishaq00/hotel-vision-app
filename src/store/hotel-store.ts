@@ -554,7 +554,7 @@ interface HotelState {
     ignoreReservationId?: string,
   ) => Reservation | null;
   checkIn: (id: string) => void;
-  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean }) => InvoiceSnapshot | null;
+  checkOut: (id: string, opts?: { paymentMethod?: PaymentMethod; markPaid?: boolean; force?: boolean; invoiceNumber?: string }) => InvoiceSnapshot | null;
   cancelReservation: (id: string) => void;
   markNoShow: (id: string) => void;
   markRecentlyViewed: (id: string) => void;
@@ -1203,7 +1203,7 @@ export const useHotelStore = create<HotelState>()(
           if (!room) return null;
           const settings = get().settings;
           const now = new Date().toISOString();
-          const invoiceNumber = nextInvoiceNumber(settings);
+          const invoiceNumber = opts?.invoiceNumber || nextInvoiceNumber(settings);
           const extras = get().getReservationExtras(id);
           const invoice = buildInvoice({
             reservation: res,

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { saveSignature, getSignature, clearSignature } from "@/lib/signatures";
+import { saveSignature, clearSignature } from "@/lib/signatures";
 
 interface Props {
   open: boolean;
@@ -52,16 +52,19 @@ export function SignatureDialog({
       ctx.fillRect(0, 0, canvas!.width, canvas!.height);
       setIsEmpty(true);
 
-      // Load existing signature if any
-      const existing = getSignature(reservationId);
-      if (existing) {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, rect.width, 240);
-          setIsEmpty(false);
-        };
-        img.src = existing.dataUrl;
-      }
+      // Load existing signature from DB if any
+      void (async () => {
+        const mod = await import("@/lib/signatures");
+        const existing = await mod.fetchSignature(reservationId);
+        if (existing) {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, rect.width, 240);
+            setIsEmpty(false);
+          };
+          img.src = existing.dataUrl;
+        }
+      })();
     }
 
     setup();
@@ -114,28 +117,36 @@ export function SignatureDialog({
     setIsEmpty(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (isEmpty) { toast.error("Signature is empty"); return; }
     const dataUrl = canvas.toDataURL("image/png");
-    saveSignature({
-      reservationId,
-      dataUrl,
-      signedAt: new Date().toISOString(),
-      signedByName,
-      guestName,
-    });
-    toast.success("Signature saved");
-    onSaved?.();
-    onOpenChange(false);
+    try {
+      await saveSignature({
+        reservationId,
+        dataUrl,
+        signedAt: new Date().toISOString(),
+        signedByName,
+        guestName,
+      });
+      toast.success("Signature saved");
+      onSaved?.();
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error("Failed to save signature: " + (e?.message ?? "unknown"));
+    }
   }
 
-  function handleRemove() {
-    clearSignature(reservationId);
-    handleClear();
-    toast("Signature removed");
-    onSaved?.();
+  async function handleRemove() {
+    try {
+      await clearSignature(reservationId);
+      handleClear();
+      toast("Signature removed");
+      onSaved?.();
+    } catch (e: any) {
+      toast.error("Failed to remove: " + (e?.message ?? "unknown"));
+    }
   }
 
   return (

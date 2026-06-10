@@ -178,7 +178,15 @@ export function CheckoutDialog({ reservation, open, onOpenChange }: CheckoutDial
       force = true;
     }
 
-    const finalInvoice = checkOut(reservation.id, { paymentMethod: method, markPaid, force });
+    // Issue invoice number from server-side sequence (unique across devices)
+    let invoiceNumber: string | undefined;
+    try {
+      invoiceNumber = await (await import("@/lib/invoice-numbering")).issueInvoiceNumber(settings.invoicePrefix || "INV");
+    } catch (e: any) {
+      toast.error("Failed to issue invoice number: " + (e?.message ?? "unknown"));
+      return;
+    }
+    const finalInvoice = checkOut(reservation.id, { paymentMethod: method, markPaid, force, invoiceNumber });
 
     // Handle balance error from our improved checkOut
     if (finalInvoice && typeof finalInvoice === "object" && "__balanceError" in finalInvoice) {

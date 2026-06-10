@@ -8,6 +8,7 @@ import { useHotelStore } from "@/store/hotel-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useStoreSync } from "@/lib/sync/use-store-sync";
 import { runDailyAutoBackup, daysSinceLastDownload, downloadBackup } from "@/lib/backup";
+import { primeSignatures, subscribeSignatures } from "@/lib/signatures";
 
 export function AppBoot() {
   const lang = useHotelStore((s) => s.settings.language) ?? "en";
@@ -17,6 +18,14 @@ export function AppBoot() {
 
   // LAN sync — connects to PocketBase server when configured in settings
   useStoreSync();
+
+  // Prime DB-backed signatures cache + live-update on remote changes
+  useEffect(() => {
+    void primeSignatures();
+    const unsub = subscribeSignatures();
+    return () => unsub();
+  }, []);
+
 
   // Auto night audit catch-up: for each missed night (incl. overstays),
   // post the nightly room charge so totals stay accurate even without
