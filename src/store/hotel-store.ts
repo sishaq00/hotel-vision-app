@@ -1203,7 +1203,7 @@ export const useHotelStore = create<HotelState>()(
           if (!room) return null;
           const settings = get().settings;
           const now = new Date().toISOString();
-          const invoiceNumber = nextInvoiceNumber(settings);
+          const invoiceNumber = opts?.invoiceNumber || nextInvoiceNumber(settings);
           const extras = get().getReservationExtras(id);
           const invoice = buildInvoice({
             reservation: res,
