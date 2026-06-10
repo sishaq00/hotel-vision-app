@@ -52,16 +52,20 @@ export function SignatureDialog({
       ctx.fillRect(0, 0, canvas!.width, canvas!.height);
       setIsEmpty(true);
 
-      // Load existing signature if any
-      const existing = getSignature(reservationId);
-      if (existing) {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, rect.width, 240);
-          setIsEmpty(false);
-        };
-        img.src = existing.dataUrl;
-      }
+      // Load existing signature from DB if any
+      void (async () => {
+        const existing = (await import("@/lib/signatures")).fetchSignature
+          ? await (await import("@/lib/signatures")).fetchSignature(reservationId)
+          : getSignature(reservationId);
+        if (existing) {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, rect.width, 240);
+            setIsEmpty(false);
+          };
+          img.src = existing.dataUrl;
+        }
+      })();
     }
 
     setup();
