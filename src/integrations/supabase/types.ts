@@ -1411,7 +1411,6 @@ export type Database = {
         Returns: undefined
       }
       run_full_hotel_simulation: { Args: { p_actor: string }; Returns: Json }
-      run_reservation_rpc_tests: { Args: never; Returns: Json }
       set_lost_found_location: {
         Args: { p_item_id: string; p_location: string }
         Returns: undefined
