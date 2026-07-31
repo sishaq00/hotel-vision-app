@@ -202,11 +202,11 @@ export function NewReservationDialog({
 
     if (activeCode) consumeCode(activeCode.id);
 
-    if (manualRate && result.ok && result.id) {
+    if (manualRate && result.ok && result.data) {
       const guest = guests.find((g) => g.id === guestId);
       recordRateOverride({
         context: "new-reservation",
-        reservationId: result.id,
+        reservationId: result.data,
         roomNumber: room.number,
         guestName: guest?.name ?? name,
         oldAmount: room.price,
