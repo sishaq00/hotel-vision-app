@@ -1,6 +1,7 @@
 // Professional Reservations Table — shared across Arrivals, Departures,
 // In-House, Search, Archived, and Recently-Viewed pages.
 import { useState } from "react";
+import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
   MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine,
@@ -102,8 +103,6 @@ export function ReservationsTable({
   const guests                = useHotelStore((s) => s.guests);
   const rooms                 = useHotelStore((s) => s.rooms);
   const settings              = useHotelStore((s) => s.settings);
-  const doCheckIn             = useHotelStore((s) => s.checkIn);
-  const doCancel              = useHotelStore((s) => s.cancelReservation);
   const markRecentlyViewed    = useHotelStore((s) => s.markRecentlyViewed);
   const getReservationBalance = useHotelStore((s) => s.getReservationBalance);
   const confirm               = useConfirm();
@@ -287,7 +286,11 @@ export function ReservationsTable({
                       {/* Check-in button */}
                       {actions.checkIn && r.status === "confirmed" && (
                         <Button size="sm" className="h-8 gap-1.5 text-xs"
-                          onClick={() => { doCheckIn(r.id); toast.success("Checked in"); }}
+                          onClick={async () => {
+                            const res = await checkInReservationRpc(r.id);
+                            if (!res.ok) { toast.error("Check-in failed", { description: res.error }); return; }
+                            toast.success("Checked in");
+                          }}
                         >
                           <LogIn className="h-3.5 w-3.5" /> Check in
                         </Button>
@@ -393,7 +396,8 @@ export function ReservationsTable({
                                     destructive: true,
                                   });
                                   if (!ok) return;
-                                  doCancel(r.id);
+                                  const cres = await cancelReservationRpc(r.id);
+                                  if (!cres.ok) { toast.error("Cancel failed", { description: cres.error }); return; }
                                   toast("Reservation cancelled");
                                 }}
                               >

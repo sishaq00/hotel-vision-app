@@ -2,6 +2,7 @@
 // Rooms × 28 days grid. Bookings render as colour-coded spans.
 // Click a free cell → New Reservation. Click a booking → manage it.
 import { createFileRoute } from "@tanstack/react-router";
+import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft, ChevronRight, CalendarRange, LogIn,
@@ -189,8 +190,6 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
   const rawRooms        = useHotelStore((s) => s.rooms);
   const rawReservations = useHotelStore((s) => s.reservations);
   const rawGuests       = useHotelStore((s) => s.guests);
-  const checkInAction   = useHotelStore((s) => s.checkIn);
-  const cancelAction    = useHotelStore((s) => s.cancelReservation);
 
   const [viewRes, setViewRes]     = useState<Reservation | null>(null);
   const [checkoutFor, setCheckoutFor] = useState<Reservation | null>(null);
@@ -434,13 +433,13 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
         open={!!viewRes}
         onClose={() => setViewRes(null)}
         onCheckIn={() => {
-          if (viewRes) { checkInAction(viewRes.id); setViewRes(null); }
+          if (viewRes) { void checkInReservationRpc(viewRes.id).then((r) => { if (!r.ok) toast.error("Check-in failed", { description: r.error }); }); setViewRes(null); }
         }}
         onCheckOut={() => {
           if (viewRes) { setCheckoutFor(viewRes); setViewRes(null); }
         }}
         onCancel={() => {
-          if (viewRes) { cancelAction(viewRes.id); setViewRes(null); }
+          if (viewRes) { void cancelReservationRpc(viewRes.id).then((r) => { if (!r.ok) toast.error("Cancel failed", { description: r.error }); }); setViewRes(null); }
         }}
       />
 
