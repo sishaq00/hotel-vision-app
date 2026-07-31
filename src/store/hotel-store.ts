@@ -545,7 +545,7 @@ interface HotelState {
 
   // Reservations
   addReservation: (
-    r: Omit<Reservation, "id" | "createdAt">,
+    r: Omit<Reservation, "id" | "createdAt"> & { id?: string },
   ) => { ok: true; id: string } | { ok: false; error: string };
   hasRoomConflict: (
     roomId: string,
