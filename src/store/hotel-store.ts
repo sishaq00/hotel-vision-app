@@ -1086,7 +1086,7 @@ export const useHotelStore = create<HotelState>()(
               error: `Room is already booked from ${conflict.checkIn} to ${conflict.checkOut}.`,
             };
           }
-          const id = uid();
+          const id = r.id ?? uid();
           const newReservation: Reservation = {
             ...r,
             id,
