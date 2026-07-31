@@ -545,7 +545,7 @@ interface HotelState {
 
   // Reservations
   addReservation: (
-    r: Omit<Reservation, "id" | "createdAt">,
+    r: Omit<Reservation, "id" | "createdAt"> & { id?: string },
   ) => { ok: true; id: string } | { ok: false; error: string };
   hasRoomConflict: (
     roomId: string,
@@ -1086,7 +1086,7 @@ export const useHotelStore = create<HotelState>()(
               error: `Room is already booked from ${conflict.checkIn} to ${conflict.checkOut}.`,
             };
           }
-          const id = uid();
+          const id = r.id ?? uid();
           const newReservation: Reservation = {
             ...r,
             id,

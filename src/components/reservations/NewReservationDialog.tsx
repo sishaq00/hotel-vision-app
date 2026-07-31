@@ -1,5 +1,6 @@
 // New reservation dialog with Zod validation + overlap detection + i18n.
 import { useState } from "react";
+import { createReservationRpc } from "@/lib/reservations-rpc";
 import { Plus } from "lucide-react";
 import { useHotelStore } from "@/store/hotel-store";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,6 @@ export function NewReservationDialog({
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
   const addGuest = useHotelStore((s) => s.addGuest);
-  const addReservation = useHotelStore((s) => s.addReservation);
   const hasRoomConflict = useHotelStore((s) => s.hasRoomConflict);
 
   const bookableRooms = rooms.filter((r) => r.status !== "maintenance");
@@ -124,7 +124,7 @@ export function NewReservationDialog({
     setManualRate(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let guestId = existingGuestId;
@@ -185,7 +185,7 @@ export function NewReservationDialog({
 
     const composedNotes = [notes.trim(), ...extraNotes].filter(Boolean).join(" ").trim() || undefined;
 
-    const result = addReservation({
+    const result = await createReservationRpc({
       guestId,
       roomId,
       checkIn,
@@ -202,11 +202,11 @@ export function NewReservationDialog({
 
     if (activeCode) consumeCode(activeCode.id);
 
-    if (manualRate && result.ok && result.id) {
+    if (manualRate && result.ok && result.data) {
       const guest = guests.find((g) => g.id === guestId);
       recordRateOverride({
         context: "new-reservation",
-        reservationId: result.id,
+        reservationId: result.data,
         roomNumber: room.number,
         guestName: guest?.name ?? name,
         oldAmount: room.price,

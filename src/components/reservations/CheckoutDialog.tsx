@@ -186,14 +186,20 @@ export function CheckoutDialog({ reservation, open, onOpenChange }: CheckoutDial
       toast.error("Failed to issue invoice number: " + (e?.message ?? "unknown"));
       return;
     }
-    const finalInvoice = checkOut(reservation.id, { paymentMethod: method, markPaid, force, invoiceNumber });
-
-    // Handle balance error from our improved checkOut
-    if (finalInvoice && typeof finalInvoice === "object" && "__balanceError" in finalInvoice) {
-      toast.error("Outstanding balance must be settled before checkout.");
+    // Database-first: the check-out transaction runs in PostgreSQL, local state
+    // is only updated once the server accepted it.
+    const { checkOutReservationRpc } = await import("@/lib/reservations-rpc");
+    const res = await checkOutReservationRpc(reservation.id, {
+      paymentMethod: method,
+      markPaid,
+      force,
+      invoiceNumber,
+    });
+    if (!res.ok) {
+      toast.error(t("co.failed"), { description: res.error });
       return;
     }
-    if (!finalInvoice) { toast.error(t("co.failed")); return; }
+    const finalInvoice = res.data;
 
     if (finalAdjust && room) {
       recordRateOverride({
