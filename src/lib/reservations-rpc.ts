@@ -38,9 +38,9 @@ export async function createReservationRpc(
     p_check_in: input.checkIn,
     p_check_out: input.checkOut,
     p_total_amount: input.totalAmount ?? 0,
-    p_notes: input.notes ?? null,
-    p_source: (input as { source?: string }).source ?? null,
-    p_group_master_id: (input as { groupMasterId?: string }).groupMasterId ?? null,
+    p_notes: input.notes ?? undefined,
+    p_source: (input as { source?: string }).source ?? undefined,
+    p_group_master_id: (input as { groupMasterId?: string }).groupMasterId ?? undefined,
   });
   if (error) return { ok: false, error: friendly(error) };
 
@@ -56,11 +56,11 @@ export async function updateReservationRpc(
 ): Promise<RpcResult<null>> {
   const { error } = await supabase.rpc("update_reservation", {
     p_reservation_id: id,
-    p_room_id: patch.roomId ?? null,
-    p_check_in: patch.checkIn ?? null,
-    p_check_out: patch.checkOut ?? null,
-    p_total_amount: patch.totalAmount ?? null,
-    p_notes: patch.notes ?? null,
+    p_room_id: patch.roomId ?? undefined,
+    p_check_in: patch.checkIn ?? undefined,
+    p_check_out: patch.checkOut ?? undefined,
+    p_total_amount: patch.totalAmount ?? undefined,
+    p_notes: patch.notes ?? undefined,
   });
   if (error) return { ok: false, error: friendly(error) };
 
@@ -109,7 +109,7 @@ export async function checkOutReservationRpc(
   const { error } = await supabase.rpc("check_out_reservation", {
     p_reservation_id: id,
     p_final_amount: total,
-    p_invoice: null,
+    p_invoice: undefined,
   });
   if (error) return { ok: false, error: friendly(error) };
 
@@ -126,7 +126,7 @@ export async function cancelReservationRpc(
 ): Promise<RpcResult<null>> {
   const { error } = await supabase.rpc("cancel_reservation", {
     p_reservation_id: id,
-    p_reason: reason ?? null,
+    p_reason: reason ?? undefined,
     p_no_show: noShow,
   });
   if (error) return { ok: false, error: friendly(error) };
