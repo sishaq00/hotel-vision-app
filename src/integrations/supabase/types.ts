@@ -1339,17 +1339,48 @@ export type Database = {
         Args: { p_technician_id: string; p_ticket_id: string }
         Returns: undefined
       }
+      cancel_reservation: {
+        Args: {
+          p_no_show?: boolean
+          p_reason?: string
+          p_reservation_id: string
+        }
+        Returns: undefined
+      }
       check_in_reservation: {
         Args: { p_reservation_id: string }
         Returns: string
       }
-      check_out_reservation: {
-        Args: { p_final_amount?: number; p_reservation_id: string }
-        Returns: undefined
-      }
+      check_out_reservation:
+        | {
+            Args: { p_final_amount?: number; p_reservation_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_final_amount?: number
+              p_invoice?: Json
+              p_reservation_id: string
+            }
+            Returns: undefined
+          }
       complete_maintenance_ticket: {
         Args: { p_resolution_notes?: string; p_ticket_id: string }
         Returns: undefined
+      }
+      create_reservation: {
+        Args: {
+          p_check_in: string
+          p_check_out: string
+          p_group_master_id?: string
+          p_guest_id: string
+          p_id?: string
+          p_notes?: string
+          p_room_id: string
+          p_source?: string
+          p_total_amount?: number
+        }
+        Returns: string
       }
       has_role: {
         Args: {
@@ -1360,6 +1391,10 @@ export type Database = {
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       issue_invoice_number: { Args: { p_prefix?: string }; Returns: string }
+      log_reservation_action: {
+        Args: { p_action: string; p_id: string; p_new: Json; p_old: Json }
+        Returns: undefined
+      }
       record_payment_with_audit: {
         Args: {
           p_amount: number
@@ -1378,6 +1413,17 @@ export type Database = {
       run_full_hotel_simulation: { Args: { p_actor: string }; Returns: Json }
       set_lost_found_location: {
         Args: { p_item_id: string; p_location: string }
+        Returns: undefined
+      }
+      update_reservation: {
+        Args: {
+          p_check_in?: string
+          p_check_out?: string
+          p_notes?: string
+          p_reservation_id: string
+          p_room_id?: string
+          p_total_amount?: number
+        }
         Returns: undefined
       }
       update_room_housekeeping_status: {
