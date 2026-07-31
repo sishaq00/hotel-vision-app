@@ -20,6 +20,7 @@ import { CheckoutDialog } from "@/components/reservations/CheckoutDialog";
 import { NewReservationDialog } from "@/components/reservations/NewReservationDialog";
 import { useHotelStore, type Reservation, type Room } from "@/store/hotel-store";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/availability")({
   head: () => ({

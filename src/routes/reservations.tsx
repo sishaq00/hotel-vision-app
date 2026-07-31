@@ -22,6 +22,7 @@ import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { useT } from "@/lib/i18n";
+import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
 
 export const Route = createFileRoute("/reservations")({
   head: () => ({
@@ -39,8 +40,6 @@ function ReservationsPage() {
   const guests = useHotelStore((s) => s.guests);
   const rooms = useHotelStore((s) => s.rooms);
   const settings = useHotelStore((s) => s.settings);
-  const checkIn = useHotelStore((s) => s.checkIn);
-  const cancel = useHotelStore((s) => s.cancelReservation);
   const confirm = useConfirm();
 
   const [query, setQuery] = useState("");
@@ -122,8 +121,12 @@ function ReservationsPage() {
                               size="sm"
                               variant="outline"
                               className="h-8 gap-1.5"
-                              onClick={() => {
-                                checkIn(r.id);
+                              onClick={async () => {
+                                const res = await checkInReservationRpc(r.id);
+                                if (!res.ok) {
+                                  toast.error("Check-in failed", { description: res.error });
+                                  return;
+                                }
                                 toast.success("Checked in");
                               }}
                             >
@@ -175,7 +178,11 @@ function ReservationsPage() {
                                   destructive: true,
                                 });
                                 if (!ok) return;
-                                cancel(r.id);
+                                const cres = await cancelReservationRpc(r.id);
+                                if (!cres.ok) {
+                                  toast.error("Cancel failed", { description: cres.error });
+                                  return;
+                                }
                                 toast("Reservation cancelled");
                               }}
                             >
