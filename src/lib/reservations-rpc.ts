@@ -26,7 +26,7 @@ function friendly(error: unknown): string {
   return msg;
 }
 
-const rpc = supabase.rpc.bind(supabase) as (fn: string, args?: Record<string, unknown>) => Promise<{ error: unknown }>;
+const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ error: unknown }>;
 
 /** Pull the authoritative row back from Postgres and mirror it locally. */
 async function refresh(id: string): Promise<void> {
