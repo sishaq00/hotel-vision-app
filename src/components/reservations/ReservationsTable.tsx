@@ -1,10 +1,14 @@
 // Professional Reservations Table — shared across Arrivals, Departures,
 // In-House, Search, Archived, and Recently-Viewed pages.
 import { useState } from "react";
-import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
+import { checkInReservationRpc } from "@/lib/reservations-rpc";
+import { EditReservationDialog } from "@/components/reservations/EditReservationDialog";
+import { RoomMoveDialog } from "@/components/reservations/RoomMoveDialog";
+import { CancelReservationDialog } from "@/components/reservations/CancelReservationDialog";
+import { ReservationHistoryDialog } from "@/components/reservations/ReservationHistoryDialog";
 import {
   LogIn, LogOut, Printer, X, CalendarPlus, Download,
-  MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine,
+  MoreHorizontal, Eye, AlertTriangle, Wallet, PenLine, Pencil, ArrowLeftRight, History, UserX,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ExtendStayDialog } from "@/components/reservations/ExtendStayDialog";
@@ -66,6 +70,7 @@ const STATUS_CFG: Record<ReservationStatus, { label: string; cls: string }> = {
   confirmed:    { label: "Confirmed",   cls: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-400" },
   "checked-in": { label: "In house",    cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400" },
   "checked-out":{ label: "Checked out", cls: "border-border bg-muted text-muted-foreground" },
+  "no-show":    { label: "No show",     cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400" },
   cancelled:    { label: "Cancelled",   cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400" },
 };
 
@@ -112,6 +117,11 @@ export function ReservationsTable({
   const [payId,      setPayId]      = useState<string | null>(null);
   const [signId,     setSignId]     = useState<string | null>(null);
   const [sigVersion, setSigVersion] = useState(0);
+  const [editId,     setEditId]     = useState<string | null>(null);
+  const [moveId,     setMoveId]     = useState<string | null>(null);
+  const [historyId,  setHistoryId]  = useState<string | null>(null);
+  const [cancelId,   setCancelId]   = useState<string | null>(null);
+  const [noShowId,   setNoShowId]   = useState<string | null>(null);
   // sigVersion is bumped after capturing/removing a signature so badges re-evaluate
   void sigVersion;
 
@@ -330,6 +340,21 @@ export function ReservationsTable({
                             </DropdownMenuItem>
                           )}
 
+                          {/* Edit / room move / history */}
+                          {(r.status === "confirmed" || r.status === "checked-in") && (
+                            <>
+                              <DropdownMenuItem onClick={() => setEditId(r.id)} className="text-xs">
+                                <Pencil className="mr-2 h-3.5 w-3.5" /> Edit reservation
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setMoveId(r.id)} className="text-xs">
+                                <ArrowLeftRight className="mr-2 h-3.5 w-3.5" /> Move room
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuItem onClick={() => setHistoryId(r.id)} className="text-xs">
+                            <History className="mr-2 h-3.5 w-3.5" /> History
+                          </DropdownMenuItem>
+
                           {/* Extend stay */}
                           {actions.checkOut && r.status === "checked-in" && (
                             <DropdownMenuItem onClick={() => setExtendId(r.id)} className="text-xs">
@@ -381,29 +406,25 @@ export function ReservationsTable({
                             </>
                           )}
 
-                          {/* Cancel */}
-                          {actions.cancel && (r.status === "confirmed" || r.status === "checked-in") && (
+                          {/* No show + cancel */}
+                          {actions.cancel && r.status === "confirmed" && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                className="text-xs text-destructive focus:text-destructive"
-                                onClick={async () => {
-                                  const ok = await confirm({
-                                    title: "Cancel reservation?",
-                                    description: `Cancel ${g?.name ?? "guest"}'s booking for room ${rm?.number ?? "—"}? This cannot be undone.`,
-                                    confirmLabel: "Cancel reservation",
-                                    cancelLabel: "Keep",
-                                    destructive: true,
-                                  });
-                                  if (!ok) return;
-                                  const cres = await cancelReservationRpc(r.id);
-                                  if (!cres.ok) { toast.error("Cancel failed", { description: cres.error }); return; }
-                                  toast("Reservation cancelled");
-                                }}
+                                className="text-xs"
+                                onClick={() => setNoShowId(r.id)}
                               >
-                                <X className="mr-2 h-3.5 w-3.5" /> Cancel reservation
+                                <UserX className="mr-2 h-3.5 w-3.5" /> Mark as no show
                               </DropdownMenuItem>
                             </>
+                          )}
+                          {actions.cancel && (r.status === "confirmed" || r.status === "checked-in") && (
+                            <DropdownMenuItem
+                              className="text-xs text-destructive focus:text-destructive"
+                              onClick={() => setCancelId(r.id)}
+                            >
+                              <X className="mr-2 h-3.5 w-3.5" /> Cancel reservation
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -457,6 +478,27 @@ export function ReservationsTable({
           />
         );
       })()}
+      <EditReservationDialog
+        reservation={editId ? reservations.find((x) => x.id === editId) ?? null : null}
+        onClose={() => setEditId(null)}
+      />
+      <RoomMoveDialog
+        reservation={moveId ? reservations.find((x) => x.id === moveId) ?? null : null}
+        onClose={() => setMoveId(null)}
+      />
+      <ReservationHistoryDialog
+        reservation={historyId ? reservations.find((x) => x.id === historyId) ?? null : null}
+        onClose={() => setHistoryId(null)}
+      />
+      <CancelReservationDialog
+        reservation={cancelId ? reservations.find((x) => x.id === cancelId) ?? null : null}
+        onClose={() => setCancelId(null)}
+      />
+      <CancelReservationDialog
+        mode="no-show"
+        reservation={noShowId ? reservations.find((x) => x.id === noShowId) ?? null : null}
+        onClose={() => setNoShowId(null)}
+      />
     </>
   );
 }

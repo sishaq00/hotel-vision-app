@@ -55,7 +55,7 @@ export function GlobalSearch() {
         type: "reservation",
         id: r.id,
         title: `${g?.name ?? "—"} · Room ${room?.number ?? "—"}`,
-        subtitle: `${r.confirmationNumber ?? r.id.slice(0, 8)} · ${r.checkIn} → ${r.checkOut} · ${r.status}`,
+        subtitle: `${r.confirmationNumber ?? "—"} · ${r.checkIn} → ${r.checkOut} · ${r.status}`,
         to: "/search-reservations",
       };
     });

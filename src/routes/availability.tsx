@@ -2,7 +2,8 @@
 // Rooms × 28 days grid. Bookings render as colour-coded spans.
 // Click a free cell → New Reservation. Click a booking → manage it.
 import { createFileRoute } from "@tanstack/react-router";
-import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
+import { checkInReservationRpc } from "@/lib/reservations-rpc";
+import { CancelReservationDialog } from "@/components/reservations/CancelReservationDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft, ChevronRight, CalendarRange, LogIn,
@@ -83,6 +84,12 @@ const STATUS_STYLES = {
     hover: "hover:bg-muted/80",
     label: "Checked out",
   },
+  "no-show": {
+    bg: "bg-amber-100 dark:bg-amber-950/40",
+    text: "text-amber-700 dark:text-amber-400",
+    hover: "",
+    label: "No show",
+  },
   cancelled: {
     bg: "bg-rose-100 dark:bg-rose-950/40",
     text: "text-rose-600 dark:text-rose-400",
@@ -115,7 +122,7 @@ function BookingPopup({
   if (!reservation) return null;
   const g   = guests.find((x) => x.id === reservation.guestId);
   const rm  = rooms.find((x) => x.id === reservation.roomId);
-  const cfg = STATUS_STYLES[reservation.status] ?? STATUS_STYLES.confirmed;
+  const cfg = (STATUS_STYLES as Record<string, { bg: string; text: string; hover: string; label: string }>)[reservation.status] ?? STATUS_STYLES.confirmed;
   const nights = nightsBetween(reservation.checkIn, reservation.checkOut);
 
   return (
@@ -142,7 +149,7 @@ function BookingPopup({
             ["Nights",    String(nights)],
             ["Status",    cfg.label],
             ["Total",     `${settings.currency ?? "$"} ${reservation.totalAmount.toLocaleString()}`],
-            ["Confirmation", reservation.confirmationNumber ?? reservation.id.slice(0, 8).toUpperCase()],
+            ["Confirmation", reservation.confirmationNumber ?? "—"],
           ].map(([k, v]) => (
             <div key={k} className="flex items-center justify-between rounded-lg py-1.5 text-sm">
               <span className="text-muted-foreground">{k}</span>
@@ -194,6 +201,7 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
 
   const [viewRes, setViewRes]     = useState<Reservation | null>(null);
   const [checkoutFor, setCheckoutFor] = useState<Reservation | null>(null);
+  const [cancelFor, setCancelFor]     = useState<Reservation | null>(null);
   const [newResDate, setNewResDate]   = useState<string | null>(null);
   const [newResOpen, setNewResOpen]   = useState(false);
 
@@ -375,7 +383,7 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
 
                       {/* Booking spans — absolutely positioned over the cells */}
                       {roomRes.map((res) => {
-                        const cfg = STATUS_STYLES[res.status] ?? STATUS_STYLES.confirmed;
+                        const cfg = (STATUS_STYLES as Record<string, { bg: string; text: string; hover: string; label: string }>)[res.status] ?? STATUS_STYLES.confirmed;
                         const g   = guestById.get(res.guestId);
 
                         // Clamp the span to the visible window
@@ -440,9 +448,11 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
           if (viewRes) { setCheckoutFor(viewRes); setViewRes(null); }
         }}
         onCancel={() => {
-          if (viewRes) { void cancelReservationRpc(viewRes.id).then((r) => { if (!r.ok) toast.error("Cancel failed", { description: r.error }); }); setViewRes(null); }
+          if (viewRes) { setCancelFor(viewRes); setViewRes(null); }
         }}
       />
+
+      <CancelReservationDialog reservation={cancelFor} onClose={() => setCancelFor(null)} />
 
       {newResOpen && (
         <NewReservationDialog

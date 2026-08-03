@@ -37,7 +37,7 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
       return ctx.reservations
         .filter((r) => isoDate(r.checkIn) === t && r.status === "confirmed")
         .map((r) => ({
-          confirmation: r.confirmationNumber ?? r.id.slice(0, 8),
+          confirmation: r.confirmationNumber ?? "",
           guest: guestName(ctx, r.guestId),
           room: roomNumber(ctx, r.roomId),
           checkIn: r.checkIn, checkOut: r.checkOut,

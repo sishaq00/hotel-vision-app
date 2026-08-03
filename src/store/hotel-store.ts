@@ -51,7 +51,7 @@ export interface Room {
   housekeepingPhotos?: string[]; // base64 data URLs
 }
 
-export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled";
+export type ReservationStatus = "confirmed" | "checked-in" | "checked-out" | "cancelled" | "no-show";
 
 export interface InvoiceExtraItem {
   description: string;
@@ -111,6 +111,12 @@ export interface Reservation {
   groupMasterId?: string;
   confirmationNumber?: string;
   recentlyViewedAt?: string;
+  guestsCount?: number;
+  ratePlanId?: string;
+  cancellationReason?: string;
+  cancellationFee?: number;
+  cancelledBy?: string;
+  noShowAt?: string;
   notes?: string; // free-text guest requests / special instructions
   // Tracks the last audit date a nightly room charge was posted for this reservation.
   // Prevents duplicate charges if the night audit is re-run.
@@ -1459,7 +1465,7 @@ export const useHotelStore = create<HotelState>()(
           set((s) => ({
             reservations: s.reservations.map((r) =>
               r.id === id
-                ? { ...r, noShow: true, status: "cancelled" as ReservationStatus, cancelledAt: new Date().toISOString() }
+                ? { ...r, noShow: true, status: "no-show" as ReservationStatus, noShowAt: new Date().toISOString(), cancelledAt: new Date().toISOString() }
                 : r,
             ),
           }));

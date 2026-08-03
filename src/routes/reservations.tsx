@@ -22,7 +22,8 @@ import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/system/ConfirmDialog";
 import { useT } from "@/lib/i18n";
-import { checkInReservationRpc, cancelReservationRpc } from "@/lib/reservations-rpc";
+import { checkInReservationRpc } from "@/lib/reservations-rpc";
+import { CancelReservationDialog } from "@/components/reservations/CancelReservationDialog";
 
 export const Route = createFileRoute("/reservations")({
   head: () => ({
@@ -44,6 +45,7 @@ function ReservationsPage() {
 
   const [query, setQuery] = useState("");
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
+  const [cancelFor, setCancelFor] = useState<import("@/store/hotel-store").Reservation | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -169,22 +171,7 @@ function ReservationsPage() {
                               variant="ghost"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
                               title="Cancel reservation"
-                              onClick={async () => {
-                                const ok = await confirm({
-                                  title: "Cancel reservation?",
-                                  description: "This will release the room. The action cannot be undone.",
-                                  confirmLabel: "Cancel reservation",
-                                  cancelLabel: "Keep",
-                                  destructive: true,
-                                });
-                                if (!ok) return;
-                                const cres = await cancelReservationRpc(r.id);
-                                if (!cres.ok) {
-                                  toast.error("Cancel failed", { description: cres.error });
-                                  return;
-                                }
-                                toast("Reservation cancelled");
-                              }}
+                              onClick={() => setCancelFor(r)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -199,6 +186,8 @@ function ReservationsPage() {
           </div>
         )}
       </Card>
+
+      <CancelReservationDialog reservation={cancelFor} onClose={() => setCancelFor(null)} />
 
       {checkoutId && (() => {
         const r = reservations.find((x) => x.id === checkoutId);
