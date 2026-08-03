@@ -999,9 +999,50 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          reservation_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          reservation_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          reservation_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_events_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
+          cancellation_fee: number
+          cancellation_reason: string | null
           cancelled_at: string | null
+          cancelled_by: string | null
           check_in: string
           check_out: string
           checked_in_at: string | null
@@ -1010,11 +1051,14 @@ export type Database = {
           created_at: string
           group_master_id: string | null
           guest_id: string
+          guests_count: number
           id: string
           invoice: Json | null
           last_nightly_charge_date: string | null
           no_show: boolean | null
+          no_show_at: string | null
           notes: string | null
+          rate_plan_id: string | null
           room_id: string | null
           source: string | null
           status: string
@@ -1022,7 +1066,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_fee?: number
+          cancellation_reason?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           check_in: string
           check_out: string
           checked_in_at?: string | null
@@ -1031,11 +1078,14 @@ export type Database = {
           created_at?: string
           group_master_id?: string | null
           guest_id: string
+          guests_count?: number
           id?: string
           invoice?: Json | null
           last_nightly_charge_date?: string | null
           no_show?: boolean | null
+          no_show_at?: string | null
           notes?: string | null
+          rate_plan_id?: string | null
           room_id?: string | null
           source?: string | null
           status?: string
@@ -1043,7 +1093,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_fee?: number
+          cancellation_reason?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           check_in?: string
           check_out?: string
           checked_in_at?: string | null
@@ -1052,11 +1105,14 @@ export type Database = {
           created_at?: string
           group_master_id?: string | null
           guest_id?: string
+          guests_count?: number
           id?: string
           invoice?: Json | null
           last_nightly_charge_date?: string | null
           no_show?: boolean | null
+          no_show_at?: string | null
           notes?: string | null
+          rate_plan_id?: string | null
           room_id?: string | null
           source?: string | null
           status?: string
@@ -1340,11 +1396,7 @@ export type Database = {
         Returns: undefined
       }
       cancel_reservation: {
-        Args: {
-          p_no_show?: boolean
-          p_reason?: string
-          p_reservation_id: string
-        }
+        Args: { p_fee?: number; p_reason: string; p_reservation_id: string }
         Returns: undefined
       }
       check_in_reservation: {
@@ -1382,6 +1434,24 @@ export type Database = {
         }
         Returns: string
       }
+      get_reservation_events: {
+        Args: { p_reservation_id: string }
+        Returns: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          reservation_id: string
+          user_email: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "reservation_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1395,6 +1465,27 @@ export type Database = {
         Args: { p_action: string; p_id: string; p_new: Json; p_old: Json }
         Returns: undefined
       }
+      log_reservation_event: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_reservation_id: string
+        }
+        Returns: undefined
+      }
+      mark_reservation_no_show: {
+        Args: { p_fee?: number; p_reason?: string; p_reservation_id: string }
+        Returns: undefined
+      }
+      move_reservation_room: {
+        Args: {
+          p_new_room_id: string
+          p_reason: string
+          p_reservation_id: string
+        }
+        Returns: undefined
+      }
+      next_confirmation_number: { Args: never; Returns: string }
       record_payment_with_audit: {
         Args: {
           p_amount: number
@@ -1419,9 +1510,13 @@ export type Database = {
         Args: {
           p_check_in?: string
           p_check_out?: string
+          p_guest_id?: string
+          p_guests_count?: number
           p_notes?: string
+          p_rate_plan_id?: string
           p_reservation_id: string
           p_room_id?: string
+          p_source?: string
           p_total_amount?: number
         }
         Returns: undefined
