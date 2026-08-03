@@ -66,6 +66,7 @@ const STATUS_CFG: Record<ReservationStatus, { label: string; cls: string }> = {
   confirmed:    { label: "Confirmed",   cls: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-400" },
   "checked-in": { label: "In house",    cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400" },
   "checked-out":{ label: "Checked out", cls: "border-border bg-muted text-muted-foreground" },
+  "no-show":    { label: "No show",     cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400" },
   cancelled:    { label: "Cancelled",   cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400" },
 };
 

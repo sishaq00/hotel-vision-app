@@ -202,6 +202,11 @@ function reservationToRow(r: Reservation) {
     confirmation_number: r.confirmationNumber ?? null,
     notes: r.notes ?? null,
     last_nightly_charge_date: r.lastNightlyChargeDate ?? null,
+    guests_count: r.guestsCount ?? 1,
+    rate_plan_id: r.ratePlanId ?? null,
+    cancellation_reason: r.cancellationReason ?? null,
+    cancellation_fee: r.cancellationFee ?? 0,
+    no_show_at: r.noShowAt ?? null,
   };
 }
 
@@ -225,6 +230,12 @@ function rowToReservation(r: any): Reservation {
     confirmationNumber: r.confirmation_number ?? undefined,
     notes: r.notes ?? undefined,
     lastNightlyChargeDate: r.last_nightly_charge_date ?? undefined,
+    guestsCount: r.guests_count ?? undefined,
+    ratePlanId: r.rate_plan_id ?? undefined,
+    cancellationReason: r.cancellation_reason ?? undefined,
+    cancellationFee: r.cancellation_fee != null ? Number(r.cancellation_fee) : undefined,
+    cancelledBy: r.cancelled_by ?? undefined,
+    noShowAt: r.no_show_at ?? undefined,
   };
 }
 
