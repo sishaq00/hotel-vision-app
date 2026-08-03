@@ -122,7 +122,7 @@ function BookingPopup({
   if (!reservation) return null;
   const g   = guests.find((x) => x.id === reservation.guestId);
   const rm  = rooms.find((x) => x.id === reservation.roomId);
-  const cfg = (STATUS_STYLES as Record<string, typeof STATUS_STYLES.confirmed>)[reservation.status] ?? STATUS_STYLES.confirmed;
+  const cfg = (STATUS_STYLES as Record<string, { bg: string; text: string; hover: string; label: string }>)[reservation.status] ?? STATUS_STYLES.confirmed;
   const nights = nightsBetween(reservation.checkIn, reservation.checkOut);
 
   return (
@@ -383,7 +383,7 @@ function TapeChart({ offset, days, cellW }: TapeChartProps) {
 
                       {/* Booking spans — absolutely positioned over the cells */}
                       {roomRes.map((res) => {
-                        const cfg = (STATUS_STYLES as Record<string, typeof STATUS_STYLES.confirmed>)[res.status] ?? STATUS_STYLES.confirmed;
+                        const cfg = (STATUS_STYLES as Record<string, { bg: string; text: string; hover: string; label: string }>)[res.status] ?? STATUS_STYLES.confirmed;
                         const g   = guestById.get(res.guestId);
 
                         // Clamp the span to the visible window
