@@ -149,7 +149,7 @@ function BookingPopup({
             ["Nights",    String(nights)],
             ["Status",    cfg.label],
             ["Total",     `${settings.currency ?? "$"} ${reservation.totalAmount.toLocaleString()}`],
-            ["Confirmation", reservation.confirmationNumber ?? reservation.id.slice(0, 8).toUpperCase()],
+            ["Confirmation", reservation.confirmationNumber ?? "—"],
           ].map(([k, v]) => (
             <div key={k} className="flex items-center justify-between rounded-lg py-1.5 text-sm">
               <span className="text-muted-foreground">{k}</span>

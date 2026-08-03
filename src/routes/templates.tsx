@@ -131,7 +131,7 @@ function TemplatesPage() {
     return {
       guest_name: g?.name ?? "Guest",
       hotel_name: settings.hotelName,
-      confirmation: r.confirmationNumber ?? r.id.slice(0, 6).toUpperCase(),
+      confirmation: r.confirmationNumber ?? "",
       room_number: rm?.number ?? "—",
       check_in: r.checkIn,
       check_out: r.checkOut,

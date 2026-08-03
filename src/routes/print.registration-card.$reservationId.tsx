@@ -73,7 +73,7 @@ function PrintRegistrationCard() {
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 11, color: "#6b7280" }}>Registration Card</div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
-              {reservation.confirmationNumber ?? reservation.id.slice(0, 8).toUpperCase()}
+              {reservation.confirmationNumber ?? "—"}
             </div>
             <div style={{ fontSize: 10.5, color: "#6b7280" }}>{new Date().toLocaleString()}</div>
           </div>
