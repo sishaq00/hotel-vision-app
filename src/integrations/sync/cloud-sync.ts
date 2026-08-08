@@ -264,8 +264,17 @@ const M = {
       notes: p.notes ?? null,
       meta: p,
     }),
-    fromRow: (r: any) => r.meta ?? { id: r.id, reservationId: r.reservation_id, amount: r.amount, method: r.method, status: r.status },
+    fromRow: (r: any) => ({
+      ...(r.meta && typeof r.meta === "object" ? r.meta : {}),
+      id: r.id,
+      reservationId: r.meta?.reservationId ?? r.reservation_id,
+      amount: Number(r.amount ?? r.meta?.amount ?? 0),
+      method: r.method ?? r.meta?.method ?? "cash",
+      status: r.status ?? r.meta?.status ?? "paid",
+      date: r.meta?.date ?? String(r.created_at ?? "").slice(0, 10),
+    }),
   } as Mapping<any>,
+
 
   advanceDeposits: {
     table: "advance_deposits",
