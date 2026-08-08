@@ -52,6 +52,7 @@ export function AddGuestPurchaseDialog({ guestId, reservations, open, onOpenChan
   const fmt = (n: number) => `${settings.currency} ${n.toFixed(2)}`;
 
   const handleSubmit = () => {
+    if (submitting) return; // guard against double submits
     if (!valid || !product) {
       toast.error("Pick a product and valid quantity");
       return;
@@ -61,12 +62,14 @@ export function AddGuestPurchaseDialog({ guestId, reservations, open, onOpenChan
       toast.error("Select a reservation");
       return;
     }
+    setSubmitting(true);
     const result = recordProductSale({
       productId: product.id,
       quantity: qNum,
       roomId: res.roomId,
       reservationId: res.id,
     });
+    setSubmitting(false);
     if (!result.ok) {
       toast.error(result.error);
       return;
@@ -78,6 +81,7 @@ export function AddGuestPurchaseDialog({ guestId, reservations, open, onOpenChan
     setQuantity("1");
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
