@@ -765,34 +765,43 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          created_by: string | null
           guest_id: string | null
           id: string
+          idempotency_key: string | null
           meta: Json | null
           method: string
           notes: string | null
           reservation_id: string | null
+          shift_id: string | null
           status: string
         }
         Insert: {
           amount: number
           created_at?: string
+          created_by?: string | null
           guest_id?: string | null
           id?: string
+          idempotency_key?: string | null
           meta?: Json | null
           method?: string
           notes?: string | null
           reservation_id?: string | null
+          shift_id?: string | null
           status?: string
         }
         Update: {
           amount?: number
           created_at?: string
+          created_by?: string | null
           guest_id?: string | null
           id?: string
+          idempotency_key?: string | null
           meta?: Json | null
           method?: string
           notes?: string | null
           reservation_id?: string | null
+          shift_id?: string | null
           status?: string
         }
         Relationships: [
@@ -808,6 +817,13 @@ export type Database = {
             columns: ["reservation_id"]
             isOneToOne: false
             referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
         ]
@@ -1489,13 +1505,35 @@ export type Database = {
       record_payment_with_audit: {
         Args: {
           p_amount: number
-          p_guest_id: string
+          p_guest_id?: string
+          p_idempotency_key: string
+          p_meta?: Json
           p_method?: string
           p_notes?: string
           p_reservation_id: string
+          p_shift_id?: string
           p_status?: string
         }
-        Returns: string
+        Returns: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          guest_id: string | null
+          id: string
+          idempotency_key: string | null
+          meta: Json | null
+          method: string
+          notes: string | null
+          reservation_id: string | null
+          shift_id: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       return_lost_found_item: {
         Args: { p_guest_id: string; p_item_id: string }
