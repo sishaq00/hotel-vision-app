@@ -27,7 +27,6 @@ const METHODS: { value: PaymentMethod; label: string; icon: typeof Banknote }[] 
 
 export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) {
   const settings = useHotelStore((s) => s.settings);
-  const addPayment = useHotelStore((s) => s.addPayment);
   const getBalance = useHotelStore((s) => s.getReservationBalance);
 
   const balance = useMemo(
@@ -39,7 +38,16 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
   const [amount, setAmount] = useState<string>(balance.balance.toFixed(2));
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // One idempotency key per dialog session — resubmits (double click, retry)
+  // reuse the same key so Postgres returns the existing payment instead of
+  // inserting a duplicate.
+  const idemRef = useRef<string>(newIdempotencyKey());
+  useEffect(() => {
+    if (open) idemRef.current = newIdempotencyKey();
+  }, [open]);
 
   const fmt = (n: number) =>
     `${settings.currency} ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -69,18 +77,30 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
       proofPath = res.path;
       proofName = proofFile.name;
     }
-    addPayment({
+    setSaving(true);
+    const result = await recordPayment({
       reservationId: reservation.id,
+      guestId: reservation.guestId,
       amount: Math.round(num * 100) / 100,
       method,
       status: "paid",
-      date: new Date().toISOString().slice(0, 10),
+      idempotencyKey: idemRef.current,
       proofPath,
       proofName,
     });
-    toast.success(`Payment of ${fmt(num)} recorded`);
+    setSaving(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      result.duplicate
+        ? `Payment already recorded (${fmt(result.payment.amount)})`
+        : `Payment of ${fmt(result.payment.amount)} recorded`,
+    );
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
