@@ -1,6 +1,8 @@
 // Record a payment against a reservation (cash / card / transfer).
 // Reduces outstanding balance immediately. Optionally attach proof file.
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { newIdempotencyKey, recordPayment } from "@/lib/payments-rpc";
+
 import { Banknote, CreditCard, ArrowRightLeft, Wallet, Paperclip, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
