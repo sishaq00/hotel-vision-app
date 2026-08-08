@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { newIdempotencyKey, recordPayment } from "@/lib/payments-rpc";
 import { useMemo, useState } from "react";
 import { CreditCard, Plus, Search, FileMinus, Paperclip } from "lucide-react";
 import { getSignedUrl } from "@/integrations/storage/hotel-storage";
