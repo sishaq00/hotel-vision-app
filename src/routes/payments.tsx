@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { newIdempotencyKey, recordPayment } from "@/lib/payments-rpc";
 import { useMemo, useState } from "react";
 import { CreditCard, Plus, Search, FileMinus, Paperclip } from "lucide-react";
 import { getSignedUrl } from "@/integrations/storage/hotel-storage";
@@ -53,7 +54,6 @@ function PaymentsPage() {
   const payments = useHotelStore((s) => s.payments);
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
-  const addPayment = useHotelStore((s) => s.addPayment);
   const settings   = useHotelStore((s) => s.settings);
 
   const [open, setOpen] = useState(false);
@@ -85,25 +85,32 @@ function PaymentsPage() {
       });
   }, [payments, reservations, guests, query]);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reservationId || amount <= 0) {
       toast.error("Select a reservation and enter an amount");
       return;
     }
-    addPayment({
+    const res = reservations.find((r) => r.id === reservationId);
+    const result = await recordPayment({
       reservationId,
+      guestId: res?.guestId,
       amount,
       method,
       status: "paid",
-      date: new Date().toISOString().slice(0, 10),
+      idempotencyKey: newIdempotencyKey(),
     });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Payment recorded");
     setReservationId("");
     setAmount(0);
     setMethod("cash");
     setOpen(false);
   };
+
 
   return (
     <AppLayout title={t("nav.payments")} subtitle={t("sub.payments")}>

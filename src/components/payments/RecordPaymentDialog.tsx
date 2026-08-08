@@ -1,6 +1,8 @@
 // Record a payment against a reservation (cash / card / transfer).
 // Reduces outstanding balance immediately. Optionally attach proof file.
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { newIdempotencyKey, recordPayment } from "@/lib/payments-rpc";
+
 import { Banknote, CreditCard, ArrowRightLeft, Wallet, Paperclip, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +29,6 @@ const METHODS: { value: PaymentMethod; label: string; icon: typeof Banknote }[] 
 
 export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) {
   const settings = useHotelStore((s) => s.settings);
-  const addPayment = useHotelStore((s) => s.addPayment);
   const getBalance = useHotelStore((s) => s.getReservationBalance);
 
   const balance = useMemo(
@@ -39,7 +40,16 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
   const [amount, setAmount] = useState<string>(balance.balance.toFixed(2));
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // One idempotency key per dialog session — resubmits (double click, retry)
+  // reuse the same key so Postgres returns the existing payment instead of
+  // inserting a duplicate.
+  const idemRef = useRef<string>(newIdempotencyKey());
+  useEffect(() => {
+    if (open) idemRef.current = newIdempotencyKey();
+  }, [open]);
 
   const fmt = (n: number) =>
     `${settings.currency} ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -69,18 +79,30 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
       proofPath = res.path;
       proofName = proofFile.name;
     }
-    addPayment({
+    setSaving(true);
+    const result = await recordPayment({
       reservationId: reservation.id,
+      guestId: reservation.guestId,
       amount: Math.round(num * 100) / 100,
       method,
       status: "paid",
-      date: new Date().toISOString().slice(0, 10),
+      idempotencyKey: idemRef.current,
       proofPath,
       proofName,
     });
-    toast.success(`Payment of ${fmt(num)} recorded`);
+    setSaving(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      result.duplicate
+        ? `Payment already recorded (${fmt(result.payment.amount)})`
+        : `Payment of ${fmt(result.payment.amount)} recorded`,
+    );
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -202,12 +224,13 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading || saving}>
             Cancel
           </Button>
-          <Button onClick={handleRecord} disabled={!valid || uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          <Button onClick={handleRecord} disabled={!valid || uploading || saving}>
+            {uploading || saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Record {valid ? fmt(num) : "payment"}
+
           </Button>
         </DialogFooter>
 

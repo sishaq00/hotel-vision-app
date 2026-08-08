@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.record_payment_with_audit(uuid, numeric, text, uuid, text, text, text, uuid, jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_payment_with_audit(uuid, numeric, text, uuid, text, text, text, uuid, jsonb) TO authenticated;
