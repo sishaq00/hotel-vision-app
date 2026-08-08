@@ -85,25 +85,32 @@ function PaymentsPage() {
       });
   }, [payments, reservations, guests, query]);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reservationId || amount <= 0) {
       toast.error("Select a reservation and enter an amount");
       return;
     }
-    addPayment({
+    const res = reservations.find((r) => r.id === reservationId);
+    const result = await recordPayment({
       reservationId,
+      guestId: res?.guestId,
       amount,
       method,
       status: "paid",
-      date: new Date().toISOString().slice(0, 10),
+      idempotencyKey: newIdempotencyKey(),
     });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Payment recorded");
     setReservationId("");
     setAmount(0);
     setMethod("cash");
     setOpen(false);
   };
+
 
   return (
     <AppLayout title={t("nav.payments")} subtitle={t("sub.payments")}>
