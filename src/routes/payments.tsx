@@ -54,7 +54,6 @@ function PaymentsPage() {
   const payments = useHotelStore((s) => s.payments);
   const reservations = useHotelStore((s) => s.reservations);
   const guests = useHotelStore((s) => s.guests);
-  const addPayment = useHotelStore((s) => s.addPayment);
   const settings   = useHotelStore((s) => s.settings);
 
   const [open, setOpen] = useState(false);
