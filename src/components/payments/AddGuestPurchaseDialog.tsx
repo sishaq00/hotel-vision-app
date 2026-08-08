@@ -151,7 +151,7 @@ export function AddGuestPurchaseDialog({ guestId, reservations, open, onOpenChan
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!valid}>Add to account</Button>
+          <Button onClick={handleSubmit} disabled={!valid || submitting}>Add to account</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
