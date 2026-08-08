@@ -36,6 +36,8 @@ export function AddGuestPurchaseDialog({ guestId, reservations, open, onOpenChan
   const [reservationId, setReservationId] = useState(defaultResId);
   const [productId, setProductId] = useState<string>("");
   const [quantity, setQuantity] = useState("1");
+  const [submitting, setSubmitting] = useState(false);
+
 
   const product = products.find((p) => p.id === productId);
   const qNum = parseInt(quantity, 10);
