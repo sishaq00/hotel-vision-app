@@ -224,12 +224,13 @@ export function RecordPaymentDialog({ reservation, open, onOpenChange }: Props) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading || saving}>
             Cancel
           </Button>
-          <Button onClick={handleRecord} disabled={!valid || uploading}>
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          <Button onClick={handleRecord} disabled={!valid || uploading || saving}>
+            {uploading || saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Record {valid ? fmt(num) : "payment"}
+
           </Button>
         </DialogFooter>
 
